@@ -7,9 +7,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This repository is only used for backend development.
 
 ## Application overview
-The app that is to be developed is a web application that shows NHL statistics. With the USP of calculating which teams and players are "hot" or "cold" right now. 
+
+The app that is to be developed is a web application that shows NHL statistics. With the USP of calculating which teams and players are "hot" or "cold" right now.
 
 ## Agent instructions
+
 1. Only backend agent should use this CLAUDE.md file
 2. Backend agent can only write code to this branch
 3. Backend agent can only develop to /backend sub-folder
@@ -18,19 +20,22 @@ The app that is to be developed is a web application that shows NHL statistics. 
 6. Backend agent needs to pull changes from master before developing anything new to allign that the changes will work with the frontend
 
 ### Requirements of what app should have:
-- A table that shows team standings of the current year. 
+
+- A table that shows team standings of the current year.
 - A table that shows player point standings of the current year. It should include points, games played, goals, and assists at least
-- A table that shows current points streaks of players. This needs to be calculated. 
+- A table that shows current points streaks of players. This needs to be calculated.
 - A table that determines how "hot" a player is right now based on point per games during a certain amount of games.
-- A table that shows team win streaks. 
-- A table that shows team losing streaks. 
-- When clicking on a player, you should be directed to a new page with statistics about that player. 
-- When clicking on a team, you should be directed to a new page with statistics about that team. 
+- A table that shows team win streaks.
+- A table that shows team losing streaks.
+- When clicking on a player, you should be directed to a new page with statistics about that player.
+- When clicking on a team, you should be directed to a new page with statistics about that team.
 
 ## Backend specifications
-- Use Spring Boot 
+
+- Use Spring Boot
 
 **Key Points**:
+
 - External APIs are documented in `API_REFERENCE.md`
 - Data fetching should be scheduled or triggered appropriately
 - SQLite database is the single source of truth for the REST API
@@ -76,9 +81,11 @@ External APIs (documented in API_REFERENCE.md)
 **STEP 0 - PULL FROM MASTER (MANDATORY):**
 
 **After pulling from master:**
+
 1. **Check for breaking changes**: Review frontend commits to allign code
 
 **Then proceed with:**
+
 1. **Understand the context**: Read related files and existing patterns
 2. **Follow conventions**: Match the existing code style and structure
 
@@ -99,3 +106,7 @@ External APIs (documented in API_REFERENCE.md)
 ## Resources
 
 - [Spring Boot Official Documentation](https://spring.io/projects/spring-boot#overview)
+
+### Additional, but important
+
+- Have security in mind when you work. For example don't use any unsecure references, URL:s or dependencies
