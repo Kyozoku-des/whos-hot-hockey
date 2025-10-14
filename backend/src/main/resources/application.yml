@@ -1,0 +1,59 @@
+spring:
+  application:
+    name: whos-hot-backend
+
+  datasource:
+    url: jdbc:sqlite:nhl_stats.db
+    driver-class-name: org.sqlite.JDBC
+
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-stacktrace: on_param
+
+# NHL API Configuration
+nhl:
+  api:
+    base-url: https://api-web.nhle.com
+    stats-base-url: https://api.nhle.com/stats/rest
+    current-season: 20242025
+    connection-timeout: 10000
+    read-timeout: 30000
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# Logging Configuration
+logging:
+  level:
+    com.nhl.whoshotbackend: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.web: INFO
+
+# OpenAPI Documentation
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
