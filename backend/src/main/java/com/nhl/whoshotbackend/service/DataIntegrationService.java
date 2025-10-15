@@ -10,7 +10,6 @@ import com.nhl.whoshotbackend.repository.PlayerRepository;
 import com.nhl.whoshotbackend.repository.TeamGameRepository;
 import com.nhl.whoshotbackend.repository.TeamRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -82,7 +81,14 @@ public class DataIntegrationService {
 
             JsonNode standings = standingsData.get("standings");
             for (JsonNode teamNode : standings) {
-                Team team = parseTeamFromStandings(teamNode);
+                String teamCode = teamNode.path("teamAbbrev").path("default").asText();
+
+                // Check if team exists, if so update it, otherwise create new
+                Team team = teamRepository.findByTeamCode(teamCode)
+                        .orElse(new Team());
+
+                // Update team data from API
+                updateTeamFromStandings(team, teamNode);
                 team.setLastUpdated(timestamp);
 
                 // Calculate streaks from team games
@@ -121,7 +127,14 @@ public class DataIntegrationService {
             if (statsData.has("points")) {
                 JsonNode pointsLeaders = statsData.get("points");
                 for (JsonNode playerNode : pointsLeaders) {
-                    Player player = parsePlayerFromStats(playerNode);
+                    Long playerId = playerNode.path("id").asLong();
+
+                    // Check if player exists, if so update it, otherwise create new
+                    Player player = playerRepository.findById(playerId)
+                            .orElse(new Player());
+
+                    // Update player data from API
+                    updatePlayerFromStats(player, playerNode);
                     player.setLastUpdated(timestamp);
                     playersToSave.add(player);
                 }
@@ -171,11 +184,9 @@ public class DataIntegrationService {
     }
 
     /**
-     * Parse team data from standings JSON.
+     * Update team data from standings JSON.
      */
-    private Team parseTeamFromStandings(JsonNode teamNode) {
-        Team team = new Team();
-
+    private void updateTeamFromStandings(Team team, JsonNode teamNode) {
         team.setTeamCode(teamNode.path("teamAbbrev").path("default").asText());
         team.setTeamName(teamNode.path("teamName").path("default").asText());
         team.setFranchiseName(teamNode.path("teamCommonName").path("default").asText());
@@ -190,16 +201,12 @@ public class DataIntegrationService {
         team.setGoalDifferential(teamNode.path("goalDifferential").asInt());
         team.setConferenceName(teamNode.path("conferenceName").asText());
         team.setDivisionName(teamNode.path("divisionName").asText());
-
-        return team;
     }
 
     /**
-     * Parse player data from stats JSON.
+     * Update player data from stats JSON.
      */
-    private Player parsePlayerFromStats(JsonNode playerNode) {
-        Player player = new Player();
-
+    private void updatePlayerFromStats(Player player, JsonNode playerNode) {
         player.setPlayerId(playerNode.path("id").asLong());
         player.setFirstName(playerNode.path("firstName").path("default").asText());
         player.setLastName(playerNode.path("lastName").path("default").asText());
@@ -228,8 +235,6 @@ public class DataIntegrationService {
         if (player.getShots() > 0) {
             player.setShootingPercentage((double) player.getGoals() / player.getShots() * 100);
         }
-
-        return player;
     }
 
     /**

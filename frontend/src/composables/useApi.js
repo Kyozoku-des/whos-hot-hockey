@@ -43,7 +43,7 @@ export function usePlayerStats() {
   }
 
   const getPlayerStreaks = async (minGames = 3) => {
-    const data = await fetchData(`/players/streaks?minGames=${minGames}`)
+    const data = await fetchData(`/players/point-streaks?minGames=${minGames}`)
     return data?.streaks || []
   }
 
