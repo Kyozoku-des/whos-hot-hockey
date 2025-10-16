@@ -2,6 +2,7 @@ package com.nhl.whoshotbackend.controller;
 
 import com.nhl.whoshotbackend.entity.Player;
 import com.nhl.whoshotbackend.entity.Team;
+import com.nhl.whoshotbackend.service.NhlApiService;
 import com.nhl.whoshotbackend.service.StatisticsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,64 +23,78 @@ import java.util.List;
 public class TeamController {
 
     private final StatisticsService statisticsService;
+    private final NhlApiService nhlApiService;
 
-    public TeamController(StatisticsService statisticsService) {
+    public TeamController(StatisticsService statisticsService, NhlApiService nhlApiService) {
         this.statisticsService = statisticsService;
+        this.nhlApiService = nhlApiService;
     }
 
     /**
-     * Get team standings.
+     * Get team standings for a season.
      */
     @GetMapping("/standings")
-    @Operation(summary = "Get team standings", description = "Returns all teams ordered by points")
-    public ResponseEntity<List<Team>> getStandings() {
-        log.info("GET /api/teams/standings");
-        List<Team> standings = statisticsService.getStandings();
+    @Operation(summary = "Get team standings", description = "Returns all teams ordered by points for a given season")
+    public ResponseEntity<List<Team>> getStandings(
+            @RequestParam(required = false) String season) {
+        String actualSeason = season != null ? season : nhlApiService.getCurrentSeason();
+        log.info("GET /api/teams/standings?season={}", actualSeason);
+        List<Team> standings = statisticsService.getStandings(actualSeason);
         return ResponseEntity.ok(standings);
     }
 
     /**
-     * Get teams with current win streaks.
+     * Get teams with current win streaks for a season.
      */
     @GetMapping("/win-streaks")
-    @Operation(summary = "Get team win streaks", description = "Returns teams with active win streaks")
-    public ResponseEntity<List<Team>> getWinStreaks() {
-        log.info("GET /api/teams/win-streaks");
-        List<Team> teams = statisticsService.getTeamWinStreaks();
+    @Operation(summary = "Get team win streaks", description = "Returns teams with active win streaks for a given season")
+    public ResponseEntity<List<Team>> getWinStreaks(
+            @RequestParam(required = false) String season) {
+        String actualSeason = season != null ? season : nhlApiService.getCurrentSeason();
+        log.info("GET /api/teams/win-streaks?season={}", actualSeason);
+        List<Team> teams = statisticsService.getTeamWinStreaks(actualSeason);
         return ResponseEntity.ok(teams);
     }
 
     /**
-     * Get teams with current loss streaks.
+     * Get teams with current loss streaks for a season.
      */
     @GetMapping("/loss-streaks")
-    @Operation(summary = "Get team loss streaks", description = "Returns teams with active loss streaks")
-    public ResponseEntity<List<Team>> getLossStreaks() {
-        log.info("GET /api/teams/loss-streaks");
-        List<Team> teams = statisticsService.getTeamLossStreaks();
+    @Operation(summary = "Get team loss streaks", description = "Returns teams with active loss streaks for a given season")
+    public ResponseEntity<List<Team>> getLossStreaks(
+            @RequestParam(required = false) String season) {
+        String actualSeason = season != null ? season : nhlApiService.getCurrentSeason();
+        log.info("GET /api/teams/loss-streaks?season={}", actualSeason);
+        List<Team> teams = statisticsService.getTeamLossStreaks(actualSeason);
         return ResponseEntity.ok(teams);
     }
 
     /**
-     * Get specific team by code.
+     * Get specific team by code and season.
      */
     @GetMapping("/{teamCode}")
-    @Operation(summary = "Get team details", description = "Returns details for a specific team")
-    public ResponseEntity<Team> getTeam(@PathVariable String teamCode) {
-        log.info("GET /api/teams/{}", teamCode);
-        return statisticsService.getTeam(teamCode)
+    @Operation(summary = "Get team details", description = "Returns details for a specific team in a given season")
+    public ResponseEntity<Team> getTeam(
+            @PathVariable String teamCode,
+            @RequestParam(required = false) String season) {
+        String actualSeason = season != null ? season : nhlApiService.getCurrentSeason();
+        log.info("GET /api/teams/{}?season={}", teamCode, actualSeason);
+        return statisticsService.getTeam(teamCode, actualSeason)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     /**
-     * Get players on a team.
+     * Get players on a team for a season.
      */
     @GetMapping("/{teamCode}/players")
-    @Operation(summary = "Get team roster", description = "Returns all players on a specific team")
-    public ResponseEntity<List<Player>> getTeamPlayers(@PathVariable String teamCode) {
-        log.info("GET /api/teams/{}/players", teamCode);
-        List<Player> players = statisticsService.getTeamPlayers(teamCode);
+    @Operation(summary = "Get team roster", description = "Returns all players on a specific team for a given season")
+    public ResponseEntity<List<Player>> getTeamPlayers(
+            @PathVariable String teamCode,
+            @RequestParam(required = false) String season) {
+        String actualSeason = season != null ? season : nhlApiService.getCurrentSeason();
+        log.info("GET /api/teams/{}/players?season={}", teamCode, actualSeason);
+        List<Player> players = statisticsService.getTeamPlayers(teamCode, actualSeason);
         return ResponseEntity.ok(players);
     }
 }

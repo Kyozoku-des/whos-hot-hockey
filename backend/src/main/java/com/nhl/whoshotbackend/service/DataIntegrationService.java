@@ -67,7 +67,15 @@ public class DataIntegrationService {
      */
     @Transactional
     public void syncStandings() {
-        log.info("Syncing team standings...");
+        syncStandings(null); // null means use current season
+    }
+
+    @Transactional
+    public void syncStandings(String seasonId) {
+        // Determine actual season
+        String actualSeasonId = seasonId != null ? seasonId : nhlApiService.getCurrentSeason();
+
+        log.info("Syncing team standings for season: {}...", actualSeasonId);
 
         try {
             JsonNode standingsData = nhlApiService.getStandings();
@@ -83,19 +91,21 @@ public class DataIntegrationService {
             for (JsonNode teamNode : standings) {
                 String teamCode = teamNode.path("teamAbbrev").path("default").asText();
 
-                // Check if team exists, if so update it, otherwise create new
-                Team team = teamRepository.findByTeamCode(teamCode)
+                // Create composite key to check if team+season exists
+                Team.TeamKey teamKey = new Team.TeamKey(teamCode, actualSeasonId);
+                Team team = teamRepository.findById(teamKey)
                         .orElse(new Team());
 
                 // Update team data from API
                 updateTeamFromStandings(team, teamNode);
+                team.setSeason(actualSeasonId); // Set season
                 team.setLastUpdated(timestamp);
 
                 // Calculate streaks from team games
                 calculateTeamStreaks(team);
 
                 teamRepository.save(team);
-                log.debug("Saved team: {}", team.getTeamCode());
+                log.debug("Saved team: {} for season: {}", team.getTeamCode(), actualSeasonId);
             }
 
             log.info("Team standings sync completed. Total teams: {}", standings.size());
@@ -106,14 +116,35 @@ public class DataIntegrationService {
     }
 
     /**
-     * Sync player statistics.
+     * Sync player statistics for the current season.
      */
     @Transactional
     public void syncPlayerStats() {
-        log.info("Syncing player statistics...");
+        syncPlayerStats(null); // null means use current season
+    }
+
+    /**
+     * Sync player statistics for a specific season.
+     * @param seasonId Season ID in format YYYYYYYY (e.g., 20252026), or null for current season
+     */
+    @Transactional
+    public void syncPlayerStats(String seasonId) {
+        // Get actual season ID (use current if null)
+        String actualSeasonId = seasonId;
+        if (actualSeasonId == null) {
+            // Read from config
+            actualSeasonId = nhlApiService.getAllSkaterStats().path("seasonId").asText();
+            if (actualSeasonId == null || actualSeasonId.isEmpty()) {
+                actualSeasonId = com.nhl.whoshotbackend.util.SeasonValidator.getCurrentSeasonId();
+            }
+        }
+
+        log.info("Syncing player statistics for season: {}...", actualSeasonId);
 
         try {
-            JsonNode statsData = nhlApiService.getSkaterStatsLeaders();
+            JsonNode statsData = seasonId != null
+                ? nhlApiService.getAllSkaterStats(seasonId)
+                : nhlApiService.getAllSkaterStats();
 
             if (statsData == null) {
                 log.warn("No player stats data received");
@@ -123,18 +154,20 @@ public class DataIntegrationService {
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
             List<Player> playersToSave = new ArrayList<>();
 
-            // The API returns categories like "goals", "assists", "points"
-            if (statsData.has("points")) {
-                JsonNode pointsLeaders = statsData.get("points");
-                for (JsonNode playerNode : pointsLeaders) {
-                    Long playerId = playerNode.path("id").asLong();
+            // The Stats API returns data in a "data" array
+            if (statsData.has("data")) {
+                JsonNode playersData = statsData.get("data");
+                for (JsonNode playerNode : playersData) {
+                    Long playerId = playerNode.path("playerId").asLong();
 
-                    // Check if player exists, if so update it, otherwise create new
-                    Player player = playerRepository.findById(playerId)
+                    // Create composite key to check if player+season exists
+                    Player.PlayerKey playerKey = new Player.PlayerKey(playerId, actualSeasonId);
+                    Player player = playerRepository.findById(playerKey)
                             .orElse(new Player());
 
                     // Update player data from API
                     updatePlayerFromStats(player, playerNode);
+                    player.setSeason(actualSeasonId); // Set season
                     player.setLastUpdated(timestamp);
                     playersToSave.add(player);
                 }
@@ -205,36 +238,49 @@ public class DataIntegrationService {
 
     /**
      * Update player data from stats JSON.
+     * Updated to work with the Stats API response format.
      */
     private void updatePlayerFromStats(Player player, JsonNode playerNode) {
-        player.setPlayerId(playerNode.path("id").asLong());
-        player.setFirstName(playerNode.path("firstName").path("default").asText());
-        player.setLastName(playerNode.path("lastName").path("default").asText());
-        player.setFullName(playerNode.path("firstName").path("default").asText() + " " +
-                          playerNode.path("lastName").path("default").asText());
+        // Stats API uses different field names than the Web API
+        player.setPlayerId(playerNode.path("playerId").asLong());
+
+        // Parse full name (Stats API returns "skaterFullName" as "FirstName LastName")
+        String fullName = playerNode.path("skaterFullName").asText();
+        String[] nameParts = fullName.split(" ", 2);
+        if (nameParts.length >= 2) {
+            player.setFirstName(nameParts[0]);
+            player.setLastName(nameParts[1]);
+        } else {
+            player.setFirstName(fullName);
+            player.setLastName(playerNode.path("lastName").asText());
+        }
+        player.setFullName(fullName);
+
         player.setPositionCode(playerNode.path("positionCode").asText());
-        player.setTeamCode(playerNode.path("teamAbbrev").asText());
+        // Stats API uses "teamAbbrevs" which can be multiple teams (handle first one)
+        String teamAbbrevs = playerNode.path("teamAbbrevs").asText();
+        player.setTeamCode(teamAbbrevs.split(",")[0].trim());
+
         player.setGamesPlayed(playerNode.path("gamesPlayed").asInt());
         player.setGoals(playerNode.path("goals").asInt());
         player.setAssists(playerNode.path("assists").asInt());
         player.setPoints(playerNode.path("points").asInt());
 
-        // Calculate points per game
-        if (player.getGamesPlayed() > 0) {
-            player.setPointsPerGame((double) player.getPoints() / player.getGamesPlayed());
-        }
+        // Stats API provides pointsPerGame directly
+        double ppg = playerNode.path("pointsPerGame").asDouble(0.0);
+        player.setPointsPerGame(ppg > 0 ? ppg : null);
 
         player.setPlusMinus(playerNode.path("plusMinus").asInt());
         player.setPenaltyMinutes(playerNode.path("penaltyMinutes").asInt());
-        player.setPowerPlayGoals(playerNode.path("powerPlayGoals").asInt());
-        player.setShorthandedGoals(playerNode.path("shorthandedGoals").asInt());
+        player.setPowerPlayGoals(playerNode.path("ppGoals").asInt());
+        player.setShorthandedGoals(playerNode.path("shGoals").asInt());
         player.setGameWinningGoals(playerNode.path("gameWinningGoals").asInt());
         player.setOvertimeGoals(playerNode.path("otGoals").asInt());
         player.setShots(playerNode.path("shots").asInt());
 
-        if (player.getShots() > 0) {
-            player.setShootingPercentage((double) player.getGoals() / player.getShots() * 100);
-        }
+        // Stats API provides shootingPct directly as a decimal (e.g., 0.11522 for 11.522%)
+        double shootPct = playerNode.path("shootingPct").asDouble(0.0);
+        player.setShootingPercentage(shootPct > 0 ? shootPct * 100 : null);
     }
 
     /**

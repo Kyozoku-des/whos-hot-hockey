@@ -39,17 +39,17 @@ export function usePlayerStats() {
 
   const getTopScorers = async (limit = 10) => {
     const data = await fetchData(`/players/standings?limit=${limit}`)
-    return data?.players || []
+    return data || []
   }
 
   const getPlayerStreaks = async (minGames = 3) => {
     const data = await fetchData(`/players/point-streaks?minGames=${minGames}`)
-    return data?.streaks || []
+    return data || []
   }
 
   const getHottestPlayers = async (games = 5, limit = 20) => {
     const data = await fetchData(`/players/hot?games=${games}&limit=${limit}`)
-    return data?.hotPlayers || []
+    return data || []
   }
 
   const getPlayerDetails = async (playerId) => {
@@ -77,17 +77,17 @@ export function useTeamStats() {
 
   const getStandings = async () => {
     const data = await fetchData('/standings')
-    return data?.standings || []
+    return data || []
   }
 
   const getTeamWinStreaks = async (minGames = 2) => {
     const data = await fetchData(`/teams/win-streaks?minGames=${minGames}`)
-    return data?.streaks || []
+    return data || []
   }
 
   const getTeamLoseStreaks = async (minGames = 2) => {
     const data = await fetchData(`/teams/losing-streaks?minGames=${minGames}`)
-    return data?.streaks || []
+    return data || []
   }
 
   const getTeamDetails = async (teamCode) => {

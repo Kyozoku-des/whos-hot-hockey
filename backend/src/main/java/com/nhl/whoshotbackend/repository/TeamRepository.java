@@ -10,29 +10,30 @@ import java.util.Optional;
 
 /**
  * Repository for Team entities.
+ * Note: Uses composite key (teamCode + season).
  */
 @Repository
-public interface TeamRepository extends JpaRepository<Team, Long> {
+public interface TeamRepository extends JpaRepository<Team, Team.TeamKey> {
 
     /**
-     * Find a team by its three-letter team code.
+     * Find a team by its three-letter team code and season.
      */
-    Optional<Team> findByTeamCode(String teamCode);
+    Optional<Team> findByTeamCodeAndSeason(String teamCode, String season);
 
     /**
-     * Get all teams ordered by points descending (standings).
+     * Get all teams for a season ordered by points descending (standings).
      */
-    List<Team> findAllByOrderByPointsDesc();
+    List<Team> findBySeasonOrderByPointsDesc(String season);
 
     /**
-     * Get teams with current win streaks, ordered by streak length.
+     * Get teams with current win streaks for a season, ordered by streak length.
      */
-    @Query("SELECT t FROM Team t WHERE t.currentWinStreak > 0 ORDER BY t.currentWinStreak DESC")
-    List<Team> findTeamsWithWinStreaks();
+    @Query("SELECT t FROM Team t WHERE t.season = ?1 AND t.currentWinStreak > 0 ORDER BY t.currentWinStreak DESC")
+    List<Team> findTeamsWithWinStreaks(String season);
 
     /**
-     * Get teams with current loss streaks, ordered by streak length.
+     * Get teams with current loss streaks for a season, ordered by streak length.
      */
-    @Query("SELECT t FROM Team t WHERE t.currentLossStreak > 0 ORDER BY t.currentLossStreak DESC")
-    List<Team> findTeamsWithLossStreaks();
+    @Query("SELECT t FROM Team t WHERE t.season = ?1 AND t.currentLossStreak > 0 ORDER BY t.currentLossStreak DESC")
+    List<Team> findTeamsWithLossStreaks(String season);
 }

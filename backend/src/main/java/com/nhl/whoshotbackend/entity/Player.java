@@ -5,18 +5,26 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * Entity representing an NHL player.
+ * Uses composite key (playerId + season) to support multiple seasons.
  */
 @Entity
 @Table(name = "players")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@IdClass(Player.PlayerKey.class)
 public class Player {
 
     @Id
     private Long playerId; // NHL API player ID
+
+    @Id
+    @Column(nullable = false)
+    private String season; // Season ID (e.g., "20252026")
 
     @Column(nullable = false)
     private String firstName;
@@ -79,5 +87,25 @@ public class Player {
     private Double hotRating; // Points per game over last N games (calculated)
 
     @Column
+    private Boolean hot; // true when on a hot streak
+
+    @Column
+    private Boolean cold; // true when on a cold streak
+
+    @Column
+    private Boolean pointStreak; // true when current streak qualifies
+
+    @Column
     private String lastUpdated;
+
+    /**
+     * Composite key class for Player entity.
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PlayerKey implements Serializable {
+        private Long playerId;
+        private String season;
+    }
 }

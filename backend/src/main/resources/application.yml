@@ -28,7 +28,7 @@ nhl:
   api:
     base-url: https://api-web.nhle.com
     stats-base-url: https://api.nhle.com/stats/rest
-    current-season: 20242025
+    current-season: 20252026
     connection-timeout: 10000
     read-timeout: 30000
 

@@ -2,7 +2,9 @@
   <div id="app">
     <header class="app-header">
       <div class="container">
-        <router-link to="/" class="logo">NHL Tracker</router-link>
+        <router-link to="/" class="logo">
+          <img src="./assets/nhl_logo.png" alt="Who's Hot NHL" class="logo-image" />
+        </router-link>
       </div>
     </header>
 
@@ -35,10 +37,17 @@
 }
 
 .logo {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--color-text-secondary);
+  display: inline-block;
   text-decoration: none;
+  line-height: 0;
+}
+
+.logo-image {
+  height: 80px;
+  width: auto;
+  display: block;
+  transform: scaleX(0.8);
+  transform-origin: left center;
 }
 
 .app-main {

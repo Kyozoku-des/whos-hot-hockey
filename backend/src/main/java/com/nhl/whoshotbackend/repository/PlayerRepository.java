@@ -9,29 +9,30 @@ import java.util.List;
 
 /**
  * Repository for Player entities.
+ * Note: Uses composite key (playerId + season).
  */
 @Repository
-public interface PlayerRepository extends JpaRepository<Player, Long> {
+public interface PlayerRepository extends JpaRepository<Player, Player.PlayerKey> {
 
     /**
-     * Get all players ordered by points descending.
+     * Get all players for a season ordered by points descending.
      */
-    List<Player> findAllByOrderByPointsDesc();
+    List<Player> findBySeasonOrderByPointsDesc(String season);
 
     /**
-     * Get players with current point streaks, ordered by streak length.
+     * Get players with current point streaks for a season, ordered by streak length.
      */
-    @Query("SELECT p FROM Player p WHERE p.currentPointStreak > 0 ORDER BY p.currentPointStreak DESC")
-    List<Player> findPlayersWithPointStreaks();
+    @Query("SELECT p FROM Player p WHERE p.season = ?1 AND p.currentPointStreak > 0 ORDER BY p.currentPointStreak DESC")
+    List<Player> findPlayersWithPointStreaks(String season);
 
     /**
-     * Get "hot" players ordered by hot rating descending.
+     * Get "hot" players for a season ordered by hot rating descending.
      */
-    @Query("SELECT p FROM Player p WHERE p.hotRating IS NOT NULL ORDER BY p.hotRating DESC")
-    List<Player> findHotPlayers();
+    @Query("SELECT p FROM Player p WHERE p.season = ?1 AND p.hotRating IS NOT NULL ORDER BY p.hotRating DESC")
+    List<Player> findHotPlayers(String season);
 
     /**
-     * Find players by team code.
+     * Find players by team code for a specific season.
      */
-    List<Player> findByTeamCode(String teamCode);
+    List<Player> findByTeamCodeAndSeason(String teamCode, String season);
 }

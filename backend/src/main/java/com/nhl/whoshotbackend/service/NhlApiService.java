@@ -30,6 +30,14 @@ public class NhlApiService {
     }
 
     /**
+     * Get the current season ID from configuration.
+     * @return Season ID in format YYYYYYYY (e.g., "20252026")
+     */
+    public String getCurrentSeason() {
+        return currentSeason;
+    }
+
+    /**
      * Get current standings.
      */
     public JsonNode getStandings() {
@@ -44,16 +52,29 @@ public class NhlApiService {
     }
 
     /**
-     * Get current skater stats leaders.
+     * Get all skater stats for the current season.
+     * Uses the Stats API which provides complete player statistics, not just leaders.
      */
-    public JsonNode getSkaterStatsLeaders() {
-        String url = baseUrl + "/v1/skater-stats-leaders/current?limit=-1";
-        log.info("Fetching skater stats from: {}", url);
+    public JsonNode getAllSkaterStats() {
+        return getAllSkaterStats(currentSeason);
+    }
+
+    /**
+     * Get all skater stats for a specific season.
+     * @param seasonId Season ID in format YYYYYYYY (e.g., 20252026 for 2025-2026 season)
+     * @return JSON response with player statistics
+     */
+    public JsonNode getAllSkaterStats(String seasonId) {
+        // Use the Stats API endpoint to get ALL skater stats
+        // cayenneExp parameter filters by season and game type (2 = regular season)
+        String url = String.format("%s/en/skater/summary?limit=-1&cayenneExp=seasonId=%s and gameTypeId=2",
+                                   statsBaseUrl, seasonId);
+        log.info("Fetching all skater stats for season {} from: {}", seasonId, url);
         try {
             return restTemplate.getForObject(url, JsonNode.class);
         } catch (Exception e) {
-            log.error("Error fetching skater stats", e);
-            throw new RuntimeException("Failed to fetch skater stats from NHL API", e);
+            log.error("Error fetching skater stats for season {}", seasonId, e);
+            throw new RuntimeException("Failed to fetch skater stats from NHL API for season " + seasonId, e);
         }
     }
 
