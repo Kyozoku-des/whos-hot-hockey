@@ -20,7 +20,14 @@
           @click="goToPlayer(player.playerId)"
           class="clickable-row"
         >
-          <td>{{ player.firstName }} {{ player.lastName }}</td>
+          <td class="name-cell">
+            {{ player.firstName }} {{ player.lastName }}
+            <span class="status-icons">
+              <img v-if="player.hot" src="../assets/flame.png" alt="Hot" class="status-icon" title="Hot streak (PPG > 1.5)" />
+              <img v-if="player.cold" src="../assets/snowflake.png" alt="Cold" class="status-icon" title="Cold streak (PPG < 0.2)" />
+              <img v-if="player.pointStreak" src="../assets/graph.png" alt="Point Streak" class="status-icon" title="5+ game point streak" />
+            </span>
+          </td>
           <td>{{ player.goals }}</td>
           <td>{{ player.assists }}</td>
           <td>{{ player.points }}</td>
@@ -32,19 +39,29 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, inject, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlayerStats } from '../composables/useApi'
 
 const router = useRouter()
 const { loading, error, getTopScorers } = usePlayerStats()
 const players = ref([])
+const selectedSeason = inject('selectedSeason')
 
-onMounted(async () => {
-  const data = await getTopScorers(10)
+const loadData = async () => {
+  const data = await getTopScorers(10, selectedSeason.value)
   if (data) {
     players.value = data
   }
+}
+
+onMounted(() => {
+  loadData()
+})
+
+// Reload data when season changes
+watch(selectedSeason, () => {
+  loadData()
 })
 
 const goToPlayer = (playerId) => {
@@ -108,5 +125,23 @@ const goToPlayer = (playerId) => {
 
 .error {
   color: #d32f2f;
+}
+
+.name-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.status-icons {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin-left: 0.5rem;
+}
+
+.status-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
 }
 </style>

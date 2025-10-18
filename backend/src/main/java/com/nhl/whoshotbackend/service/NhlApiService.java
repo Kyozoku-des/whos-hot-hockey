@@ -79,15 +79,29 @@ public class NhlApiService {
     }
 
     /**
-     * Get player game log.
+     * Get player game log for current season.
      */
     public JsonNode getPlayerGameLog(Long playerId) {
-        String url = String.format("%s/v1/player/%d/game-log/now", baseUrl, playerId);
-        log.info("Fetching game log for player {} from: {}", playerId, url);
+        return getPlayerGameLog(playerId, currentSeason, 2);
+    }
+
+    /**
+     * Get game-by-game logs for a specific player.
+     * Returns detailed stats for each game the player has played.
+     * @param playerId The player's NHL ID
+     * @param seasonId The season ID (e.g., "20252026")
+     * @param gameType Game type: 2 = Regular season, 3 = Playoffs
+     * @return JsonNode containing game log data
+     */
+    public JsonNode getPlayerGameLog(Long playerId, String seasonId, int gameType) {
+        String url = String.format("%s/v1/player/%d/game-log/%s/%d",
+                baseUrl, playerId, seasonId, gameType);
+        log.info("Fetching game log for player {} season {} gameType {} from: {}", playerId, seasonId, gameType, url);
         try {
             return restTemplate.getForObject(url, JsonNode.class);
         } catch (Exception e) {
-            log.error("Error fetching game log for player {}", playerId, e);
+            log.warn("Could not fetch game log for player {} season {}: {}", playerId, seasonId, e.getMessage());
+            // Don't throw exception - some players might not have game logs yet
             return null;
         }
     }

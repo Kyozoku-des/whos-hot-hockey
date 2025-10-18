@@ -177,6 +177,23 @@ public class DataIntegrationService {
             playerRepository.saveAll(playersToSave);
 
             log.info("Player statistics sync completed. Total players: {}", playersToSave.size());
+
+            // Now sync game logs for each player to enable streak calculations
+            log.info("Starting game log synchronization for {} players...", playersToSave.size());
+            int gameLogsFetched = 0;
+            for (Player player : playersToSave) {
+                try {
+                    syncPlayerGameLogs(player.getPlayerId(), actualSeasonId);
+                    gameLogsFetched++;
+                    if (gameLogsFetched % 50 == 0) {
+                        log.info("Game logs fetched for {} / {} players", gameLogsFetched, playersToSave.size());
+                    }
+                } catch (Exception e) {
+                    log.warn("Could not fetch game logs for player {}: {}", player.getPlayerId(), e.getMessage());
+                }
+            }
+            log.info("Game log synchronization completed. Fetched logs for {} players", gameLogsFetched);
+
         } catch (Exception e) {
             log.error("Error syncing player stats", e);
             throw new RuntimeException("Failed to sync player stats", e);
@@ -184,17 +201,27 @@ public class DataIntegrationService {
     }
 
     /**
-     * Sync game logs for a specific player.
+     * Sync game logs for a specific player (current season).
      */
     @Transactional
     public void syncPlayerGameLogs(Long playerId) {
-        log.info("Syncing game logs for player: {}", playerId);
+        syncPlayerGameLogs(playerId, nhlApiService.getCurrentSeason());
+    }
+
+    /**
+     * Sync game logs for a specific player and season.
+     * @param playerId The player's NHL ID
+     * @param seasonId The season ID (e.g., "20252026")
+     */
+    @Transactional
+    public void syncPlayerGameLogs(Long playerId, String seasonId) {
+        log.debug("Syncing game logs for player: {} season: {}", playerId, seasonId);
 
         try {
-            JsonNode gameLogData = nhlApiService.getPlayerGameLog(playerId);
+            JsonNode gameLogData = nhlApiService.getPlayerGameLog(playerId, seasonId, 2); // 2 = regular season
 
             if (gameLogData == null || !gameLogData.has("gameLog")) {
-                log.warn("No game log data for player: {}", playerId);
+                log.debug("No game log data for player: {} season: {}", playerId, seasonId);
                 return;
             }
 
@@ -210,9 +237,9 @@ public class DataIntegrationService {
             gameLogRepository.deleteAll(gameLogRepository.findByPlayerIdOrderByGameDateDesc(playerId));
             gameLogRepository.saveAll(gameLogsToSave);
 
-            log.info("Game logs synced for player: {}. Total games: {}", playerId, gameLogsToSave.size());
+            log.debug("Game logs synced for player: {} season: {}. Total games: {}", playerId, seasonId, gameLogsToSave.size());
         } catch (Exception e) {
-            log.error("Error syncing game logs for player: {}", playerId, e);
+            log.warn("Could not sync game logs for player: {} season: {}: {}", playerId, seasonId, e.getMessage());
         }
     }
 
