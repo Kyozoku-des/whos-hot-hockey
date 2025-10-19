@@ -98,6 +98,9 @@ public class Player {
     @Column
     private String lastUpdated;
 
+    @Column
+    private String headshotUrl; // Player headshot image URL
+
     /**
      * Composite key class for Player entity.
      */

@@ -178,21 +178,40 @@ public class DataIntegrationService {
 
             log.info("Player statistics sync completed. Total players: {}", playersToSave.size());
 
-            // Now sync game logs for each player to enable streak calculations
-            log.info("Starting game log synchronization for {} players...", playersToSave.size());
+            // Fetch headshots and game logs for each player
+            log.info("Starting headshot and game log synchronization for {} players...", playersToSave.size());
             int gameLogsFetched = 0;
+            int headshotsFetched = 0;
             for (Player player : playersToSave) {
                 try {
+                    // Fetch headshot URL from player info
+                    JsonNode playerInfo = nhlApiService.getPlayerInfo(player.getPlayerId());
+                    if (playerInfo != null && playerInfo.has("headshot")) {
+                        String headshotUrl = playerInfo.path("headshot").asText();
+                        if (headshotUrl != null && !headshotUrl.isEmpty()) {
+                            player.setHeadshotUrl(headshotUrl);
+                            headshotsFetched++;
+                        }
+                    }
+
+                    // Fetch game logs
                     syncPlayerGameLogs(player.getPlayerId(), actualSeasonId);
                     gameLogsFetched++;
+
                     if (gameLogsFetched % 50 == 0) {
-                        log.info("Game logs fetched for {} / {} players", gameLogsFetched, playersToSave.size());
+                        log.info("Progress: {} / {} players (headshots: {}, game logs: {})",
+                                gameLogsFetched, playersToSave.size(), headshotsFetched, gameLogsFetched);
                     }
                 } catch (Exception e) {
-                    log.warn("Could not fetch game logs for player {}: {}", player.getPlayerId(), e.getMessage());
+                    log.warn("Could not fetch data for player {}: {}", player.getPlayerId(), e.getMessage());
                 }
             }
-            log.info("Game log synchronization completed. Fetched logs for {} players", gameLogsFetched);
+
+            // Save players again with headshots
+            playerRepository.saveAll(playersToSave);
+
+            log.info("Player data synchronization completed. Headshots: {} / {}, Game logs: {} / {}",
+                    headshotsFetched, playersToSave.size(), gameLogsFetched, playersToSave.size());
 
         } catch (Exception e) {
             log.error("Error syncing player stats", e);

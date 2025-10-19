@@ -27,6 +27,7 @@ body {
   font-family: var(--font-family);
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
+  letter-spacing: 2px; /* Add spacing between characters */
 }
 
 #app {

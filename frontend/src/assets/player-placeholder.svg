@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <!-- Background -->
+  <rect width="200" height="200" fill="#2a2a2a"/>
+
+  <!-- Simple player silhouette -->
+  <g transform="translate(100, 100)">
+    <!-- Head -->
+    <circle cx="0" cy="-20" r="20" fill="#4a4a4a"/>
+
+    <!-- Body -->
+    <ellipse cx="0" cy="30" rx="30" ry="40" fill="#4a4a4a"/>
+
+    <!-- Jersey number placeholder -->
+    <text x="0" y="35" font-family="Arial, sans-serif" font-size="24" font-weight="bold"
+          text-anchor="middle" fill="#6a6a6a">?</text>
+  </g>
+</svg>

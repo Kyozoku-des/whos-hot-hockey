@@ -6,11 +6,10 @@
       <div v-else class="player-content">
         <div class="player-header">
           <div class="player-info-card">
-            <img
-              :src="playerImageUrl"
-              :alt="player?.name"
-              class="player-image"
-              @error="handleImageError"
+            <PlayerAvatar
+              :headshot-url="player?.headshotUrl"
+              :alt="`${player?.firstName} ${player?.lastName}`"
+              size="large"
             />
             <div class="player-stats">
               <h1 class="player-name">{{ player?.firstName }} {{ player?.lastName }}</h1>
@@ -58,9 +57,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePlayerStats } from '../composables/useApi'
+import PlayerAvatar from '../components/PlayerAvatar.vue'
 
 const route = useRoute()
 const { loading, error, getPlayerDetails, getPlayerGameLog } = usePlayerStats()
@@ -68,18 +68,6 @@ const { loading, error, getPlayerDetails, getPlayerGameLog } = usePlayerStats()
 const player = ref(null)
 const gameLogs = ref([])
 const loadingGameLog = ref(false)
-const imageError = ref(false)
-
-const playerImageUrl = computed(() => {
-  if (imageError.value || !player.value?.imageUrl) {
-    return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect width="200" height="200" fill="%239cb89f"/%3E%3Ctext x="50%25" y="50%25" font-size="24" text-anchor="middle" dy=".3em" fill="%23fff"%3EPlayer Image%3C/text%3E%3C/svg%3E'
-  }
-  return player.value.imageUrl
-})
-
-const handleImageError = () => {
-  imageError.value = true
-}
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A'
@@ -135,13 +123,6 @@ onMounted(async () => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.player-image {
-  width: 200px;
-  height: 200px;
-  border-radius: 8px;
-  object-fit: cover;
-  background-color: var(--color-bg-dark);
-}
 
 .player-stats {
   flex: 1;
