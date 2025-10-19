@@ -11,10 +11,11 @@
         @click="goToPlayer(player.playerId)"
       >
         <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
-        <span class="player-icons">
-          <img v-if="player.hot" src="../assets/flame.png" alt="Hot" class="status-icon" title="Hot streak (PPG > 1.5)" />
-          <img v-if="player.cold" src="../assets/snowflake.png" alt="Cold" class="status-icon" title="Cold streak (PPG < 0.2)" />
-          <img v-if="player.pointStreak" src="../assets/graph.png" alt="Point Streak" class="status-icon" title="5+ game point streak" />
+        <span class="player-stats">
+          <span class="stat-item">G: {{ player.goals }}</span>
+          <span class="stat-item">A: {{ player.assists }}</span>
+          <span class="stat-item">P: {{ player.points }}</span>
+          <span class="stat-item">GP: {{ player.gamesPlayed }}</span>
         </span>
       </div>
     </div>
@@ -60,6 +61,7 @@ const goToPlayer = (playerId) => {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  padding-right: 1.5rem;
 }
 
 .player-item {
@@ -72,28 +74,33 @@ const goToPlayer = (playerId) => {
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
 }
 
 .player-item:hover {
   background-color: rgba(255, 255, 255, 0.1);
   transform: translateX(5px);
+  z-index: 10;
 }
 
 .player-name {
   color: var(--color-text-secondary);
   font-size: 1rem;
   font-weight: bold;
+  flex: 1;
 }
 
-.player-icons {
+.player-stats {
   display: flex;
-  gap: 0.5rem;
+  gap: 1rem;
+  align-items: center;
 }
 
-.status-icon {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
+.stat-item {
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+  font-weight: normal;
+  white-space: nowrap;
 }
 
 .loading,

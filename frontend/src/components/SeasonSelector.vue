@@ -1,6 +1,6 @@
 <template>
   <div class="season-selector">
-    <label for="season-select" class="season-label">Season:</label>
+    <label for="season-select" class="season-label">Season</label>
     <select
       id="season-select"
       v-model="selectedSeason"
@@ -57,7 +57,7 @@ const seasons = computed(() => {
     const startYear = currentSeasonStart - i
     const endYear = startYear + 1
     const seasonId = `${startYear}${endYear}`
-    const seasonLabel = `${startYear}-${endYear}`
+    const seasonLabel = `${String(startYear).slice(-2)}/${String(endYear).slice(-2)}`
 
     seasonList.push({
       id: seasonId,
@@ -86,16 +86,15 @@ onMounted(() => {
 <style scoped>
 .season-selector {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1.25rem;
+  gap: 0.2rem;
+  padding: 1rem 0rem;
   background-color: var(--color-bg-card);
-  border: 2px solid var(--color-border);
-  border-radius: 8px;
 }
 
 .season-label {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: bold;
   color: var(--color-text-primary);
   white-space: nowrap;
@@ -104,21 +103,18 @@ onMounted(() => {
 }
 
 .season-dropdown {
-  padding: 0.5rem 2rem 0.5rem 1rem;
-  font-size: 1rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
   font-weight: bold;
   font-family: var(--font-family);
   color: var(--color-text-primary);
-  background-color: var(--color-bg-card);
+  background-color: transparent;
   border: 2px solid var(--color-border);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 10px;
+  text-align: center;
 }
 
 .season-dropdown:hover {
@@ -137,5 +133,6 @@ onMounted(() => {
   color: var(--color-text-primary);
   padding: 0.5rem;
   font-family: var(--font-family);
+  text-align: center;
 }
 </style>

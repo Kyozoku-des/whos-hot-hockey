@@ -13,12 +13,12 @@
 
 :root {
   /* Retro black & white theme inspired by mockup */
-  --color-bg-primary: #000000;        /* Pure black background */
-  --color-bg-card: #000000;           /* Black cards */
+  --color-bg-primary: hsl(166, 5%, 5%);        /* Pure black background */
+  --color-bg-card: hsl(166, 5%, 5%);           /* Black cards */
   --color-text-primary: #ffffff;      /* White text */
-  --color-text-secondary: #ffaa00;    /* Gold/orange text for highlights */
+  --color-text-secondary: hsl(40, 100%, 75%);    /* Gold/orange text for highlights */
   --color-border: #ffffff;            /* White borders */
-  --color-border-thick: 3px;          /* Thick retro borders */
+  --color-border-thick: 2px;          /* Thick retro borders */
   --font-family: 'Minecraft', monospace, system-ui;
 }
 
