@@ -88,26 +88,29 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
+  padding: 0.75rem 1.25rem;
+  background-color: var(--color-bg-card);
+  border: 2px solid var(--color-border);
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .season-label {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--color-text-primary);
   white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .season-dropdown {
   padding: 0.5rem 2rem 0.5rem 1rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 1rem;
+  font-weight: bold;
+  font-family: var(--font-family);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-card);
+  border: 2px solid var(--color-border);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -119,19 +122,20 @@ onMounted(() => {
 }
 
 .season-dropdown:hover {
-  background: rgba(0, 0, 0, 0.4);
-  border-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--color-text-secondary);
 }
 
 .season-dropdown:focus {
   outline: none;
-  border-color: #4a9eff;
-  box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1);
+  border-color: var(--color-text-secondary);
+  box-shadow: 0 0 0 2px rgba(255, 170, 0, 0.2);
 }
 
 .season-dropdown option {
-  background: #1a1a1a;
-  color: #fff;
+  background-color: var(--color-bg-card);
+  color: var(--color-text-primary);
   padding: 0.5rem;
+  font-family: var(--font-family);
 }
 </style>
