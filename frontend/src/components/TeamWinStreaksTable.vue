@@ -2,19 +2,31 @@
   <div class="team-list">
     <div v-if="loading" class="loading">Loading...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
-    <div v-else-if="teams.length === 0" class="empty">No win streaks</div>
+    <div v-else-if="teams.length === 0" class="empty">No win streaks found</div>
     <div v-else class="teams-grid">
       <div
-        v-for="team in teams"
+        v-for="(team, index) in teams"
         :key="team.teamCode"
         class="team-item"
         @click="goToTeam(team.teamCode)"
       >
-        <span class="team-name">{{ team.teamName }}</span>
-        <span class="team-icons">
-          <img v-if="team.hot" src="../assets/flame.png" alt="Hot" class="status-icon" title="Hot streak" />
-          <span class="streak-count">{{ team.currentWinStreak }}</span>
+        <div class="team-main">
+          <span class="team-rank">{{ index + 1 }}</span>
+          <span class="team-name">{{ team.teamName }}</span>
+          <span class="team-icons">
+            <img v-if="team.hot" src="../assets/flame.png" alt="Hot" class="status-icon" title="Hot streak" />
+          </span>
+        </div>
+        <span class="team-stats">
+          <span class="stat-item stat-streak">Streak: {{ team.currentWinStreak }}</span>
+          <span v-if="isExpanded" class="stat-item">W: {{ team.wins }}</span>
+          <span v-if="isExpanded" class="stat-item">L: {{ team.losses }}</span>
+          <span v-if="isExpanded" class="stat-item">GP: {{ team.gamesPlayed }}</span>
+          <span v-if="isExpanded" class="stat-item">PTS: {{ team.points }}</span>
         </span>
+        <div class="tooltip" v-if="team.nextOpponentCode">
+          Next: {{ formatNextGame(team) }}
+        </div>
       </div>
     </div>
   </div>
@@ -26,14 +38,16 @@ import { useRouter } from 'vue-router'
 import { useTeamStats } from '../composables/useApi'
 
 const router = useRouter()
-const { loading, error, getTeamWinStreaks } = useTeamStats()
+const { loading, error, getStandings } = useTeamStats()
 const teams = ref([])
 const selectedSeason = inject('selectedSeason')
+const isExpanded = inject('isExpanded', ref(false))
 
 const loadData = async () => {
-  const data = await getTeamWinStreaks(2, selectedSeason.value)
+  const data = await getStandings(selectedSeason.value)
   if (data) {
-    teams.value = data.slice(0, 5)
+    // Sort all teams by win streak length descending
+    teams.value = data.sort((a, b) => b.currentWinStreak - a.currentWinStreak)
   }
 }
 
@@ -48,6 +62,12 @@ watch(selectedSeason, () => {
 const goToTeam = (teamCode) => {
   router.push(`/team/${teamCode}`)
 }
+
+const formatNextGame = (team) => {
+  if (!team.nextOpponentCode) return 'N/A'
+  const location = team.nextGameIsHome ? 'vs' : '@'
+  return `${location} ${team.nextOpponentCode}`
+}
 </script>
 
 <style scoped>
@@ -59,6 +79,8 @@ const goToTeam = (teamCode) => {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  padding-right: 1.5rem;
+  padding-top: 2.5rem;
 }
 
 .team-item {
@@ -71,23 +93,42 @@ const goToTeam = (teamCode) => {
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
 }
 
 .team-item:hover {
   background-color: rgba(255, 255, 255, 0.1);
   transform: translateX(5px);
+  z-index: 10;
+}
+
+.team-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.team-rank {
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-weight: bold;
+  min-width: 24px;
+  text-align: center;
 }
 
 .team-name {
   color: var(--color-text-secondary);
   font-size: 1rem;
   font-weight: bold;
+  flex: 1;
 }
 
 .team-icons {
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  margin-left: 0.5rem;
 }
 
 .status-icon {
@@ -96,10 +137,47 @@ const goToTeam = (teamCode) => {
   object-fit: contain;
 }
 
-.streak-count {
+.team-stats {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.stat-item {
   color: var(--color-text-primary);
-  font-size: 1.2rem;
+  font-size: 0.9rem;
+  font-weight: normal;
+  white-space: nowrap;
+}
+
+.stat-streak {
   font-weight: bold;
+  font-size: 1rem;
+}
+
+.tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  color: black;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  margin-bottom: 0.5rem;
+  z-index: 9999;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.team-item:hover .tooltip {
+  opacity: 1;
 }
 
 .loading,

@@ -18,7 +18,7 @@
     <description>NHL Statistics Backend Application</description>
 
     <properties>
-        <java.version>25</java.version>
+        <java.version>23</java.version>
         <maven.compiler.plugin.version>3.14.0</maven.compiler.plugin.version>
         <maven.compiler.proc>full</maven.compiler.proc>
         <lombok.version>1.18.42</lombok.version>

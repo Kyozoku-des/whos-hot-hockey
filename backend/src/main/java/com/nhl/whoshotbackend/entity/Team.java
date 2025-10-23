@@ -72,6 +72,9 @@ public class Team {
     private Integer currentLossStreak;
 
     @Column
+    private Double last10GamesWinPercentage; // Win percentage over last 10 games
+
+    @Column
     private Boolean hot; // true when recent stretch exceeds hot threshold
 
     @Column
@@ -79,6 +82,15 @@ public class Team {
 
     @Column
     private Boolean pointStreak; // true when team has consecutive point games
+
+    @Column
+    private String nextOpponentCode; // Next opponent team code
+
+    @Column
+    private String nextGameDate; // Next game date (ISO format)
+
+    @Column
+    private Boolean nextGameIsHome; // true if next game is home
 
     @Column
     private String lastUpdated;

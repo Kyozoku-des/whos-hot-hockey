@@ -149,15 +149,25 @@ public class NhlApiService {
     }
 
     /**
-     * Get team schedule.
+     * Get team schedule for current season.
      */
     public JsonNode getTeamSchedule(String teamCode) {
-        String url = String.format("%s/v1/club-schedule-season/%s/now", baseUrl, teamCode);
-        log.info("Fetching schedule for team {} from: {}", teamCode, url);
+        return getTeamSchedule(teamCode, currentSeason);
+    }
+
+    /**
+     * Get team schedule for a specific season.
+     * @param teamCode Team code (e.g., "COL")
+     * @param seasonId Season ID in format YYYYYYYY (e.g., "20252026")
+     * @return JsonNode containing schedule data with game results
+     */
+    public JsonNode getTeamSchedule(String teamCode, String seasonId) {
+        String url = String.format("%s/v1/club-schedule-season/%s/%s", baseUrl, teamCode, seasonId);
+        log.info("Fetching schedule for team {} season {} from: {}", teamCode, seasonId, url);
         try {
             return restTemplate.getForObject(url, JsonNode.class);
         } catch (Exception e) {
-            log.error("Error fetching schedule for team {}", teamCode, e);
+            log.error("Error fetching schedule for team {} season {}", teamCode, seasonId, e);
             return null;
         }
     }

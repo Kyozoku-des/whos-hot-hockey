@@ -35,7 +35,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, provide } from 'vue'
 
 defineProps({
   title: {
@@ -46,6 +46,9 @@ defineProps({
 
 const isExpanded = ref(false)
 const isClosing = ref(false)
+
+// Provide the expanded state to child components
+provide('isExpanded', isExpanded)
 
 const expandCard = () => {
   if (!isExpanded.value) {
