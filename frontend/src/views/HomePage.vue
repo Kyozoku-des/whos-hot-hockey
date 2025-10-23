@@ -68,6 +68,7 @@ const handleSeasonChange = (season) => {
   padding: 0rem 1rem;
   border-bottom: var(--color-border-thick) solid var(--color-border);
   gap: 0;
+  background-color: var(--color-bg-card);
 }
 
 .title {

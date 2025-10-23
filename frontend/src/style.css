@@ -13,7 +13,7 @@
 
 :root {
   /* Retro black & white theme inspired by mockup */
-  --color-bg-primary: hsl(166, 5%, 5%);        /* Pure black background */
+  --color-bg-primary: hsl(180, 5%, 8%);        /* Pure black background */
   --color-bg-card: hsl(166, 5%, 5%);           /* Black cards */
   --color-text-primary: #ffffff;      /* White text */
   --color-text-secondary: hsl(40, 100%, 75%);    /* Gold/orange text for highlights */
