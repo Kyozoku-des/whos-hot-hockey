@@ -10,7 +10,11 @@
         class="player-item"
         @click="goToPlayer(player.playerId)"
       >
-        <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
+        <div class="player-main">
+          <TeamLogo :teamCode="player.teamCode" size="small" />
+          <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
+          <span class="team-code">{{ player.teamCode }}</span>
+        </div>
         <span class="player-icons">
           <img v-if="player.hot" src="../assets/flame.png" alt="Hot" class="status-icon" title="Hot streak (PPG > 1.5)" />
           <img v-if="player.cold" src="../assets/snowflake.png" alt="Cold" class="status-icon" title="Cold streak (PPG < 0.2)" />
@@ -26,6 +30,7 @@
 import { ref, inject, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlayerStats } from '../composables/useApi'
+import TeamLogo from './TeamLogo.vue'
 
 const router = useRouter()
 const { loading, error, getPlayerStreaks } = usePlayerStats()
@@ -84,10 +89,25 @@ const goToPlayer = (playerId) => {
   z-index: 10;
 }
 
+.player-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
 .player-name {
   color: var(--color-text-secondary);
   font-size: 1rem;
   font-weight: bold;
+  flex: 1;
+}
+
+.team-code {
+  color: var(--color-text-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0.8;
 }
 
 .player-icons {
