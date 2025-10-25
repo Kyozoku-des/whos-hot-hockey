@@ -1,8 +1,10 @@
 package com.nhl.whoshotbackend.repository;
 
+import com.nhl.whoshotbackend.dto.SearchResultDTO;
 import com.nhl.whoshotbackend.entity.Player;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -35,4 +37,15 @@ public interface PlayerRepository extends JpaRepository<Player, Player.PlayerKey
      * Find players by team code for a specific season.
      */
     List<Player> findByTeamCodeAndSeason(String teamCode, String season);
+
+    /**
+     * Get all players for search functionality (lightweight data).
+     * Returns players ordered by last name, first name.
+     */
+    @Query("SELECT new com.nhl.whoshotbackend.dto.SearchResultDTO('PLAYER', " +
+           "CAST(p.playerId AS string), CONCAT(p.firstName, ' ', p.lastName), " +
+           "p.positionCode, p.headshotUrl, p.season) " +
+           "FROM Player p WHERE p.season = :season " +
+           "ORDER BY p.lastName, p.firstName")
+    List<SearchResultDTO> findAllForSearch(@Param("season") String season);
 }

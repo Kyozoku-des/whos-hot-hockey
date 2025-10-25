@@ -1,8 +1,10 @@
 package com.nhl.whoshotbackend.repository;
 
+import com.nhl.whoshotbackend.dto.SearchResultDTO;
 import com.nhl.whoshotbackend.entity.Team;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -36,4 +38,14 @@ public interface TeamRepository extends JpaRepository<Team, Team.TeamKey> {
      */
     @Query("SELECT t FROM Team t WHERE t.season = ?1 AND t.currentLossStreak > 0 ORDER BY t.currentLossStreak DESC")
     List<Team> findTeamsWithLossStreaks(String season);
+
+    /**
+     * Get all teams for search functionality (lightweight data).
+     * Returns teams ordered by full name.
+     */
+    @Query("SELECT new com.nhl.whoshotbackend.dto.SearchResultDTO('TEAM', " +
+           "t.teamCode, t.teamName, t.teamCode, t.logoUrl, t.season) " +
+           "FROM Team t WHERE t.season = :season " +
+           "ORDER BY t.teamName")
+    List<SearchResultDTO> findAllForSearch(@Param("season") String season);
 }

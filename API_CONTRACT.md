@@ -527,6 +527,45 @@ Get game-by-game results for a specific team in a given season.
 
 ---
 
+### 11. Search All
+
+#### GET `/api/search/all`
+
+Get all searchable items (players and teams) for autocomplete functionality.
+
+**Query Parameters:**
+- `season` (string, optional) - Season ID (e.g., "20252026"). Defaults to current season.
+
+**Response:**
+```json
+[
+  {
+    "type": "TEAM",
+    "id": "TOR",
+    "name": "Toronto Maple Leafs",
+    "secondaryInfo": "TOR",
+    "imageUrl": "https://assets.nhle.com/logos/nhl/svg/TOR_light.svg",
+    "season": "20252026"
+  },
+  {
+    "type": "PLAYER",
+    "id": "8478402",
+    "name": "Connor McDavid",
+    "secondaryInfo": "C",
+    "imageUrl": "https://assets.nhle.com/mugs/nhl/20252026/EDM/8478402.png",
+    "season": "20252026"
+  }
+]
+```
+
+**Notes:**
+- Returns lightweight data for all players and teams in the specified season
+- Client-side filtering is recommended for autocomplete functionality
+- Results include teams first, then players
+- Dataset size: ~32 teams + ~800 players = ~832 items (~50KB)
+
+---
+
 ## Development Workflow
 
 1. **Backend develops endpoints** following this contract
@@ -561,3 +600,4 @@ Get game-by-game results for a specific team in a given season.
 
 - **1.0** (2025-10-14): Initial API contract
 - **1.1** (2025-10-25): Added player and team game log endpoints for graph visualization (Issue #3)
+- **1.2** (2025-10-25): Added search endpoint for autocomplete functionality (Issue #4)
