@@ -56,9 +56,12 @@ export function usePlayerStats() {
     return await fetchData(`/players/${playerId}`)
   }
 
-  const getPlayerGameLog = async (playerId) => {
-    const data = await fetchData(`/players/${playerId}`)
-    return data?.recentGames || []
+  const getPlayerGameLog = async (playerId, season = null) => {
+    const endpoint = season
+      ? `/players/${playerId}/game-log?season=${season}`
+      : `/players/${playerId}/game-log`
+    const data = await fetchData(endpoint)
+    return data || []
   }
 
   return {
@@ -94,12 +97,21 @@ export function useTeamStats() {
     return await fetchData(`/teams/${teamCode}`)
   }
 
+  const getTeamGameLog = async (teamCode, season = null) => {
+    const endpoint = season
+      ? `/teams/${teamCode}/game-log?season=${season}`
+      : `/teams/${teamCode}/game-log`
+    const data = await fetchData(endpoint)
+    return data || []
+  }
+
   return {
     loading,
     error,
     getStandings,
     getTeamWinStreaks,
     getTeamLoseStreaks,
-    getTeamDetails
+    getTeamDetails,
+    getTeamGameLog
   }
 }

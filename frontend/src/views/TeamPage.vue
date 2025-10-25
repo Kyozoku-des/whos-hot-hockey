@@ -68,17 +68,49 @@ import TeamLogo from '../components/TeamLogo.vue'
 import TeamGameLogGraph from '../components/TeamGameLogGraph.vue'
 
 const route = useRoute()
-const { loading, error, getTeamDetails } = useTeamStats()
+const { loading, error, getTeamDetails, getTeamGameLog } = useTeamStats()
 
 const team = ref(null)
 const teamGameLogs = ref([])
 const previousSeasonTeamGameLogs = ref([])
 
+// Calculate previous season ID
+const calculatePreviousSeason = () => {
+  const currentYear = new Date().getFullYear()
+  const currentMonth = new Date().getMonth() + 1
+
+  let seasonStartYear
+  if (currentMonth >= 10) {
+    seasonStartYear = currentYear
+  } else {
+    seasonStartYear = currentYear - 1
+  }
+
+  const previousStartYear = seasonStartYear - 1
+  const previousEndYear = seasonStartYear
+
+  return `${previousStartYear}${previousEndYear}`
+}
+
 onMounted(async () => {
   const teamId = route.params.id
+
   const teamData = await getTeamDetails(teamId)
   if (teamData) {
     team.value = teamData
+  }
+
+  // Fetch current season game log
+  const gameLogData = await getTeamGameLog(teamId)
+  if (gameLogData) {
+    teamGameLogs.value = gameLogData
+  }
+
+  // Fetch previous season game log
+  const previousSeason = calculatePreviousSeason()
+  const previousSeasonData = await getTeamGameLog(teamId, previousSeason)
+  if (previousSeasonData) {
+    previousSeasonTeamGameLogs.value = previousSeasonData
   }
 })
 </script>

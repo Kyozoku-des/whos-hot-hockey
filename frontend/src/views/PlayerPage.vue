@@ -78,6 +78,24 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+// Calculate previous season ID
+const calculatePreviousSeason = () => {
+  const currentYear = new Date().getFullYear()
+  const currentMonth = new Date().getMonth() + 1
+
+  let seasonStartYear
+  if (currentMonth >= 10) {
+    seasonStartYear = currentYear
+  } else {
+    seasonStartYear = currentYear - 1
+  }
+
+  const previousStartYear = seasonStartYear - 1
+  const previousEndYear = seasonStartYear
+
+  return `${previousStartYear}${previousEndYear}`
+}
+
 onMounted(async () => {
   const playerId = route.params.id
 
@@ -87,10 +105,20 @@ onMounted(async () => {
   }
 
   loadingGameLog.value = true
+
+  // Fetch current season game log
   const gameLogData = await getPlayerGameLog(playerId)
   if (gameLogData) {
     gameLogs.value = gameLogData
   }
+
+  // Fetch previous season game log
+  const previousSeason = calculatePreviousSeason()
+  const previousSeasonData = await getPlayerGameLog(playerId, previousSeason)
+  if (previousSeasonData) {
+    previousSeasonGameLogs.value = previousSeasonData
+  }
+
   loadingGameLog.value = false
 })
 </script>
