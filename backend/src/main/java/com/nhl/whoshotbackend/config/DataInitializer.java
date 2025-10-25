@@ -25,18 +25,17 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        log.info("=== Starting initial data synchronization ===");
+        log.info("=== Application startup - Data initialization ===");
 
         try {
-            // Sync all data from NHL API
-            dataIntegrationService.syncAllData();
+            // Ensure current season is set in the database
+            // This does NOT sync data from NHL API on startup
+            dataIntegrationService.ensureCurrentSeasonExists();
 
-            // Calculate hot ratings and streaks
-            statisticsService.calculateHotRatings();
-
-            log.info("=== Initial data synchronization completed successfully ===");
+            log.info("=== Data initialization completed ===");
+            log.info("=== Scheduled jobs will handle data synchronization ===");
         } catch (Exception e) {
-            log.error("Error during initial data synchronization. Application will continue but may have incomplete data.", e);
+            log.error("Error during data initialization.", e);
         }
     }
 }

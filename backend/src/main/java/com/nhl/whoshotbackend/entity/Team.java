@@ -68,5 +68,8 @@ public class Team {
     private Integer currentLossStreak;
 
     @Column
+    private String seasonId; // NHL season identifier (e.g., "20242025")
+
+    @Column
     private String lastUpdated;
 }

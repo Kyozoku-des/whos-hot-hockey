@@ -79,5 +79,8 @@ public class Player {
     private Double hotRating; // Points per game over last N games (calculated)
 
     @Column
+    private String seasonId; // NHL season identifier (e.g., "20242025")
+
+    @Column
     private String lastUpdated;
 }
