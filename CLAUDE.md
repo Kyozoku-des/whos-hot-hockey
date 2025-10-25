@@ -8,12 +8,12 @@ This is a **multi-agent orchestration repository** that coordinates development 
 
 ### Multi-Repository Architecture
 
-The devcontainer mounts three repositories simultaneously:
-- **whos-hot-multi-agent** (this repo) - Master coordination and shared configuration
-- **backend-agent** - Backend service (mounted from `../backend-agent`)
-- **frontend-agent** - Frontend application (mounted from `../frontend-agent`)
+The mono repo has one folder for backend and one for frontend. It also has one repo (git worktree branch) per responsibility of agent:
+- **dev branch** (whos-hot-nhl repo) - Master coordination and shared configuration
+- **dev-backend branch** - Backend agent. Only works in this branch and the /root/backend folder.
+- **dev-frontend branch** - Frontend agent. Only works in this branch and the /root/frontend folder.
 
-All three repositories share:
+All three branches/repositories share:
 - The same devcontainer environment
 - Firewall rules and network restrictions
 - Development tools and configurations
@@ -77,9 +77,9 @@ curl https://api.github.com/zen
 
 ```
 /workspace/
-├── whos-hot-multi-agent/  (this repo - coordination)
-├── backend/               (backend-agent repo)
-└── frontend/              (frontend-agent repo)
+├── whos-hot-nhl/          (this repo - coordination)
+├── backend/               (dev-backend repo)
+└── frontend/              (dev-frontend repo)
 ```
 
 ### Development Pattern
@@ -127,16 +127,22 @@ git branch -r
 
 ### Git Configuration
 
+**Remote repository**
+https://github.com/Kyozoku-des/whos-hot-nhl.git
+
 Each repository has its own git configuration. When working across repos:
 ```bash
 # Check which repo you're in
 pwd
 
 # Each repo syncs independently
-cd /workspace/backend && git pull
-cd /workspace/frontend && git pull
-cd /workspace/whos-hot-multi-agent && git pull
+cd /workspace/dev-backend && git pull
+cd /workspace/dev-frontend && git pull
+cd /workspace/whos-hot-nhl && git pull
 ```
+
+**IMPORTANT**
+Never touch master branch.
 
 ## VS Code Configuration
 
@@ -172,7 +178,7 @@ The following are mounted as Docker volumes for persistence across rebuilds:
 ## Architecture Reference
 
 The `agent-flow.excalidraw` diagram shows:
-- **Master branch** (red) - Coordination repo with planning phase
+- **Dev branch** (red) - Coordination repo with planning phase
 - **Backend branch** (blue) - Backend development
 - **Frontend branch** (green) - Frontend development
 - All branches sync with GitHub
