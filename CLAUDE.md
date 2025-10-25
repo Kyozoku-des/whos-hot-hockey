@@ -9,7 +9,7 @@ This is a **multi-agent orchestration repository** that coordinates development 
 ### Multi-Repository Architecture
 
 The mono repo has one folder for backend and one for frontend. It also has one repo (git worktree branch) per responsibility of agent:
-- **dev branch** (whos-hot-nhl repo) - Master coordination and shared configuration
+- **dev branch** (whos-hot-nhl repo) - Coordination agents workspace and shared configurations.
 - **dev-backend branch** - Backend agent. Only works in this branch and the /root/backend folder.
 - **dev-frontend branch** - Frontend agent. Only works in this branch and the /root/frontend folder.
 
@@ -118,12 +118,12 @@ git branch -r
 ```
 
 **Coordination workflow:**
-1. Plan changes in the master coordination repo
+1. Plan changes in the dev coordination repo
 2. Always check for changes in both backend and frontend repo before continuing planing and merging
 3. Commit and push frequently to avoid merge conflicts
-4. Each repo can pull from master branch to check for changes that affect each branch
-5. Only master branch can pull from all branches
-6. Only master branch can merge changes from other (backend and frontend) branches
+4. Each repo can pull from dev branch to check for changes that affect each branch
+5. Only dev branch can pull from all branches
+6. Only dev branch can merge changes from other (backend and frontend) branches
 
 ### Git Configuration
 
