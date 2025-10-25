@@ -22,9 +22,10 @@
 
         <div class="section">
           <h2 class="section-title">Points Progression</h2>
-          <div class="chart-placeholder">
-            <p>Chart visualization would go here</p>
-          </div>
+          <PlayerGameLogGraph
+            :current-season-data="gameLogs"
+            :previous-season-data="previousSeasonGameLogs"
+          />
         </div>
 
         <div class="section">
@@ -61,12 +62,14 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePlayerStats } from '../composables/useApi'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
+import PlayerGameLogGraph from '../components/PlayerGameLogGraph.vue'
 
 const route = useRoute()
 const { loading, error, getPlayerDetails, getPlayerGameLog } = usePlayerStats()
 
 const player = ref(null)
 const gameLogs = ref([])
+const previousSeasonGameLogs = ref([])
 const loadingGameLog = ref(false)
 
 const formatDate = (dateString) => {
