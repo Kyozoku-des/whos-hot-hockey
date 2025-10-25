@@ -6,11 +6,11 @@
       <div v-else class="team-content">
         <div class="team-header">
           <div class="team-info-card">
-            <img
-              :src="teamLogoUrl"
-              :alt="team?.name"
-              class="team-logo"
-              @error="handleImageError"
+            <TeamLogo
+              :logoUrl="team?.logoUrl"
+              :teamCode="team?.teamCode"
+              :alt="team?.teamName"
+              size="large"
             />
             <div class="team-stats">
               <h1 class="team-name">{{ team?.teamName }}</h1>
@@ -53,26 +53,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTeamStats } from '../composables/useApi'
+import TeamLogo from '../components/TeamLogo.vue'
 
 const route = useRoute()
 const { loading, error, getTeamDetails } = useTeamStats()
 
 const team = ref(null)
-const imageError = ref(false)
-
-const teamLogoUrl = computed(() => {
-  if (imageError.value || !team.value?.logoUrl) {
-    return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect width="200" height="200" fill="%239cb89f"/%3E%3Ctext x="50%25" y="50%25" font-size="24" text-anchor="middle" dy=".3em" fill="%23fff"%3ETeam Logo%3C/text%3E%3C/svg%3E'
-  }
-  return team.value.logoUrl
-})
-
-const handleImageError = () => {
-  imageError.value = true
-}
 
 onMounted(async () => {
   const teamId = route.params.id
@@ -114,14 +103,6 @@ onMounted(async () => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.team-logo {
-  width: 200px;
-  height: 200px;
-  border-radius: 8px;
-  object-fit: contain;
-  background-color: rgba(255, 255, 255, 0.1);
-  padding: 1rem;
-}
 
 .team-stats {
   flex: 1;

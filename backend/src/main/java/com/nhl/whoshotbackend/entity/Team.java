@@ -33,6 +33,9 @@ public class Team {
     private String franchiseName;
 
     @Column
+    private String logoUrl; // URL to team logo image
+
+    @Column
     private Integer gamesPlayed;
 
     @Column

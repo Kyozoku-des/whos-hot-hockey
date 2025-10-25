@@ -12,6 +12,7 @@
       >
         <div class="team-main">
           <span class="team-rank">{{ index + 1 }}</span>
+          <TeamLogo :logoUrl="team.logoUrl" :teamCode="team.teamCode" :alt="team.teamName" size="small" />
           <span class="team-name">{{ team.teamName }}</span>
           <span class="team-icons">
             <img v-if="team.hot" src="../assets/flame.png" alt="Hot" class="status-icon" title="Hot streak" />
@@ -36,6 +37,7 @@
 import { ref, inject, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTeamStats } from '../composables/useApi'
+import TeamLogo from './TeamLogo.vue'
 
 const router = useRouter()
 const { loading, error, getStandings } = useTeamStats()

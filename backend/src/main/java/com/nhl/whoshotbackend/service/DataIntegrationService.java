@@ -349,9 +349,14 @@ public class DataIntegrationService {
      * Update team data from standings JSON.
      */
     private void updateTeamFromStandings(Team team, JsonNode teamNode) {
-        team.setTeamCode(teamNode.path("teamAbbrev").path("default").asText());
+        String teamCode = teamNode.path("teamAbbrev").path("default").asText();
+        team.setTeamCode(teamCode);
         team.setTeamName(teamNode.path("teamName").path("default").asText());
         team.setFranchiseName(teamNode.path("teamCommonName").path("default").asText());
+
+        // Set team logo URL using NHL's standard logo URL pattern
+        team.setLogoUrl(String.format("https://assets.nhle.com/logos/nhl/svg/%s_light.svg", teamCode));
+
         team.setGamesPlayed(teamNode.path("gamesPlayed").asInt());
         team.setWins(teamNode.path("wins").asInt());
         team.setLosses(teamNode.path("losses").asInt());
