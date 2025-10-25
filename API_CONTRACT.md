@@ -447,6 +447,86 @@ Access-Control-Allow-Headers: Content-Type
 
 ---
 
+### 9. Player Game Log
+
+#### GET `/api/players/{playerId}/game-log`
+
+Get game-by-game statistics for a specific player in a given season.
+
+**Path Parameters:**
+- `playerId` (integer, required) - NHL Player ID
+
+**Query Parameters:**
+- `season` (string, optional) - Season ID (e.g., "20252026"). Defaults to current season.
+
+**Response:**
+```json
+[
+  {
+    "gameNumber": 1,
+    "gameDate": "2025-10-10",
+    "points": 2,
+    "goals": 1,
+    "assists": 1,
+    "opponentTeamCode": "BOS",
+    "homeGame": true
+  },
+  {
+    "gameNumber": 2,
+    "gameDate": "2025-10-12",
+    "points": 0,
+    "goals": 0,
+    "assists": 0,
+    "opponentTeamCode": "NYR",
+    "homeGame": false
+  }
+]
+```
+
+**Note:** Game numbers range from 1-82 for a full regular season. Current season will only include games played so far.
+
+---
+
+### 10. Team Game Log
+
+#### GET `/api/teams/{teamCode}/game-log`
+
+Get game-by-game results for a specific team in a given season.
+
+**Path Parameters:**
+- `teamCode` (string, required) - Three-letter team code (e.g., "TOR", "EDM")
+
+**Query Parameters:**
+- `season` (string, optional) - Season ID (e.g., "20252026"). Defaults to current season.
+
+**Response:**
+```json
+[
+  {
+    "gameNumber": 1,
+    "gameDate": "2025-10-10",
+    "won": true,
+    "goalsFor": 5,
+    "goalsAgainst": 2,
+    "opponentTeamCode": "MTL",
+    "homeGame": true
+  },
+  {
+    "gameNumber": 2,
+    "gameDate": "2025-10-12",
+    "won": false,
+    "goalsFor": 2,
+    "goalsAgainst": 4,
+    "opponentTeamCode": "BOS",
+    "homeGame": false
+  }
+]
+```
+
+**Note:** Game numbers range from 1-82 for a full regular season. Current season will only include games played so far.
+
+---
+
 ## Development Workflow
 
 1. **Backend develops endpoints** following this contract
@@ -480,3 +560,4 @@ Access-Control-Allow-Headers: Content-Type
 ## Version History
 
 - **1.0** (2025-10-14): Initial API contract
+- **1.1** (2025-10-25): Added player and team game log endpoints for graph visualization (Issue #3)
