@@ -2,6 +2,9 @@
   <div class="home-page">
     <div class="header">
       <h1 class="title">WHOS HOT NHL</h1>
+      <div class="search-container">
+        <SearchBar />
+      </div>
       <CurrentSeasonDisplay />
     </div>
 
@@ -44,6 +47,7 @@ import TeamStandingsTable from '../components/TeamStandingsTable.vue'
 import TeamWinStreaksTable from '../components/TeamWinStreaksTable.vue'
 import TeamHotTable from '../components/TeamHotTable.vue'
 import CurrentSeasonDisplay from '../components/CurrentSeasonDisplay.vue'
+import SearchBar from '../components/SearchBar.vue'
 </script>
 
 <style scoped>
@@ -58,7 +62,7 @@ import CurrentSeasonDisplay from '../components/CurrentSeasonDisplay.vue'
   align-items: center;
   padding: 0rem 1rem;
   border-bottom: var(--color-border-thick) solid var(--color-border);
-  gap: 0;
+  gap: 2rem;
   background-color: var(--color-bg-card);
 }
 
@@ -72,6 +76,11 @@ import CurrentSeasonDisplay from '../components/CurrentSeasonDisplay.vue'
   padding-right: 3rem;
   border-right: var(--color-border-thick) solid var(--color-border);
   flex-shrink: 0;
+}
+
+.search-container {
+  flex: 1;
+  max-width: 500px;
 }
 
 .header :deep(.current-season-display) {
@@ -99,6 +108,18 @@ import CurrentSeasonDisplay from '../components/CurrentSeasonDisplay.vue'
   }
 }
 
+@media (max-width: 1024px) {
+  .header {
+    flex-wrap: wrap;
+  }
+
+  .search-container {
+    order: 3;
+    flex-basis: 100%;
+    max-width: 100%;
+  }
+}
+
 @media (max-width: 768px) {
   .header {
     flex-direction: column;
@@ -109,6 +130,12 @@ import CurrentSeasonDisplay from '../components/CurrentSeasonDisplay.vue'
 
   .title {
     font-size: 1.8rem;
+    border-right: none;
+    padding-right: 0;
+  }
+
+  .search-container {
+    width: 100%;
   }
 
   .content-container {
