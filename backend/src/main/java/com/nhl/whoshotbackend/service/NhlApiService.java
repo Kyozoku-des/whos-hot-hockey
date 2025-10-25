@@ -185,4 +185,25 @@ public class NhlApiService {
             return null;
         }
     }
+
+    /**
+     * Get all NHL seasons.
+     */
+    public JsonNode getSeasons() {
+        String url = baseUrl + "/v1/season";
+        log.info("Fetching all seasons from: {}", url);
+        try {
+            return restTemplate.getForObject(url, JsonNode.class);
+        } catch (Exception e) {
+            log.error("Error fetching seasons", e);
+            return null;
+        }
+    }
+
+    /**
+     * Get the configured current season ID.
+     */
+    public String getCurrentSeasonId() {
+        return currentSeason;
+    }
 }

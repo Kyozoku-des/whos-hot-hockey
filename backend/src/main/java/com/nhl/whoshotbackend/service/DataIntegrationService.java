@@ -1,15 +1,18 @@
 package com.nhl.whoshotbackend.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.nhl.whoshotbackend.entity.CurrentSeason;
 import com.nhl.whoshotbackend.entity.GameLog;
 import com.nhl.whoshotbackend.entity.Player;
 import com.nhl.whoshotbackend.entity.Team;
 import com.nhl.whoshotbackend.entity.TeamGame;
+import com.nhl.whoshotbackend.repository.CurrentSeasonRepository;
 import com.nhl.whoshotbackend.repository.GameLogRepository;
 import com.nhl.whoshotbackend.repository.PlayerRepository;
 import com.nhl.whoshotbackend.repository.TeamGameRepository;
 import com.nhl.whoshotbackend.repository.TeamRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Service responsible for fetching data from NHL API and persisting to database.
@@ -30,23 +34,48 @@ public class DataIntegrationService {
     private final PlayerRepository playerRepository;
     private final GameLogRepository gameLogRepository;
     private final TeamGameRepository teamGameRepository;
+    private final CurrentSeasonRepository currentSeasonRepository;
 
     public DataIntegrationService(
             NhlApiService nhlApiService,
             TeamRepository teamRepository,
             PlayerRepository playerRepository,
             GameLogRepository gameLogRepository,
-            TeamGameRepository teamGameRepository) {
+            TeamGameRepository teamGameRepository,
+            CurrentSeasonRepository currentSeasonRepository) {
         this.nhlApiService = nhlApiService;
         this.teamRepository = teamRepository;
         this.playerRepository = playerRepository;
         this.gameLogRepository = gameLogRepository;
         this.teamGameRepository = teamGameRepository;
+        this.currentSeasonRepository = currentSeasonRepository;
+    }
+
+    /**
+     * Scheduled job to sync NHL data every 6 hours.
+     * Runs at fixed delay of 6 hours after the last execution completed.
+     */
+    @Scheduled(fixedDelay = 21600000) // 6 hours = 21600000 milliseconds
+    @Transactional
+    public void scheduledDataSync() {
+        log.info("=== Starting scheduled data synchronization ===");
+
+        try {
+            // Ensure current season is set
+            ensureCurrentSeasonExists();
+
+            // Sync all data
+            syncAllData();
+
+            log.info("=== Scheduled data synchronization completed successfully ===");
+        } catch (Exception e) {
+            log.error("Error during scheduled data synchronization", e);
+        }
     }
 
     /**
      * Fetch and sync all NHL data.
-     * This method is called on startup and scheduled to run periodically.
+     * This method syncs data but does not run automatically on startup.
      */
     @Transactional
     public void syncAllData() {
@@ -60,6 +89,53 @@ public class DataIntegrationService {
             log.error("Error during data synchronization", e);
             throw e;
         }
+    }
+
+    /**
+     * Ensure that a current season exists in the database.
+     * If not, create one using the NHL API.
+     */
+    @Transactional
+    public void ensureCurrentSeasonExists() {
+        Optional<CurrentSeason> existingSeason = currentSeasonRepository.findByIsActiveTrue();
+
+        if (existingSeason.isEmpty()) {
+            log.info("No active season found in database. Creating current season...");
+
+            String seasonId = nhlApiService.getCurrentSeason();
+            String displayName = formatSeasonDisplayName(seasonId);
+
+            CurrentSeason currentSeason = new CurrentSeason();
+            currentSeason.setSeasonId(seasonId);
+            currentSeason.setSeasonDisplayName(displayName);
+            currentSeason.setIsActive(true);
+            currentSeason.setLastUpdated(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+
+            currentSeasonRepository.save(currentSeason);
+            log.info("Created current season: {} ({})", seasonId, displayName);
+        } else {
+            log.debug("Active season already exists: {}", existingSeason.get().getSeasonId());
+        }
+    }
+
+    /**
+     * Get the current active season ID.
+     */
+    public String getCurrentSeasonId() {
+        Optional<CurrentSeason> currentSeason = currentSeasonRepository.findByIsActiveTrue();
+        return currentSeason.map(CurrentSeason::getSeasonId)
+                .orElse(nhlApiService.getCurrentSeason());
+    }
+
+    /**
+     * Format season ID to display name.
+     * Example: "20242025" -> "2024-2025"
+     */
+    private String formatSeasonDisplayName(String seasonId) {
+        if (seasonId != null && seasonId.length() == 8) {
+            return seasonId.substring(0, 4) + "-" + seasonId.substring(4);
+        }
+        return seasonId;
     }
 
     /**

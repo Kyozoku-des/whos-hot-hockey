@@ -1,5 +1,7 @@
 package com.nhl.whoshotbackend.controller;
 
+import com.nhl.whoshotbackend.entity.CurrentSeason;
+import com.nhl.whoshotbackend.repository.CurrentSeasonRepository;
 import com.nhl.whoshotbackend.service.DataIntegrationService;
 import com.nhl.whoshotbackend.service.StatisticsService;
 import com.nhl.whoshotbackend.util.SeasonValidator;
@@ -10,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * REST controller for data synchronization endpoints.
@@ -23,12 +26,31 @@ public class DataController {
 
     private final DataIntegrationService dataIntegrationService;
     private final StatisticsService statisticsService;
+    private final CurrentSeasonRepository currentSeasonRepository;
 
     public DataController(
             DataIntegrationService dataIntegrationService,
-            StatisticsService statisticsService) {
+            StatisticsService statisticsService,
+            CurrentSeasonRepository currentSeasonRepository) {
         this.dataIntegrationService = dataIntegrationService;
         this.statisticsService = statisticsService;
+        this.currentSeasonRepository = currentSeasonRepository;
+    }
+
+    /**
+     * Get current active NHL season.
+     */
+    @GetMapping("/current-season")
+    @Operation(summary = "Get current season", description = "Get the currently active NHL season")
+    public ResponseEntity<CurrentSeason> getCurrentSeason() {
+        log.info("GET /api/data/current-season");
+        Optional<CurrentSeason> currentSeason = currentSeasonRepository.findByIsActiveTrue();
+
+        if (currentSeason.isPresent()) {
+            return ResponseEntity.ok(currentSeason.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     /**
