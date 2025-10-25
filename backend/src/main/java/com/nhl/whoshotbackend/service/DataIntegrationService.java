@@ -330,12 +330,14 @@ public class DataIntegrationService {
             JsonNode gameLogs = gameLogData.get("gameLog");
             List<GameLog> gameLogsToSave = new ArrayList<>();
 
+            int gameNumber = 1;
             for (JsonNode gameNode : gameLogs) {
-                GameLog gameLog = parseGameLog(playerId, gameNode);
+                GameLog gameLog = parseGameLog(playerId, seasonId, gameNumber, gameNode);
                 gameLogsToSave.add(gameLog);
+                gameNumber++;
             }
 
-            // Clear existing game logs for this player and save new ones
+            // Clear existing game logs for this player and season, then save new ones
             gameLogRepository.deleteAll(gameLogRepository.findByPlayerIdOrderByGameDateDesc(playerId));
             gameLogRepository.saveAll(gameLogsToSave);
 
@@ -420,7 +422,7 @@ public class DataIntegrationService {
     /**
      * Parse game log from JSON.
      */
-    private GameLog parseGameLog(Long playerId, JsonNode gameNode) {
+    private GameLog parseGameLog(Long playerId, String seasonId, int gameNumber, JsonNode gameNode) {
         GameLog gameLog = new GameLog();
 
         gameLog.setPlayerId(playerId);
@@ -433,6 +435,8 @@ public class DataIntegrationService {
         gameLog.setPoints(gameNode.path("points").asInt());
         gameLog.setPlusMinus(gameNode.path("plusMinus").asInt());
         gameLog.setShots(gameNode.path("shots").asInt());
+        gameLog.setSeasonId(seasonId);
+        gameLog.setGameNumber(gameNumber);
 
         // Parse time on ice (format: "MM:SS")
         String toi = gameNode.path("toi").asText();
@@ -466,6 +470,7 @@ public class DataIntegrationService {
             JsonNode games = scheduleData.get("games");
             List<TeamGame> teamGamesToSave = new ArrayList<>();
 
+            int gameNumber = 1;
             for (JsonNode gameNode : games) {
                 // Only process regular season games (gameType = 2)
                 int gameType = gameNode.path("gameType").asInt();
@@ -479,9 +484,10 @@ public class DataIntegrationService {
                     continue;
                 }
 
-                TeamGame teamGame = parseTeamGame(teamCode, gameNode);
+                TeamGame teamGame = parseTeamGame(teamCode, seasonId, gameNumber, gameNode);
                 if (teamGame != null) {
                     teamGamesToSave.add(teamGame);
+                    gameNumber++;
                 }
             }
 
@@ -500,13 +506,15 @@ public class DataIntegrationService {
     /**
      * Parse a team game from schedule JSON.
      */
-    private TeamGame parseTeamGame(String teamCode, JsonNode gameNode) {
+    private TeamGame parseTeamGame(String teamCode, String seasonId, int gameNumber, JsonNode gameNode) {
         TeamGame teamGame = new TeamGame();
 
         teamGame.setGameId(gameNode.path("id").asLong());
         teamGame.setTeamCode(teamCode);
         teamGame.setGameDate(gameNode.path("gameDate").asText());
         teamGame.setGameType("REGULAR");
+        teamGame.setSeasonId(seasonId);
+        teamGame.setGameNumber(gameNumber);
 
         // Determine if team is home or away
         JsonNode homeTeam = gameNode.path("homeTeam");

@@ -49,4 +49,10 @@ public class TeamGame {
 
     @Column
     private String gameType; // Regular season or playoffs
+
+    @Column
+    private String seasonId; // NHL season identifier (e.g., "20252026")
+
+    @Column
+    private Integer gameNumber; // Game number in the season (1-82)
 }

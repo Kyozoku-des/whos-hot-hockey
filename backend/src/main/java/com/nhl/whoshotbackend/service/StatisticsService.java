@@ -1,10 +1,14 @@
 package com.nhl.whoshotbackend.service;
 
+import com.nhl.whoshotbackend.dto.GameLogDTO;
+import com.nhl.whoshotbackend.dto.TeamGameLogDTO;
 import com.nhl.whoshotbackend.entity.GameLog;
 import com.nhl.whoshotbackend.entity.Player;
 import com.nhl.whoshotbackend.entity.Team;
+import com.nhl.whoshotbackend.entity.TeamGame;
 import com.nhl.whoshotbackend.repository.GameLogRepository;
 import com.nhl.whoshotbackend.repository.PlayerRepository;
+import com.nhl.whoshotbackend.repository.TeamGameRepository;
 import com.nhl.whoshotbackend.repository.TeamRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Service for calculating and retrieving statistics.
@@ -26,14 +31,17 @@ public class StatisticsService {
     private final PlayerRepository playerRepository;
     private final TeamRepository teamRepository;
     private final GameLogRepository gameLogRepository;
+    private final TeamGameRepository teamGameRepository;
 
     public StatisticsService(
             PlayerRepository playerRepository,
             TeamRepository teamRepository,
-            GameLogRepository gameLogRepository) {
+            GameLogRepository gameLogRepository,
+            TeamGameRepository teamGameRepository) {
         this.playerRepository = playerRepository;
         this.teamRepository = teamRepository;
         this.gameLogRepository = gameLogRepository;
+        this.teamGameRepository = teamGameRepository;
     }
 
     /**
@@ -97,6 +105,44 @@ public class StatisticsService {
      */
     public List<Player> getTeamPlayers(String teamCode, String season) {
         return playerRepository.findByTeamCodeAndSeason(teamCode, season);
+    }
+
+    /**
+     * Get game log (points per game) for a specific player and season.
+     */
+    public List<GameLogDTO> getPlayerGameLog(Long playerId, String season) {
+        List<GameLog> gameLogs = gameLogRepository.findByPlayerIdAndSeasonIdOrderByGameNumberAsc(playerId, season);
+
+        return gameLogs.stream()
+                .map(gameLog -> new GameLogDTO(
+                        gameLog.getGameNumber(),
+                        gameLog.getGameDate(),
+                        gameLog.getPoints(),
+                        gameLog.getGoals(),
+                        gameLog.getAssists(),
+                        gameLog.getOpponentTeamCode(),
+                        gameLog.getHomeGame()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get game log (wins/losses) for a specific team and season.
+     */
+    public List<TeamGameLogDTO> getTeamGameLog(String teamCode, String season) {
+        List<TeamGame> teamGames = teamGameRepository.findByTeamCodeAndSeasonIdOrderByGameNumberAsc(teamCode, season);
+
+        return teamGames.stream()
+                .map(teamGame -> new TeamGameLogDTO(
+                        teamGame.getGameNumber(),
+                        teamGame.getGameDate(),
+                        teamGame.getWon(),
+                        teamGame.getGoalsFor(),
+                        teamGame.getGoalsAgainst(),
+                        teamGame.getOpponentTeamCode(),
+                        teamGame.getHomeGame()
+                ))
+                .collect(Collectors.toList());
     }
 
     /**

@@ -24,4 +24,10 @@ public interface GameLogRepository extends JpaRepository<GameLog, Long> {
      */
     @Query(value = "SELECT * FROM game_logs WHERE player_id = :playerId ORDER BY game_date DESC LIMIT :limit", nativeQuery = true)
     List<GameLog> findLastNGamesByPlayer(@Param("playerId") Long playerId, @Param("limit") int limit);
+
+    /**
+     * Get game logs for a specific player and season, ordered by game number ascending.
+     */
+    @Query(value = "SELECT * FROM game_logs WHERE player_id = :playerId AND season_id = :seasonId ORDER BY game_number ASC", nativeQuery = true)
+    List<GameLog> findByPlayerIdAndSeasonIdOrderByGameNumberAsc(@Param("playerId") Long playerId, @Param("seasonId") String seasonId);
 }
