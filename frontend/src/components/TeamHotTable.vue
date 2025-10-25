@@ -27,7 +27,7 @@
           <span v-if="isExpanded" class="stat-item">Streak: {{ team.currentWinStreak }}</span>
         </span>
         <div class="tooltip">
-          {{ formatWinPercentage(team.last10GamesWinPercentage) }} W/GP
+          {{ formatPointPercentage(team.last10GamesPointPercentage) }} PTS%
         </div>
       </div>
     </div>
@@ -48,16 +48,17 @@ const isExpanded = inject('isExpanded', ref(false))
 const loadData = async () => {
   const data = await getStandings()
   if (data) {
-    // Sort all teams by last 10 games win percentage (descending)
+    // Sort all teams by last 10 games point percentage (descending)
     teams.value = data
-      .filter(team => team.last10GamesWinPercentage != null)
-      .sort((a, b) => b.last10GamesWinPercentage - a.last10GamesWinPercentage)
+      .filter(team => team.last10GamesPointPercentage != null)
+      .sort((a, b) => b.last10GamesPointPercentage - a.last10GamesPointPercentage)
   }
 }
 
-const formatWinPercentage = (percentage) => {
+const formatPointPercentage = (percentage) => {
   if (percentage == null) return 'N/A'
-  return percentage.toFixed(2)
+  // Convert to percentage (0.75 -> 75.0%)
+  return (percentage * 100).toFixed(1) + '%'
 }
 
 onMounted(() => {

@@ -556,12 +556,17 @@ public class DataIntegrationService {
         int winStreak = 0;
         int lossStreak = 0;
         int winsInLast10 = 0;
+        int pointsInLast10 = 0;
 
         for (TeamGame game : recentGames) {
             // Count wins for last 10 games win percentage
             if (game.getWon()) {
                 winsInLast10++;
+                pointsInLast10 += 2; // Win = 2 points
+            } else if (game.getOvertimeLoss() != null && game.getOvertimeLoss()) {
+                pointsInLast10 += 1; // OT/SO loss = 1 point
             }
+            // Regular loss = 0 points (no addition needed)
 
             // Calculate current streak (only for consecutive games from most recent)
             if (game == recentGames.get(0)) {
@@ -591,8 +596,15 @@ public class DataIntegrationService {
         if (!recentGames.isEmpty()) {
             double winPercentage = (double) winsInLast10 / recentGames.size();
             team.setLast10GamesWinPercentage(winPercentage);
+
+            // Calculate point percentage for last 10 games
+            // Point % = points earned / (games played * 2)
+            double possiblePoints = recentGames.size() * 2.0;
+            double pointPercentage = pointsInLast10 / possiblePoints;
+            team.setLast10GamesPointPercentage(pointPercentage);
         } else {
             team.setLast10GamesWinPercentage(null);
+            team.setLast10GamesPointPercentage(null);
         }
     }
 
