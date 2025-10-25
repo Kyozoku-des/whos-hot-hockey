@@ -338,7 +338,7 @@ public class DataIntegrationService {
             }
 
             // Clear existing game logs for this player and season, then save new ones
-            gameLogRepository.deleteAll(gameLogRepository.findByPlayerIdOrderByGameDateDesc(playerId));
+            gameLogRepository.deleteAll(gameLogRepository.findByPlayerIdAndSeasonId(playerId, seasonId));
             gameLogRepository.saveAll(gameLogsToSave);
 
             log.debug("Game logs synced for player: {} season: {}. Total games: {}", playerId, seasonId, gameLogsToSave.size());
@@ -492,7 +492,7 @@ public class DataIntegrationService {
             }
 
             // Clear existing team games for this team and season, then save new ones
-            teamGameRepository.deleteAll(teamGameRepository.findLastNGamesByTeam(teamCode, 1000));
+            teamGameRepository.deleteAll(teamGameRepository.findByTeamCodeAndSeasonId(teamCode, seasonId));
             teamGameRepository.saveAll(teamGamesToSave);
 
             log.debug("Team games synced for team: {} season: {}. Total games: {}",

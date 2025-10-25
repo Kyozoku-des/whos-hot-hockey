@@ -1,21 +1,9 @@
 <template>
   <div class="game-log-graph">
-    <div class="graphs-container">
-      <div class="graph-section">
-        <h3 class="graph-title">Current Season ({{ currentSeasonLabel }})</h3>
-        <div class="chart-wrapper">
-          <Line v-if="currentSeasonData" :data="currentSeasonChartData" :options="chartOptions" />
-          <div v-else class="no-data">No current season data available</div>
-        </div>
-      </div>
-
-      <div class="graph-section">
-        <h3 class="graph-title">Previous Season ({{ previousSeasonLabel }})</h3>
-        <div class="chart-wrapper">
-          <Line v-if="previousSeasonData" :data="previousSeasonChartData" :options="chartOptions" />
-          <div v-else class="no-data">No previous season data available</div>
-        </div>
-      </div>
+    <h3 class="graph-title">Points Per Game - Season Comparison</h3>
+    <div class="chart-wrapper">
+      <Line v-if="hasData" :data="combinedChartData" :options="chartOptions" />
+      <div v-else class="no-data">No game log data available</div>
     </div>
   </div>
 </template>
@@ -68,7 +56,7 @@ const currentSeasonLabel = computed(() => {
   }
 
   const seasonEnd = seasonStart + 1
-  return `${String(seasonStart).slice(-2)}/${String(seasonEnd).slice(-2)}`
+  return `${seasonStart}-${seasonEnd}`
 })
 
 // Calculate previous season label
@@ -84,65 +72,81 @@ const previousSeasonLabel = computed(() => {
   }
 
   const seasonEnd = seasonStart + 1
-  return `${String(seasonStart).slice(-2)}/${String(seasonEnd).slice(-2)}`
+  return `${seasonStart}-${seasonEnd}`
 })
 
-// Process current season data
-const currentSeasonChartData = computed(() => {
-  if (!props.currentSeasonData || props.currentSeasonData.length === 0) return null
+// Check if we have any data
+const hasData = computed(() => {
+  return (props.currentSeasonData && props.currentSeasonData.length > 0) ||
+         (props.previousSeasonData && props.previousSeasonData.length > 0)
+})
 
-  const gameNumbers = props.currentSeasonData.map((_, index) => index + 1)
-  const points = props.currentSeasonData.map(game => game.points || 0)
+// Combine both seasons into one chart with two datasets
+const combinedChartData = computed(() => {
+  // Determine max game count (82 for full season, or longest available)
+  const maxGames = Math.max(
+    82,
+    props.currentSeasonData?.length || 0,
+    props.previousSeasonData?.length || 0
+  )
 
-  return {
-    labels: gameNumbers,
-    datasets: [
-      {
-        label: 'Points Per Game',
-        data: points,
-        borderColor: '#FFAA00',
-        backgroundColor: 'rgba(255, 170, 0, 0.1)',
-        borderWidth: 2,
-        tension: 0.1,
-        pointRadius: 3,
-        pointHoverRadius: 5
-      }
-    ]
+  // Create labels (1-82)
+  const labels = Array.from({ length: maxGames }, (_, i) => i + 1)
+
+  const datasets = []
+
+  // Add previous season data (if available)
+  if (props.previousSeasonData && props.previousSeasonData.length > 0) {
+    const previousPoints = props.previousSeasonData.map(game => game.points || 0)
+    datasets.push({
+      label: `${previousSeasonLabel.value} (Previous)`,
+      data: previousPoints,
+      borderColor: '#6B7280',
+      backgroundColor: 'rgba(107, 114, 128, 0.1)',
+      borderWidth: 2,
+      tension: 0.1,
+      pointRadius: 2,
+      pointHoverRadius: 5,
+      borderDash: [5, 5] // Dashed line for previous season
+    })
   }
-})
 
-// Process previous season data
-const previousSeasonChartData = computed(() => {
-  if (!props.previousSeasonData || props.previousSeasonData.length === 0) return null
-
-  const gameNumbers = props.previousSeasonData.map((_, index) => index + 1)
-  const points = props.previousSeasonData.map(game => game.points || 0)
+  // Add current season data (if available)
+  if (props.currentSeasonData && props.currentSeasonData.length > 0) {
+    const currentPoints = props.currentSeasonData.map(game => game.points || 0)
+    datasets.push({
+      label: `${currentSeasonLabel.value} (Current)`,
+      data: currentPoints,
+      borderColor: '#FFAA00',
+      backgroundColor: 'rgba(255, 170, 0, 0.1)',
+      borderWidth: 3,
+      tension: 0.1,
+      pointRadius: 3,
+      pointHoverRadius: 6
+    })
+  }
 
   return {
-    labels: gameNumbers,
-    datasets: [
-      {
-        label: 'Points Per Game',
-        data: points,
-        borderColor: '#6B7280',
-        backgroundColor: 'rgba(107, 114, 128, 0.1)',
-        borderWidth: 2,
-        tension: 0.1,
-        pointRadius: 3,
-        pointHoverRadius: 5
-      }
-    ]
+    labels,
+    datasets
   }
 })
 
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
+  interaction: {
+    mode: 'index',
+    intersect: false
+  },
   plugins: {
     legend: {
       display: true,
+      position: 'top',
       labels: {
-        color: '#ffffff'
+        color: '#ffffff',
+        usePointStyle: true,
+        padding: 15
       }
     },
     tooltip: {
@@ -153,7 +157,7 @@ const chartOptions = {
           return `Game ${context[0].label}`
         },
         label: (context) => {
-          return `Points: ${context.parsed.y}`
+          return `${context.dataset.label}: ${context.parsed.y} points`
         }
       }
     }
@@ -163,10 +167,15 @@ const chartOptions = {
       title: {
         display: true,
         text: 'Game Number',
-        color: '#ffffff'
+        color: '#ffffff',
+        font: {
+          size: 14,
+          weight: 'bold'
+        }
       },
       ticks: {
-        color: '#ffffff'
+        color: '#ffffff',
+        maxTicksLimit: 20
       },
       grid: {
         color: 'rgba(255, 255, 255, 0.1)'
@@ -176,7 +185,11 @@ const chartOptions = {
       title: {
         display: true,
         text: 'Points',
-        color: '#ffffff'
+        color: '#ffffff',
+        font: {
+          size: 14,
+          weight: 'bold'
+        }
       },
       ticks: {
         color: '#ffffff',
@@ -194,29 +207,21 @@ const chartOptions = {
 <style scoped>
 .game-log-graph {
   width: 100%;
-}
-
-.graphs-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-}
-
-.graph-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--color-bg-card);
+  border-radius: 8px;
 }
 
 .graph-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
   text-align: center;
+  margin-bottom: 1.5rem;
 }
 
 .chart-wrapper {
-  height: 300px;
+  height: 400px;
   position: relative;
 }
 
@@ -227,11 +232,16 @@ const chartOptions = {
   height: 100%;
   color: var(--color-text-secondary);
   font-style: italic;
+  font-size: 1.1rem;
 }
 
-@media (max-width: 968px) {
-  .graphs-container {
-    grid-template-columns: 1fr;
+@media (max-width: 768px) {
+  .chart-wrapper {
+    height: 300px;
+  }
+
+  .graph-title {
+    font-size: 1.2rem;
   }
 }
 </style>

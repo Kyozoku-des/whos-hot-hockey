@@ -30,4 +30,10 @@ public interface GameLogRepository extends JpaRepository<GameLog, Long> {
      */
     @Query(value = "SELECT * FROM game_logs WHERE player_id = :playerId AND season_id = :seasonId ORDER BY game_number ASC", nativeQuery = true)
     List<GameLog> findByPlayerIdAndSeasonIdOrderByGameNumberAsc(@Param("playerId") Long playerId, @Param("seasonId") String seasonId);
+
+    /**
+     * Find game logs by player ID and season ID.
+     */
+    @Query(value = "SELECT * FROM game_logs WHERE player_id = :playerId AND season_id = :seasonId", nativeQuery = true)
+    List<GameLog> findByPlayerIdAndSeasonId(@Param("playerId") Long playerId, @Param("seasonId") String seasonId);
 }

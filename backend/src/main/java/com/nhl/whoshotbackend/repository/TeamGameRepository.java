@@ -30,4 +30,10 @@ public interface TeamGameRepository extends JpaRepository<TeamGame, Long> {
      */
     @Query(value = "SELECT * FROM team_games WHERE team_code = :teamCode AND season_id = :seasonId ORDER BY game_number ASC", nativeQuery = true)
     List<TeamGame> findByTeamCodeAndSeasonIdOrderByGameNumberAsc(@Param("teamCode") String teamCode, @Param("seasonId") String seasonId);
+
+    /**
+     * Find team games by team code and season ID.
+     */
+    @Query(value = "SELECT * FROM team_games WHERE team_code = :teamCode AND season_id = :seasonId", nativeQuery = true)
+    List<TeamGame> findByTeamCodeAndSeasonId(@Param("teamCode") String teamCode, @Param("seasonId") String seasonId);
 }
