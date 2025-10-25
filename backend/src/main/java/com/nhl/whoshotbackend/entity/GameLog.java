@@ -55,4 +55,10 @@ public class GameLog {
 
     @Column
     private Boolean gameWon;
+
+    @Column
+    private String seasonId; // NHL season identifier (e.g., "20252026")
+
+    @Column
+    private Integer gameNumber; // Game number in the season (1-82)
 }

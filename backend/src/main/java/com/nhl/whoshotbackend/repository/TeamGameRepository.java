@@ -24,4 +24,10 @@ public interface TeamGameRepository extends JpaRepository<TeamGame, Long> {
      */
     @Query(value = "SELECT * FROM team_games WHERE team_code = :teamCode ORDER BY game_date DESC LIMIT :limit", nativeQuery = true)
     List<TeamGame> findLastNGamesByTeam(@Param("teamCode") String teamCode, @Param("limit") int limit);
+
+    /**
+     * Get games for a specific team and season, ordered by game number ascending.
+     */
+    @Query(value = "SELECT * FROM team_games WHERE team_code = :teamCode AND season_id = :seasonId ORDER BY game_number ASC", nativeQuery = true)
+    List<TeamGame> findByTeamCodeAndSeasonIdOrderByGameNumberAsc(@Param("teamCode") String teamCode, @Param("seasonId") String seasonId);
 }

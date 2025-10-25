@@ -1,5 +1,6 @@
 package com.nhl.whoshotbackend.controller;
 
+import com.nhl.whoshotbackend.dto.GameLogDTO;
 import com.nhl.whoshotbackend.entity.Player;
 import com.nhl.whoshotbackend.service.NhlApiService;
 import com.nhl.whoshotbackend.service.StatisticsService;
@@ -81,5 +82,19 @@ public class PlayerController {
         return statisticsService.getPlayer(playerId, actualSeason)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Get game log for a specific player and season.
+     */
+    @GetMapping("/{playerId}/game-log")
+    @Operation(summary = "Get player game log", description = "Returns game-by-game statistics for a specific player in a given season")
+    public ResponseEntity<List<GameLogDTO>> getPlayerGameLog(
+            @PathVariable Long playerId,
+            @RequestParam(required = false) String season) {
+        String actualSeason = season != null ? season : nhlApiService.getCurrentSeason();
+        log.info("GET /api/players/{}/game-log?season={}", playerId, actualSeason);
+        List<GameLogDTO> gameLog = statisticsService.getPlayerGameLog(playerId, actualSeason);
+        return ResponseEntity.ok(gameLog);
     }
 }
