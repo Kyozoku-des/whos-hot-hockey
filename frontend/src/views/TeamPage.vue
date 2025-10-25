@@ -44,6 +44,14 @@
         </div>
 
         <div class="section">
+          <h2 class="section-title">Win/Loss Progression</h2>
+          <TeamGameLogGraph
+            :current-season-data="teamGameLogs"
+            :previous-season-data="previousSeasonTeamGameLogs"
+          />
+        </div>
+
+        <div class="section">
           <h2 class="section-title">Roster</h2>
           <p class="placeholder-text">Team roster would be displayed here</p>
         </div>
@@ -57,11 +65,14 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTeamStats } from '../composables/useApi'
 import TeamLogo from '../components/TeamLogo.vue'
+import TeamGameLogGraph from '../components/TeamGameLogGraph.vue'
 
 const route = useRoute()
 const { loading, error, getTeamDetails } = useTeamStats()
 
 const team = ref(null)
+const teamGameLogs = ref([])
+const previousSeasonTeamGameLogs = ref([])
 
 onMounted(async () => {
   const teamId = route.params.id
