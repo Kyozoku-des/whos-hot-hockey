@@ -23,17 +23,16 @@
 </template>
 
 <script setup>
-import { ref, inject, watch, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlayerStats } from '../composables/useApi'
 
 const router = useRouter()
 const { loading, error, getPlayerStreaks } = usePlayerStats()
 const players = ref([])
-const selectedSeason = inject('selectedSeason')
 
 const loadData = async () => {
-  const data = await getPlayerStreaks(3, selectedSeason.value)
+  const data = await getPlayerStreaks(3)
   if (data) {
     // Show top 10 players with point streaks of 3+ games
     players.value = data
@@ -41,10 +40,6 @@ const loadData = async () => {
 }
 
 onMounted(() => {
-  loadData()
-})
-
-watch(selectedSeason, () => {
   loadData()
 })
 

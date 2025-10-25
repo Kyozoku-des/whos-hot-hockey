@@ -41,28 +41,23 @@
 </template>
 
 <script setup>
-import { ref, inject, watch, onMounted } from 'vue'
+import { ref, inject, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTeamStats } from '../composables/useApi'
 
 const router = useRouter()
 const { loading, error, getStandings } = useTeamStats()
 const teams = ref([])
-const selectedSeason = inject('selectedSeason')
 const isExpanded = inject('isExpanded', ref(false))
 
 const loadData = async () => {
-  const data = await getStandings(selectedSeason.value)
+  const data = await getStandings()
   if (data) {
     teams.value = data // Show all teams
   }
 }
 
 onMounted(() => {
-  loadData()
-})
-
-watch(selectedSeason, () => {
   loadData()
 })
 

@@ -33,18 +33,17 @@
 </template>
 
 <script setup>
-import { ref, inject, watch, onMounted } from 'vue'
+import { ref, inject, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTeamStats } from '../composables/useApi'
 
 const router = useRouter()
 const { loading, error, getStandings } = useTeamStats()
 const teams = ref([])
-const selectedSeason = inject('selectedSeason')
 const isExpanded = inject('isExpanded', ref(false))
 
 const loadData = async () => {
-  const data = await getStandings(selectedSeason.value)
+  const data = await getStandings()
   if (data) {
     // Sort all teams by win streak length descending
     teams.value = data.sort((a, b) => b.currentWinStreak - a.currentWinStreak)
@@ -52,10 +51,6 @@ const loadData = async () => {
 }
 
 onMounted(() => {
-  loadData()
-})
-
-watch(selectedSeason, () => {
   loadData()
 })
 

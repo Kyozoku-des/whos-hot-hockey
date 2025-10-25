@@ -34,18 +34,17 @@
 </template>
 
 <script setup>
-import { ref, inject, watch, onMounted } from 'vue'
+import { ref, inject, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTeamStats } from '../composables/useApi'
 
 const router = useRouter()
 const { loading, error, getStandings } = useTeamStats()
 const teams = ref([])
-const selectedSeason = inject('selectedSeason')
 const isExpanded = inject('isExpanded', ref(false))
 
 const loadData = async () => {
-  const data = await getStandings(selectedSeason.value)
+  const data = await getStandings()
   if (data) {
     // Sort all teams by last 10 games win percentage (descending)
     teams.value = data
@@ -60,10 +59,6 @@ const formatWinPercentage = (percentage) => {
 }
 
 onMounted(() => {
-  loadData()
-})
-
-watch(selectedSeason, () => {
   loadData()
 })
 

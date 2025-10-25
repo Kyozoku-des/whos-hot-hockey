@@ -37,32 +37,27 @@ export function useApi() {
 export function usePlayerStats() {
   const { loading, error, fetchData } = useApi()
 
-  const getTopScorers = async (limit = 10, season = null) => {
-    const seasonParam = season ? `&season=${season}` : ''
-    const data = await fetchData(`/players/standings?limit=${limit}${seasonParam}`)
+  const getTopScorers = async (limit = 10) => {
+    const data = await fetchData(`/players/standings?limit=${limit}`)
     return data || []
   }
 
-  const getPlayerStreaks = async (minGames = 3, season = null) => {
-    const seasonParam = season ? `&season=${season}` : ''
-    const data = await fetchData(`/players/point-streaks?minGames=${minGames}${seasonParam}`)
+  const getPlayerStreaks = async (minGames = 3) => {
+    const data = await fetchData(`/players/point-streaks?minGames=${minGames}`)
     return data || []
   }
 
-  const getHottestPlayers = async (games = 5, limit = 20, season = null) => {
-    const seasonParam = season ? `&season=${season}` : ''
-    const data = await fetchData(`/players/hot?games=${games}&limit=${limit}${seasonParam}`)
+  const getHottestPlayers = async (games = 5, limit = 20) => {
+    const data = await fetchData(`/players/hot?games=${games}&limit=${limit}`)
     return data || []
   }
 
-  const getPlayerDetails = async (playerId, season = null) => {
-    const seasonParam = season ? `?season=${season}` : ''
-    return await fetchData(`/players/${playerId}${seasonParam}`)
+  const getPlayerDetails = async (playerId) => {
+    return await fetchData(`/players/${playerId}`)
   }
 
-  const getPlayerGameLog = async (playerId, season = null) => {
-    const seasonParam = season ? `?season=${season}` : ''
-    const data = await fetchData(`/players/${playerId}${seasonParam}`)
+  const getPlayerGameLog = async (playerId) => {
+    const data = await fetchData(`/players/${playerId}`)
     return data?.recentGames || []
   }
 
@@ -80,27 +75,23 @@ export function usePlayerStats() {
 export function useTeamStats() {
   const { loading, error, fetchData } = useApi()
 
-  const getStandings = async (season = null) => {
-    const seasonParam = season ? `?season=${season}` : ''
-    const data = await fetchData(`/teams/standings${seasonParam}`)
+  const getStandings = async () => {
+    const data = await fetchData(`/teams/standings`)
     return data || []
   }
 
-  const getTeamWinStreaks = async (minGames = 2, season = null) => {
-    const seasonParam = season ? `&season=${season}` : ''
-    const data = await fetchData(`/teams/win-streaks?minGames=${minGames}${seasonParam}`)
+  const getTeamWinStreaks = async (minGames = 2) => {
+    const data = await fetchData(`/teams/win-streaks?minGames=${minGames}`)
     return data || []
   }
 
-  const getTeamLoseStreaks = async (minGames = 2, season = null) => {
-    const seasonParam = season ? `&season=${season}` : ''
-    const data = await fetchData(`/teams/loss-streaks?minGames=${minGames}${seasonParam}`)
+  const getTeamLoseStreaks = async (minGames = 2) => {
+    const data = await fetchData(`/teams/loss-streaks?minGames=${minGames}`)
     return data || []
   }
 
-  const getTeamDetails = async (teamCode, season = null) => {
-    const seasonParam = season ? `?season=${season}` : ''
-    return await fetchData(`/teams/${teamCode}${seasonParam}`)
+  const getTeamDetails = async (teamCode) => {
+    return await fetchData(`/teams/${teamCode}`)
   }
 
   return {
