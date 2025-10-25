@@ -23,27 +23,22 @@
 </template>
 
 <script setup>
-import { ref, inject, watch, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlayerStats } from '../composables/useApi'
 
 const router = useRouter()
 const { loading, error, getHottestPlayers } = usePlayerStats()
 const players = ref([])
-const selectedSeason = inject('selectedSeason')
 
 const loadData = async () => {
-  const data = await getHottestPlayers(5, 20, selectedSeason.value)
+  const data = await getHottestPlayers(5, 20)
   if (data) {
     players.value = data
   }
 }
 
 onMounted(() => {
-  loadData()
-})
-
-watch(selectedSeason, () => {
   loadData()
 })
 

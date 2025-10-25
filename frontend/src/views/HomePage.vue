@@ -2,7 +2,7 @@
   <div class="home-page">
     <div class="header">
       <h1 class="title">WHOS HOT NHL</h1>
-      <SeasonSelector v-model="selectedSeason" @change="handleSeasonChange" />
+      <CurrentSeasonDisplay />
     </div>
 
     <div class="content-container">
@@ -36,7 +36,6 @@
 </template>
 
 <script setup>
-import { ref, provide } from 'vue'
 import ExpandableCard from '../components/ExpandableCard.vue'
 import TopPointsTable from '../components/TopPointsTable.vue'
 import PointStreaksTable from '../components/PointStreaksTable.vue'
@@ -44,15 +43,7 @@ import HottestPlayersTable from '../components/HottestPlayersTable.vue'
 import TeamStandingsTable from '../components/TeamStandingsTable.vue'
 import TeamWinStreaksTable from '../components/TeamWinStreaksTable.vue'
 import TeamHotTable from '../components/TeamHotTable.vue'
-import SeasonSelector from '../components/SeasonSelector.vue'
-
-const selectedSeason = ref(null)
-
-provide('selectedSeason', selectedSeason)
-
-const handleSeasonChange = (season) => {
-  console.log('Season changed to:', season)
-}
+import CurrentSeasonDisplay from '../components/CurrentSeasonDisplay.vue'
 </script>
 
 <style scoped>
@@ -83,7 +74,7 @@ const handleSeasonChange = (season) => {
   flex-shrink: 0;
 }
 
-.header :deep(.season-selector) {
+.header :deep(.current-season-display) {
   margin-left: auto;
 }
 
