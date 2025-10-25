@@ -34,6 +34,12 @@ public interface PlayerRepository extends JpaRepository<Player, Player.PlayerKey
     List<Player> findHotPlayers(String season);
 
     /**
+     * Get players ordered by last 10 games PPG descending.
+     */
+    @Query("SELECT p FROM Player p WHERE p.season = ?1 AND p.last10GamesPPG IS NOT NULL ORDER BY p.last10GamesPPG DESC")
+    List<Player> findByLast10GamesPPG(String season);
+
+    /**
      * Find players by team code for a specific season.
      */
     List<Player> findByTeamCodeAndSeason(String teamCode, String season);

@@ -69,7 +69,8 @@ public class StatisticsService {
      * Get hot players based on recent performance for a season.
      */
     public List<Player> getHotPlayers(String season) {
-        return playerRepository.findHotPlayers(season);
+        log.debug("Getting hot players (by last 10 games PPG) for season: {}", season);
+        return playerRepository.findByLast10GamesPPG(season);
     }
 
     /**
@@ -175,6 +176,7 @@ public class StatisticsService {
      * Calculate hot rating for a specific player based on recent games.
      * Hot rating = points per game over last N games.
      * Also sets the hot, cold, and pointStreak boolean flags.
+     * Also calculates last 10 games PPG.
      */
     private void calculatePlayerHotRating(Player player) {
         List<GameLog> recentGames = gameLogRepository.findLastNGamesByPlayer(player.getPlayerId(), HOT_RATING_GAMES);
@@ -183,23 +185,34 @@ public class StatisticsService {
             player.setHotRating(player.getPointsPerGame());
             player.setHot(false);
             player.setCold(false);
-            return;
+        } else {
+            int totalPoints = recentGames.stream()
+                    .mapToInt(GameLog::getPoints)
+                    .sum();
+
+            double hotRating = (double) totalPoints / recentGames.size();
+            player.setHotRating(hotRating);
+
+            // Hot: PPG > 1.5 over at least 3 games
+            boolean isHot = recentGames.size() >= 3 && hotRating > 1.5;
+            player.setHot(isHot);
+
+            // Cold: PPG < 0.2 over at least 4 games
+            boolean isCold = recentGames.size() >= 4 && hotRating < 0.2;
+            player.setCold(isCold);
         }
 
-        int totalPoints = recentGames.stream()
-                .mapToInt(GameLog::getPoints)
-                .sum();
-
-        double hotRating = (double) totalPoints / recentGames.size();
-        player.setHotRating(hotRating);
-
-        // Hot: PPG > 1.5 over at least 3 games
-        boolean isHot = recentGames.size() >= 3 && hotRating > 1.5;
-        player.setHot(isHot);
-
-        // Cold: PPG < 0.2 over at least 4 games
-        boolean isCold = recentGames.size() >= 4 && hotRating < 0.2;
-        player.setCold(isCold);
+        // Calculate last 10 games PPG
+        List<GameLog> last10Games = gameLogRepository.findLastNGamesByPlayer(player.getPlayerId(), 10);
+        if (!last10Games.isEmpty()) {
+            int totalPointsLast10 = last10Games.stream()
+                    .mapToInt(GameLog::getPoints)
+                    .sum();
+            double last10PPG = (double) totalPointsLast10 / last10Games.size();
+            player.setLast10GamesPPG(last10PPG);
+        } else {
+            player.setLast10GamesPPG(player.getPointsPerGame());
+        }
     }
 
     /**

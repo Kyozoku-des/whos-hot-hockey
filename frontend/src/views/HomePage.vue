@@ -18,7 +18,7 @@
           <PointStreaksTable />
         </ExpandableCard>
 
-        <ExpandableCard title="Whos hot">
+        <ExpandableCard title="Last 10 games">
           <HottestPlayersTable />
         </ExpandableCard>
 

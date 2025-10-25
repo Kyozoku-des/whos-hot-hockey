@@ -359,10 +359,22 @@ public class DataIntegrationService {
         // Set team logo URL using NHL's standard logo URL pattern
         team.setLogoUrl(String.format("https://assets.nhle.com/logos/nhl/svg/%s_light.svg", teamCode));
 
-        team.setGamesPlayed(teamNode.path("gamesPlayed").asInt());
-        team.setWins(teamNode.path("wins").asInt());
-        team.setLosses(teamNode.path("losses").asInt());
-        team.setOvertimeLosses(teamNode.path("otLosses").asInt());
+        int gamesPlayed = teamNode.path("gamesPlayed").asInt();
+        int wins = teamNode.path("wins").asInt();
+        int losses = teamNode.path("losses").asInt();
+        int otLosses = teamNode.path("otLosses").asInt();
+
+        // Validate data integrity: wins + losses + otLosses should equal gamesPlayed
+        int totalGames = wins + losses + otLosses;
+        if (totalGames != gamesPlayed && gamesPlayed > 0) {
+            log.warn("Data integrity issue for team {}: wins({}) + losses({}) + otLosses({}) = {} != gamesPlayed({})",
+                    teamCode, wins, losses, otLosses, totalGames, gamesPlayed);
+        }
+
+        team.setGamesPlayed(gamesPlayed);
+        team.setWins(wins);
+        team.setLosses(losses);
+        team.setOvertimeLosses(otLosses);
         team.setPoints(teamNode.path("points").asInt());
         team.setPointPercentage(teamNode.path("pointPctg").asDouble());
         team.setGoalsFor(teamNode.path("goalFor").asInt());
@@ -395,7 +407,9 @@ public class DataIntegrationService {
         player.setPositionCode(playerNode.path("positionCode").asText());
         // Stats API uses "teamAbbrevs" which can be multiple teams (handle first one)
         String teamAbbrevs = playerNode.path("teamAbbrevs").asText();
-        player.setTeamCode(teamAbbrevs.split(",")[0].trim());
+        String teamCode = teamAbbrevs.split(",")[0].trim();
+        player.setTeamCode(teamCode);
+        player.setTeamLogoUrl(String.format("https://assets.nhle.com/logos/nhl/svg/%s_light.svg", teamCode));
 
         player.setGamesPlayed(playerNode.path("gamesPlayed").asInt());
         player.setGoals(playerNode.path("goals").asInt());
@@ -600,7 +614,7 @@ public class DataIntegrationService {
             // Calculate point percentage for last 10 games
             // Point % = points earned / (games played * 2)
             double possiblePoints = recentGames.size() * 2.0;
-            double pointPercentage = pointsInLast10 / possiblePoints;
+            double pointPercentage = (double) pointsInLast10 / possiblePoints;
             team.setLast10GamesPointPercentage(pointPercentage);
         } else {
             team.setLast10GamesWinPercentage(null);

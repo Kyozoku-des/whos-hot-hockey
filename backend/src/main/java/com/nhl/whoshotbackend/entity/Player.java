@@ -42,6 +42,9 @@ public class Player {
     private String teamCode; // Three-letter team code
 
     @Column
+    private String teamLogoUrl; // URL to team logo image
+
+    @Column
     private Integer gamesPlayed;
 
     @Column
@@ -85,6 +88,9 @@ public class Player {
 
     @Column
     private Double hotRating; // Points per game over last N games (calculated)
+
+    @Column
+    private Double last10GamesPPG; // Points per game over last 10 games
 
     @Column
     private Boolean hot; // true when on a hot streak

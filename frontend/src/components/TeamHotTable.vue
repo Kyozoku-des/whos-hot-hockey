@@ -11,7 +11,6 @@
         @click="goToTeam(team.teamCode)"
       >
         <div class="team-main">
-          <span class="team-rank">{{ index + 1 }}</span>
           <TeamLogo :logoUrl="team.logoUrl" :teamCode="team.teamCode" :alt="team.teamName" size="small" />
           <span class="team-name">{{ team.teamName }}</span>
           <span class="team-icons">

@@ -11,14 +11,14 @@
         @click="goToPlayer(player.playerId)"
       >
         <div class="player-main">
-          <TeamLogo :teamCode="player.teamCode" size="small" />
+          <TeamLogo :logoUrl="player.teamLogoUrl" :teamCode="player.teamCode" size="small" />
           <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
         </div>
         <span class="player-stats">
           <span class="stat-item">P: {{ player.points }}</span>
           <span class="stat-item">GP: {{ player.gamesPlayed }}</span>
-          <span class="stat-item">PPG: {{ player.pointsPerGame?.toFixed(2) || '0.00' }}</span>
-          <img src="../assets/flame.png" alt="Hot" class="status-icon" title="Hot player" />
+          <span class="stat-item">L10 PPG: {{ player.last10GamesPPG?.toFixed(2) || '0.00' }}</span>
+          <img v-if="player.hot" src="../assets/flame.png" alt="Hot" class="status-icon" title="Hot player" />
         </span>
       </div>
     </div>

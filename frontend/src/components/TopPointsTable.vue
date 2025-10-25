@@ -11,7 +11,7 @@
         @click="goToPlayer(player.playerId)"
       >
         <div class="player-main">
-          <TeamLogo :teamCode="player.teamCode" size="small" />
+          <TeamLogo :logoUrl="player.teamLogoUrl" :teamCode="player.teamCode" size="small" />
           <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
         </div>
         <span class="player-stats">
