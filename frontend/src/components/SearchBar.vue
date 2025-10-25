@@ -79,12 +79,15 @@ const showDropdown = computed(() => {
 const handleInput = () => {
   isSearching.value = true
 
+  // Update the current query immediately for real-time table filtering
+  searchStore.setQuery(searchQuery.value)
+
   // Clear previous timeout
   if (debounceTimeout) {
     clearTimeout(debounceTimeout)
   }
 
-  // Debounce for 1 second
+  // Debounce for 1 second (for dropdown results)
   debounceTimeout = setTimeout(() => {
     performSearch()
     isSearching.value = false
@@ -140,6 +143,7 @@ const closeDropdown = () => {
   searchQuery.value = ''
   searchResults.value = []
   selectedIndex.value = 0
+  searchStore.setQuery('') // Clear the filter query
 }
 
 const handleClickOutside = (event) => {

@@ -13,7 +13,6 @@
         <div class="player-main">
           <TeamLogo :teamCode="player.teamCode" size="small" />
           <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
-          <span class="team-code">{{ player.teamCode }}</span>
         </div>
         <span class="player-icons">
           <img v-if="player.hot" src="../assets/flame.png" alt="Hot" class="status-icon" title="Hot streak (PPG > 1.5)" />
@@ -27,20 +26,33 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlayerStats } from '../composables/useApi'
+import { useSearchStore } from '../stores/searchStore'
 import TeamLogo from './TeamLogo.vue'
 
 const router = useRouter()
 const { loading, error, getPlayerStreaks } = usePlayerStats()
-const players = ref([])
+const searchStore = useSearchStore()
+const allPlayers = ref([])
+
+// Filter players based on search query
+const players = computed(() => {
+  const query = searchStore.currentQuery.toLowerCase().trim()
+  if (!query) return allPlayers.value
+
+  return allPlayers.value.filter(player => {
+    const fullName = `${player.firstName} ${player.lastName}`.toLowerCase()
+    return fullName.includes(query)
+  })
+})
 
 const loadData = async () => {
   const data = await getPlayerStreaks(3)
   if (data) {
     // Show top 10 players with point streaks of 3+ games
-    players.value = data
+    allPlayers.value = data
   }
 }
 

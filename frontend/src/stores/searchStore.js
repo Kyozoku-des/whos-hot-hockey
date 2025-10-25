@@ -6,6 +6,7 @@ export const useSearchStore = defineStore('search', () => {
   const searchData = ref([])
   const isLoaded = ref(false)
   const lastUpdated = ref(null)
+  const currentQuery = ref('') // Current search query for real-time filtering
 
   // Actions
   const loadSearchData = async (fetchFn) => {
@@ -55,6 +56,11 @@ export const useSearchStore = defineStore('search', () => {
     searchData.value = []
     isLoaded.value = false
     lastUpdated.value = null
+    currentQuery.value = ''
+  }
+
+  const setQuery = (query) => {
+    currentQuery.value = query
   }
 
   return {
@@ -62,9 +68,11 @@ export const useSearchStore = defineStore('search', () => {
     searchData,
     isLoaded,
     lastUpdated,
+    currentQuery,
     // Actions
     loadSearchData,
     searchItems,
-    clearCache
+    clearCache,
+    setQuery
   }
 })

@@ -35,23 +35,43 @@
 </template>
 
 <script setup>
-import { ref, inject, onMounted } from 'vue'
+import { ref, computed, inject, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTeamStats } from '../composables/useApi'
+import { useSearchStore } from '../stores/searchStore'
 import TeamLogo from './TeamLogo.vue'
 
 const router = useRouter()
 const { loading, error, getStandings } = useTeamStats()
-const teams = ref([])
+const searchStore = useSearchStore()
+const allTeams = ref([])
 const isExpanded = inject('isExpanded', ref(false))
+
+// Filter teams based on search query
+const teams = computed(() => {
+  const query = searchStore.currentQuery.toLowerCase().trim()
+  let filtered = allTeams.value
+
+  if (query) {
+    filtered = allTeams.value.filter(team => {
+      return team.teamName.toLowerCase().includes(query)
+    })
+  }
+
+  // Sort by last 10 games point percentage (descending)
+  // Teams with null values are sorted to the end
+  return filtered.sort((a, b) => {
+    if (a.last10GamesPointPercentage == null && b.last10GamesPointPercentage == null) return 0
+    if (a.last10GamesPointPercentage == null) return 1
+    if (b.last10GamesPointPercentage == null) return -1
+    return b.last10GamesPointPercentage - a.last10GamesPointPercentage
+  })
+})
 
 const loadData = async () => {
   const data = await getStandings()
   if (data) {
-    // Sort all teams by last 10 games point percentage (descending)
-    teams.value = data
-      .filter(team => team.last10GamesPointPercentage != null)
-      .sort((a, b) => b.last10GamesPointPercentage - a.last10GamesPointPercentage)
+    allTeams.value = data
   }
 }
 

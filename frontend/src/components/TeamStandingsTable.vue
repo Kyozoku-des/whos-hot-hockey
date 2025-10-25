@@ -42,20 +42,32 @@
 </template>
 
 <script setup>
-import { ref, inject, onMounted } from 'vue'
+import { ref, computed, inject, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTeamStats } from '../composables/useApi'
+import { useSearchStore } from '../stores/searchStore'
 import TeamLogo from './TeamLogo.vue'
 
 const router = useRouter()
 const { loading, error, getStandings } = useTeamStats()
-const teams = ref([])
+const searchStore = useSearchStore()
+const allTeams = ref([])
 const isExpanded = inject('isExpanded', ref(false))
+
+// Filter teams based on search query
+const teams = computed(() => {
+  const query = searchStore.currentQuery.toLowerCase().trim()
+  if (!query) return allTeams.value
+
+  return allTeams.value.filter(team => {
+    return team.teamName.toLowerCase().includes(query)
+  })
+})
 
 const loadData = async () => {
   const data = await getStandings()
   if (data) {
-    teams.value = data // Show all teams
+    allTeams.value = data // Show all teams
   }
 }
 
