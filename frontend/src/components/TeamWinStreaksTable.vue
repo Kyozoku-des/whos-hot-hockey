@@ -10,6 +10,14 @@
         class="team-item"
         @click="goToTeam(team.teamCode)"
       >
+        <button
+          class="favorite-btn"
+          @click.stop="toggleFavorite(team)"
+          :disabled="!canFavorite(team)"
+          :title="getFavoriteTooltip(team)"
+        >
+          {{ isFavorited(team.teamCode) ? '★' : '☆' }}
+        </button>
         <div class="team-main">
           <TeamLogo :logoUrl="team.logoUrl" :teamCode="team.teamCode" :alt="team.teamName" size="small" />
           <span class="team-name">{{ team.teamName }}</span>
@@ -37,11 +45,13 @@ import { ref, computed, inject, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTeamStats } from '../composables/useApi'
 import { useSearchStore } from '../stores/searchStore'
+import { useFavorites } from '../composables/useFavorites'
 import TeamLogo from './TeamLogo.vue'
 
 const router = useRouter()
 const { loading, error, getStandings } = useTeamStats()
 const searchStore = useSearchStore()
+const { isFavorited, toggleFavorite: toggleFav, canAddMore } = useFavorites()
 const allTeams = ref([])
 const isExpanded = inject('isExpanded', ref(false))
 
@@ -79,6 +89,29 @@ const formatNextGame = (team) => {
   if (!team.nextOpponentCode) return 'N/A'
   const location = team.nextGameIsHome ? 'vs' : '@'
   return `${location} ${team.nextOpponentCode}`
+}
+
+// Favorites functions
+const toggleFavorite = (team) => {
+  const favoriteData = {
+    id: team.teamCode,
+    type: 'TEAM',
+    name: team.teamName,
+    imageUrl: team.logoUrl || '',
+    secondaryInfo: team.teamCode
+  }
+  toggleFav(favoriteData)
+}
+
+const canFavorite = (team) => {
+  return isFavorited(team.teamCode) || canAddMore()
+}
+
+const getFavoriteTooltip = (team) => {
+  if (isFavorited(team.teamCode)) {
+    return 'Remove from favorites'
+  }
+  return canAddMore() ? 'Add to favorites' : 'Maximum 10 favorites reached'
 }
 </script>
 
@@ -190,6 +223,34 @@ const formatNextGame = (team) => {
 
 .team-item:hover .tooltip {
   opacity: 1;
+}
+
+.favorite-btn {
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: #FFD700;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.favorite-btn:hover:not(:disabled) {
+  transform: translateY(-50%) scale(1.2);
+}
+
+.favorite-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .loading,
