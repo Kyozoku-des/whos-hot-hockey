@@ -194,6 +194,11 @@ onUnmounted(() => {
   flex: 1;
   overflow: hidden;
   color: var(--color-text-secondary);
+  max-height: 300px;
+}
+
+.expandable-card.expanded .card-content {
+  max-height: none;
 }
 
 .expandable-card:not(.expanded):hover .card-content {
