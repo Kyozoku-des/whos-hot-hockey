@@ -70,9 +70,8 @@ const players = computed(() => {
 })
 
 const loadData = async () => {
-  const data = await getPlayerStreaks(3)
+  const data = await getPlayerStreaks()
   if (data) {
-    // Show top 10 players with point streaks of 3+ games
     allPlayers.value = data
   }
 }

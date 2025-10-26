@@ -37,13 +37,13 @@ export function useApi() {
 export function usePlayerStats() {
   const { loading, error, fetchData } = useApi()
 
-  const getTopScorers = async (limit = 10) => {
-    const data = await fetchData(`/players/standings?limit=${limit}`)
+  const getTopScorers = async () => {
+    const data = await fetchData(`/players/standings`)
     return data || []
   }
 
-  const getPlayerStreaks = async (minGames = 3) => {
-    const data = await fetchData(`/players/point-streaks?minGames=${minGames}`)
+  const getPlayerStreaks = async () => {
+    const data = await fetchData(`/players/point-streaks`)
     return data || []
   }
 
@@ -83,13 +83,13 @@ export function useTeamStats() {
     return data || []
   }
 
-  const getTeamWinStreaks = async (minGames = 2) => {
-    const data = await fetchData(`/teams/win-streaks?minGames=${minGames}`)
+  const getTeamWinStreaks = async () => {
+    const data = await fetchData(`/teams/win-streaks`)
     return data || []
   }
 
-  const getTeamLoseStreaks = async (minGames = 2) => {
-    const data = await fetchData(`/teams/loss-streaks?minGames=${minGames}`)
+  const getTeamLoseStreaks = async () => {
+    const data = await fetchData(`/teams/loss-streaks`)
     return data || []
   }
 

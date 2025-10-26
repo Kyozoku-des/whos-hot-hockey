@@ -35,6 +35,7 @@ public class DataIntegrationService {
     private final GameLogRepository gameLogRepository;
     private final TeamGameRepository teamGameRepository;
     private final CurrentSeasonRepository currentSeasonRepository;
+    private final StatisticsService statisticsService;
 
     public DataIntegrationService(
             NhlApiService nhlApiService,
@@ -42,13 +43,15 @@ public class DataIntegrationService {
             PlayerRepository playerRepository,
             GameLogRepository gameLogRepository,
             TeamGameRepository teamGameRepository,
-            CurrentSeasonRepository currentSeasonRepository) {
+            CurrentSeasonRepository currentSeasonRepository,
+            StatisticsService statisticsService) {
         this.nhlApiService = nhlApiService;
         this.teamRepository = teamRepository;
         this.playerRepository = playerRepository;
         this.gameLogRepository = gameLogRepository;
         this.teamGameRepository = teamGameRepository;
         this.currentSeasonRepository = currentSeasonRepository;
+        this.statisticsService = statisticsService;
     }
 
     /**
@@ -82,8 +85,15 @@ public class DataIntegrationService {
         log.info("Starting full data synchronization...");
 
         try {
+            String currentSeason = getCurrentSeasonId();
+
             syncStandings();
             syncPlayerStats();
+
+            // Calculate hot ratings and streaks after syncing data
+            log.info("Calculating hot ratings and streaks for season {}...", currentSeason);
+            statisticsService.calculateHotRatings(currentSeason);
+
             log.info("Data synchronization completed successfully");
         } catch (Exception e) {
             log.error("Error during data synchronization", e);

@@ -87,7 +87,7 @@ const allTeams = ref([])
 // Fetch player and team data
 const loadData = async () => {
   const [playersData, teamsData] = await Promise.all([
-    getTopScorers(100), // Fetch more players to ensure we get all favorites
+    getTopScorers(), // Fetch all players
     getStandings()
   ])
 
