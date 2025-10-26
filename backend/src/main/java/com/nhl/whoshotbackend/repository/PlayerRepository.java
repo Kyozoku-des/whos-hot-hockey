@@ -50,7 +50,7 @@ public interface PlayerRepository extends JpaRepository<Player, Player.PlayerKey
      */
     @Query("SELECT new com.nhl.whoshotbackend.dto.SearchResultDTO('PLAYER', " +
            "CAST(p.playerId AS string), CONCAT(p.firstName, ' ', p.lastName), " +
-           "p.positionCode, p.headshotUrl, p.season) " +
+           "p.positionCode, p.teamCode, p.headshotUrl, p.season) " +
            "FROM Player p WHERE p.season = :season " +
            "ORDER BY p.lastName, p.firstName")
     List<SearchResultDTO> findAllForSearch(@Param("season") String season);

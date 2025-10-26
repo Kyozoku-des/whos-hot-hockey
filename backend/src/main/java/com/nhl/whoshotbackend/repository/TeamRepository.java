@@ -44,7 +44,7 @@ public interface TeamRepository extends JpaRepository<Team, Team.TeamKey> {
      * Returns teams ordered by full name.
      */
     @Query("SELECT new com.nhl.whoshotbackend.dto.SearchResultDTO('TEAM', " +
-           "t.teamCode, t.teamName, t.teamCode, t.logoUrl, t.season) " +
+           "t.teamCode, t.teamName, t.teamCode, null, t.logoUrl, t.season) " +
            "FROM Team t WHERE t.season = :season " +
            "ORDER BY t.teamName")
     List<SearchResultDTO> findAllForSearch(@Param("season") String season);

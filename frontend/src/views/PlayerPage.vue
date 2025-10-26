@@ -42,7 +42,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="game in gameLogs" :key="game.gameId">
+              <tr v-for="game in gameLogsReversed" :key="game.gameId">
                 <td>{{ formatDate(game.gameDate) }}</td>
                 <td>{{ game.goals }}</td>
                 <td>{{ game.assists }}</td>
@@ -69,6 +69,7 @@ const { loading, error, getPlayerDetails, getPlayerGameLog } = usePlayerStats()
 
 const player = ref(null)
 const gameLogs = ref([])
+const gameLogsReversed = ref([]) // For table display (most recent first)
 const previousSeasonGameLogs = ref([])
 const loadingGameLog = ref(false)
 
@@ -110,6 +111,8 @@ onMounted(async () => {
   const gameLogData = await getPlayerGameLog(playerId)
   if (gameLogData) {
     gameLogs.value = gameLogData
+    // Reverse for table display (show most recent games first)
+    gameLogsReversed.value = [...gameLogData].reverse()
   }
 
   // Fetch previous season game log

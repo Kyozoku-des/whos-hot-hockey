@@ -1,6 +1,6 @@
 <template>
   <div class="game-log-graph">
-    <h3 class="graph-title">Cumulative Wins - Season Comparison</h3>
+    <h3 class="graph-title">Points Per Game - Season Comparison</h3>
     <div class="chart-wrapper">
       <Line v-if="hasData" :data="combinedChartData" :options="chartOptions" />
       <div v-else class="no-data">No game log data available</div>
@@ -81,15 +81,28 @@ const hasData = computed(() => {
          (props.previousSeasonData && props.previousSeasonData.length > 0)
 })
 
-// Calculate cumulative wins from game data
-const calculateCumulativeWins = (gameData) => {
-  let cumulativeWins = 0
-  return gameData.map(game => {
+// Calculate points per game and cumulative points
+const calculatePointsData = (gameData) => {
+  let cumulativePoints = 0
+  const pointsPerGame = []
+  const cumulativeArray = []
+
+  gameData.forEach(game => {
+    let gamePoints = 0
     if (game.won) {
-      cumulativeWins++
+      gamePoints = 2 // Win = 2 points
+    } else if (game.overtimeLoss) {
+      gamePoints = 1 // OT/SO loss = 1 point
+    } else {
+      gamePoints = 0 // Regulation loss = 0 points
     }
-    return cumulativeWins
+
+    cumulativePoints += gamePoints
+    pointsPerGame.push(gamePoints)
+    cumulativeArray.push(cumulativePoints)
   })
+
+  return { pointsPerGame, cumulativePoints: cumulativeArray }
 }
 
 // Combine both seasons into one chart with two datasets
@@ -108,32 +121,34 @@ const combinedChartData = computed(() => {
 
   // Add previous season data (if available)
   if (props.previousSeasonData && props.previousSeasonData.length > 0) {
-    const previousWins = calculateCumulativeWins(props.previousSeasonData)
+    const previousData = calculatePointsData(props.previousSeasonData)
     datasets.push({
       label: `${previousSeasonLabel.value} (Previous)`,
-      data: previousWins,
+      data: previousData.pointsPerGame,
       borderColor: '#6B7280',
       backgroundColor: 'rgba(107, 114, 128, 0.1)',
       borderWidth: 2,
       tension: 0.1,
       pointRadius: 2,
       pointHoverRadius: 5,
-      borderDash: [5, 5] // Dashed line for previous season
+      borderDash: [5, 5], // Dashed line for previous season
+      cumulativePoints: previousData.cumulativePoints // Store for tooltip
     })
   }
 
   // Add current season data (if available)
   if (props.currentSeasonData && props.currentSeasonData.length > 0) {
-    const currentWins = calculateCumulativeWins(props.currentSeasonData)
+    const currentData = calculatePointsData(props.currentSeasonData)
     datasets.push({
       label: `${currentSeasonLabel.value} (Current)`,
-      data: currentWins,
+      data: currentData.pointsPerGame,
       borderColor: '#FFAA00',
       backgroundColor: 'rgba(255, 170, 0, 0.1)',
       borderWidth: 3,
       tension: 0.1,
       pointRadius: 3,
-      pointHoverRadius: 6
+      pointHoverRadius: 6,
+      cumulativePoints: currentData.cumulativePoints // Store for tooltip
     })
   }
 
@@ -157,18 +172,33 @@ const chartOptions = {
       labels: {
         color: '#ffffff',
         usePointStyle: true,
-        padding: 15
+        padding: 15,
+        font: {
+          family: 'Minecraft, sans-serif',
+          size: 12
+        }
       }
     },
     tooltip: {
       mode: 'index',
       intersect: false,
+      titleFont: {
+        family: 'Minecraft, sans-serif',
+        size: 13
+      },
+      bodyFont: {
+        family: 'Minecraft, sans-serif',
+        size: 12
+      },
       callbacks: {
         title: (context) => {
           return `Game ${context[0].label}`
         },
         label: (context) => {
-          return `${context.dataset.label}: ${context.parsed.y} wins`
+          const points = context.parsed.y
+          const gameIndex = context.dataIndex
+          const cumulative = context.dataset.cumulativePoints?.[gameIndex] || 0
+          return `${context.dataset.label}: ${points} pts (Total: ${cumulative} pts)`
         }
       }
     }
@@ -180,13 +210,17 @@ const chartOptions = {
         text: 'Game Number',
         color: '#ffffff',
         font: {
+          family: 'Minecraft, sans-serif',
           size: 14,
           weight: 'bold'
         }
       },
       ticks: {
         color: '#ffffff',
-        maxTicksLimit: 20
+        maxTicksLimit: 20,
+        font: {
+          family: 'Minecraft, sans-serif'
+        }
       },
       grid: {
         color: 'rgba(255, 255, 255, 0.1)'
@@ -195,21 +229,26 @@ const chartOptions = {
     y: {
       title: {
         display: true,
-        text: 'Cumulative Wins',
+        text: 'Points (0, 1, 2)',
         color: '#ffffff',
         font: {
+          family: 'Minecraft, sans-serif',
           size: 14,
           weight: 'bold'
         }
       },
       ticks: {
         color: '#ffffff',
-        stepSize: 5
+        stepSize: 1,
+        font: {
+          family: 'Minecraft, sans-serif'
+        }
       },
       grid: {
         color: 'rgba(255, 255, 255, 0.1)'
       },
-      beginAtZero: true
+      beginAtZero: true,
+      max: 2
     }
   }
 }

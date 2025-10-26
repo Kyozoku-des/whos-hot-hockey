@@ -29,21 +29,34 @@ export const useSearchStore = defineStore('search', () => {
 
     const lowerQuery = query.toLowerCase().trim()
 
+    // First, find all matching teams
+    const matchingTeams = searchData.value
+      .filter(item => item.type === 'TEAM' && item.name.toLowerCase().includes(lowerQuery))
+
+    // Get team codes from matching teams
+    const matchingTeamCodes = matchingTeams.map(team => team.id)
+
     // Filter and score matches
     const matches = searchData.value
       .map(item => {
         const name = item.name.toLowerCase()
         const matchIndex = name.indexOf(lowerQuery)
 
-        if (matchIndex === -1) {
-          return null
+        // Direct name match
+        if (matchIndex !== -1) {
+          // Score: lower is better
+          // Prioritize matches at the start of the name
+          const score = matchIndex + (name.length - lowerQuery.length)
+          return { ...item, score, matchType: 'name' }
         }
 
-        // Score: lower is better
-        // Prioritize matches at the start of the name
-        const score = matchIndex + (name.length - lowerQuery.length)
+        // If this is a player and their team matches the query
+        if (item.type === 'PLAYER' && item.teamCode && matchingTeamCodes.includes(item.teamCode)) {
+          // Give player team matches a higher score (lower priority than direct name matches)
+          return { ...item, score: 1000, matchType: 'team' }
+        }
 
-        return { ...item, score }
+        return null
       })
       .filter(item => item !== null)
       .sort((a, b) => a.score - b.score)

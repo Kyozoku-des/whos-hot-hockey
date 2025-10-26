@@ -98,9 +98,13 @@ const combinedChartData = computed(() => {
   // Add previous season data (if available)
   if (props.previousSeasonData && props.previousSeasonData.length > 0) {
     const previousPoints = props.previousSeasonData.map(game => game.points || 0)
+    const previousGoals = props.previousSeasonData.map(game => game.goals || 0)
+    const previousAssists = props.previousSeasonData.map(game => game.assists || 0)
     datasets.push({
       label: `${previousSeasonLabel.value} (Previous)`,
       data: previousPoints,
+      goals: previousGoals,
+      assists: previousAssists,
       borderColor: '#6B7280',
       backgroundColor: 'rgba(107, 114, 128, 0.1)',
       borderWidth: 2,
@@ -114,9 +118,13 @@ const combinedChartData = computed(() => {
   // Add current season data (if available)
   if (props.currentSeasonData && props.currentSeasonData.length > 0) {
     const currentPoints = props.currentSeasonData.map(game => game.points || 0)
+    const currentGoals = props.currentSeasonData.map(game => game.goals || 0)
+    const currentAssists = props.currentSeasonData.map(game => game.assists || 0)
     datasets.push({
       label: `${currentSeasonLabel.value} (Current)`,
       data: currentPoints,
+      goals: currentGoals,
+      assists: currentAssists,
       borderColor: '#FFAA00',
       backgroundColor: 'rgba(255, 170, 0, 0.1)',
       borderWidth: 3,
@@ -146,18 +154,38 @@ const chartOptions = {
       labels: {
         color: '#ffffff',
         usePointStyle: true,
-        padding: 15
+        padding: 15,
+        font: {
+          family: 'Minecraft, sans-serif',
+          size: 12
+        }
       }
     },
     tooltip: {
       mode: 'index',
       intersect: false,
+      titleFont: {
+        family: 'Minecraft, sans-serif',
+        size: 13
+      },
+      bodyFont: {
+        family: 'Minecraft, sans-serif',
+        size: 12
+      },
       callbacks: {
         title: (context) => {
           return `Game ${context[0].label}`
         },
         label: (context) => {
-          return `${context.dataset.label}: ${context.parsed.y} points`
+          const gameIndex = context.dataIndex
+          const dataset = context.dataset
+          const points = context.parsed.y
+
+          // Get goals and assists if available in the dataset
+          const goals = dataset.goals?.[gameIndex] ?? 0
+          const assists = dataset.assists?.[gameIndex] ?? 0
+
+          return `${dataset.label}: ${points} pts (${goals}G, ${assists}A)`
         }
       }
     }
@@ -169,13 +197,17 @@ const chartOptions = {
         text: 'Game Number',
         color: '#ffffff',
         font: {
+          family: 'Minecraft, sans-serif',
           size: 14,
           weight: 'bold'
         }
       },
       ticks: {
         color: '#ffffff',
-        maxTicksLimit: 20
+        maxTicksLimit: 20,
+        font: {
+          family: 'Minecraft, sans-serif'
+        }
       },
       grid: {
         color: 'rgba(255, 255, 255, 0.1)'
@@ -187,13 +219,17 @@ const chartOptions = {
         text: 'Points',
         color: '#ffffff',
         font: {
+          family: 'Minecraft, sans-serif',
           size: 14,
           weight: 'bold'
         }
       },
       ticks: {
         color: '#ffffff',
-        stepSize: 1
+        stepSize: 1,
+        font: {
+          family: 'Minecraft, sans-serif'
+        }
       },
       grid: {
         color: 'rgba(255, 255, 255, 0.1)'
