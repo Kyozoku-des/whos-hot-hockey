@@ -70,7 +70,7 @@ const players = computed(() => {
 })
 
 const loadData = async () => {
-  const data = await getHottestPlayers(5, 20)
+  const data = await getHottestPlayers()
   if (data) {
     allPlayers.value = data
   }

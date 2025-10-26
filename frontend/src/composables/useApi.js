@@ -47,8 +47,8 @@ export function usePlayerStats() {
     return data || []
   }
 
-  const getHottestPlayers = async (games = 5, limit = 20) => {
-    const data = await fetchData(`/players/hot?games=${games}&limit=${limit}`)
+  const getHottestPlayers = async () => {
+    const data = await fetchData(`/players/hot`)
     return data || []
   }
 
