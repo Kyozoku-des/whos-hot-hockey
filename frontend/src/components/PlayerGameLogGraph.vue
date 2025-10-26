@@ -185,7 +185,7 @@ const chartOptions = {
           const goals = dataset.goals?.[gameIndex] ?? 0
           const assists = dataset.assists?.[gameIndex] ?? 0
 
-          return `${dataset.label}: ${points} pts (${goals}G, ${assists}A)`
+          return `${dataset.label}: ${goals}G, ${assists}A, ${points}P`
         }
       }
     }
