@@ -7,11 +7,12 @@
     </div>
 
     <div v-else class="favorites-grid">
+      <!-- Player Favorites -->
       <div
-        v-for="favorite in favorites"
+        v-for="favorite in playerFavorites"
         :key="favorite.id"
-        class="favorite-item"
-        @click="goToItem(favorite)"
+        class="player-item"
+        @click="goToPlayer(favorite.id)"
       >
         <button
           class="remove-btn"
@@ -20,28 +21,52 @@
         >
           ✕
         </button>
-
-        <div class="item-image">
+        <div class="player-main">
           <img
             v-if="favorite.imageUrl"
             :src="favorite.imageUrl"
             :alt="favorite.name"
+            class="player-headshot"
             @error="handleImageError"
           />
-          <div v-else class="image-placeholder">
-            {{ favorite.type === 'PLAYER' ? '👤' : '🏒' }}
-          </div>
+          <div v-else class="image-placeholder">👤</div>
+          <span class="player-name">{{ favorite.name }}</span>
         </div>
+        <span class="player-info">
+          <span class="info-item">{{ favorite.secondaryInfo }}</span>
+          <span class="info-badge">PLAYER</span>
+        </span>
+      </div>
 
-        <div class="item-info">
-          <div class="item-name">{{ favorite.name }}</div>
-          <div class="item-secondary">{{ favorite.secondaryInfo }}</div>
-          <div class="item-badge" :class="`badge-${favorite.type.toLowerCase()}`">
-            {{ favorite.type }}
-          </div>
+      <!-- Team Favorites -->
+      <div
+        v-for="favorite in teamFavorites"
+        :key="favorite.id"
+        class="team-item"
+        @click="goToTeam(favorite.id)"
+      >
+        <button
+          class="remove-btn"
+          @click.stop="handleRemove(favorite)"
+          title="Remove from favorites"
+        >
+          ✕
+        </button>
+        <div class="team-main">
+          <TeamLogo
+            v-if="favorite.imageUrl"
+            :logoUrl="favorite.imageUrl"
+            :teamCode="favorite.id"
+            :alt="favorite.name"
+            size="small"
+          />
+          <div v-else class="image-placeholder">🏒</div>
+          <span class="team-name">{{ favorite.name }}</span>
         </div>
-
-        <div class="favorite-star">★</div>
+        <span class="team-info">
+          <span class="info-item">{{ favorite.secondaryInfo }}</span>
+          <span class="info-badge">TEAM</span>
+        </span>
       </div>
     </div>
 
@@ -55,21 +80,32 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFavorites } from '../composables/useFavorites'
+import TeamLogo from './TeamLogo.vue'
 
 const router = useRouter()
 const { favorites, removeFavorite } = useFavorites()
 
 const maxFavorites = 10
 
+// Separate player and team favorites
+const playerFavorites = computed(() => {
+  return favorites.value.filter(fav => fav.type === 'PLAYER')
+})
+
+const teamFavorites = computed(() => {
+  return favorites.value.filter(fav => fav.type === 'TEAM')
+})
+
 const handleRemove = (favorite) => {
   removeFavorite(favorite.id)
 }
 
-const goToItem = (favorite) => {
-  const path = favorite.type === 'PLAYER'
-    ? `/player/${favorite.id}`
-    : `/team/${favorite.id}`
-  router.push(path)
+const goToPlayer = (playerId) => {
+  router.push(`/player/${playerId}`)
+}
+
+const goToTeam = (teamCode) => {
+  router.push(`/team/${teamCode}`)
 }
 
 const handleImageError = (event) => {
@@ -80,7 +116,6 @@ const handleImageError = (event) => {
 <style scoped>
 .favorites-list {
   width: 100%;
-  min-height: 200px;
 }
 
 .empty-state {
@@ -112,128 +147,158 @@ const handleImageError = (event) => {
 }
 
 .favorites-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-  padding-right: 1.5rem;
-}
-
-.favorite-item {
-  position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 1.5rem 1rem;
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 2px solid var(--color-border);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  gap: 0.75rem;
+  padding-right: 1.5rem;
+  padding-top: 2.5rem;
 }
 
-.favorite-item:hover {
-  background-color: rgba(255, 170, 0, 0.1);
-  border-color: #FFAA00;
-  transform: translateY(-4px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+/* Player Item Styles (matching TopPointsTable) */
+.player-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.player-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateX(5px);
+  z-index: 10;
+}
+
+.player-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  padding-left: 2.5rem;
+}
+
+.player-headshot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--color-border);
+}
+
+.player-name {
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  font-weight: bold;
+  flex: 1;
+}
+
+.player-info {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Team Item Styles (matching TeamStandingsTable) */
+.team-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.team-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateX(5px);
+  z-index: 10;
+}
+
+.team-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  padding-left: 2.5rem;
+}
+
+.team-name {
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  font-weight: bold;
+  flex: 1;
+}
+
+.team-info {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Shared Styles */
+.image-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  border: 2px solid var(--color-border);
+}
+
+.info-item {
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+  font-weight: normal;
+  white-space: nowrap;
+}
+
+.info-badge {
+  color: var(--color-text-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  background-color: rgba(255, 170, 0, 0.2);
+  border-radius: 4px;
+  text-transform: uppercase;
 }
 
 .remove-btn {
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  width: 28px;
-  height: 28px;
+  left: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
   border: none;
-  background-color: rgba(255, 0, 0, 0.2);
+  background: transparent;
   color: #ff6b6b;
-  font-size: 1rem;
+  font-size: 1.2rem;
   font-weight: bold;
-  border-radius: 50%;
   cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
-  opacity: 0.7;
+  z-index: 5;
 }
 
 .remove-btn:hover {
-  opacity: 1;
-  background-color: rgba(255, 0, 0, 0.4);
-  transform: scale(1.1);
-}
-
-.item-image {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  overflow: hidden;
-  margin-bottom: 1rem;
-  background-color: rgba(255, 255, 255, 0.05);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid var(--color-border);
-}
-
-.item-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.image-placeholder {
-  font-size: 2.5rem;
-}
-
-.item-info {
-  text-align: center;
-  width: 100%;
-}
-
-.item-name {
-  font-weight: 600;
-  color: var(--color-text-primary);
-  font-size: 1rem;
-  margin-bottom: 0.25rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.item-secondary {
-  font-size: 0.85rem;
-  color: var(--color-text-secondary);
-  margin-bottom: 0.5rem;
-}
-
-.item-badge {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.badge-player {
-  background-color: rgba(59, 130, 246, 0.2);
-  color: #60a5fa;
-}
-
-.badge-team {
-  background-color: rgba(239, 68, 68, 0.2);
-  color: #f87171;
-}
-
-.favorite-star {
-  position: absolute;
-  bottom: 0.5rem;
-  right: 0.5rem;
-  font-size: 1.5rem;
-  color: #FFD700;
-  opacity: 0.8;
+  color: #ff5252;
+  filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.8));
+  text-shadow: 0 0 10px rgba(255, 107, 107, 0.6);
 }
 
 .favorites-count {
@@ -242,25 +307,5 @@ const handleImageError = (event) => {
   font-size: 0.9rem;
   color: var(--color-text-secondary);
   font-weight: 600;
-}
-
-@media (max-width: 768px) {
-  .favorites-grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 0.75rem;
-  }
-
-  .favorite-item {
-    padding: 1rem 0.75rem;
-  }
-
-  .item-image {
-    width: 60px;
-    height: 60px;
-  }
-
-  .item-name {
-    font-size: 0.9rem;
-  }
 }
 </style>

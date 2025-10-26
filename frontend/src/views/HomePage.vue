@@ -9,12 +9,12 @@
     </div>
 
     <div class="content-container">
-      <!-- Favorites Card - Only show if user has favorites -->
-      <ExpandableCard v-if="showFavorites" title="My Favorites" :defaultExpanded="true" class="favorites-card">
-        <FavoritesTable />
-      </ExpandableCard>
-
       <div class="cards-grid">
+        <!-- Favorites Card - Only show if user has favorites -->
+        <ExpandableCard v-if="showFavorites" title="My Favorites" :defaultExpanded="true" class="favorites-card">
+          <FavoritesTable />
+        </ExpandableCard>
+
         <ExpandableCard title="Player standings">
           <TopPointsTable />
         </ExpandableCard>
@@ -114,7 +114,6 @@ onMounted(() => {
 }
 
 .favorites-card {
-  margin-bottom: 2rem;
   border: 2px solid #FFAA00;
   box-shadow: 0 4px 12px rgba(255, 170, 0, 0.2);
 }
@@ -122,11 +121,10 @@ onMounted(() => {
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(2, 1fr);
+  grid-auto-rows: 1fr;
   gap: 1.5rem;
   max-width: 1600px;
   margin: 0 auto;
-  height: calc(100vh - 200px);
   min-height: 700px;
 }
 

@@ -145,6 +145,7 @@ const getFavoriteTooltip = (player) => {
   align-items: center;
   gap: 0.75rem;
   flex: 1;
+  padding-left: 2.5rem;
 }
 
 .player-name {
@@ -198,10 +199,20 @@ const getFavoriteTooltip = (player) => {
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 5;
 }
 
 .favorite-btn:hover:not(:disabled) {
-  transform: translateY(-50%) scale(1.2);
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8));
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+}
+
+/* Show filled star on hover for unfavorited items */
+.favorite-btn:hover:not(:disabled)::after {
+  content: '★';
+  position: absolute;
+  color: #FFD700;
+  opacity: 0.7;
 }
 
 .favorite-btn:disabled {
