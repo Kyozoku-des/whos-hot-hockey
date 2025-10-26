@@ -125,7 +125,6 @@ const getFavoriteTooltip = (team) => {
   flex-direction: column;
   gap: 0.75rem;
   padding-right: 1.5rem;
-  padding-top: 2.5rem;
 }
 
 .team-item {

@@ -6,66 +6,58 @@
       <p>Click the ★ icon on any player or team to add them here!</p>
     </div>
 
+    <div v-else-if="loading" class="loading">Loading favorites...</div>
+
     <div v-else class="favorites-grid">
       <!-- Player Favorites -->
       <div
-        v-for="favorite in playerFavorites"
-        :key="favorite.id"
+        v-for="player in playerFavorites"
+        :key="player.playerId"
         class="player-item"
-        @click="goToPlayer(favorite.id)"
+        @click="goToPlayer(player.playerId)"
       >
         <button
           class="remove-btn"
-          @click.stop="handleRemove(favorite)"
+          @click.stop="handleRemove(player.playerId)"
           title="Remove from favorites"
         >
           ✕
         </button>
         <div class="player-main">
-          <img
-            v-if="favorite.imageUrl"
-            :src="favorite.imageUrl"
-            :alt="favorite.name"
-            class="player-headshot"
-            @error="handleImageError"
-          />
-          <div v-else class="image-placeholder">👤</div>
-          <span class="player-name">{{ favorite.name }}</span>
+          <TeamLogo :logoUrl="player.teamLogoUrl" :teamCode="player.teamCode" size="small" />
+          <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
         </div>
-        <span class="player-info">
-          <span class="info-item">{{ favorite.secondaryInfo }}</span>
-          <span class="info-badge">PLAYER</span>
+        <span class="player-stats">
+          <span class="stat-item">G: {{ player.goals }}</span>
+          <span class="stat-item">A: {{ player.assists }}</span>
+          <span class="stat-item">P: {{ player.points }}</span>
+          <span class="stat-item">GP: {{ player.gamesPlayed }}</span>
         </span>
       </div>
 
       <!-- Team Favorites -->
       <div
-        v-for="favorite in teamFavorites"
-        :key="favorite.id"
+        v-for="team in teamFavorites"
+        :key="team.teamCode"
         class="team-item"
-        @click="goToTeam(favorite.id)"
+        @click="goToTeam(team.teamCode)"
       >
         <button
           class="remove-btn"
-          @click.stop="handleRemove(favorite)"
+          @click.stop="handleRemove(team.teamCode)"
           title="Remove from favorites"
         >
           ✕
         </button>
         <div class="team-main">
-          <TeamLogo
-            v-if="favorite.imageUrl"
-            :logoUrl="favorite.imageUrl"
-            :teamCode="favorite.id"
-            :alt="favorite.name"
-            size="small"
-          />
-          <div v-else class="image-placeholder">🏒</div>
-          <span class="team-name">{{ favorite.name }}</span>
+          <TeamLogo :logoUrl="team.logoUrl" :teamCode="team.teamCode" :alt="team.teamName" size="small" />
+          <span class="team-name">{{ team.teamName }}</span>
         </div>
-        <span class="team-info">
-          <span class="info-item">{{ favorite.secondaryInfo }}</span>
-          <span class="info-badge">TEAM</span>
+        <span class="team-stats">
+          <span class="stat-item">GP: {{ team.gamesPlayed }}</span>
+          <span class="stat-item">W: {{ team.wins }}</span>
+          <span class="stat-item">L: {{ team.losses }}</span>
+          <span class="stat-item stat-points">PTS: {{ team.points }}</span>
         </span>
       </div>
     </div>
@@ -77,27 +69,69 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFavorites } from '../composables/useFavorites'
+import { usePlayerStats, useTeamStats } from '../composables/useApi'
 import TeamLogo from './TeamLogo.vue'
 
 const router = useRouter()
 const { favorites, removeFavorite } = useFavorites()
+const { loading: playersLoading, getTopScorers } = usePlayerStats()
+const { loading: teamsLoading, getStandings } = useTeamStats()
 
 const maxFavorites = 10
+const allPlayers = ref([])
+const allTeams = ref([])
 
-// Separate player and team favorites
+// Fetch player and team data
+const loadData = async () => {
+  const [playersData, teamsData] = await Promise.all([
+    getTopScorers(100), // Fetch more players to ensure we get all favorites
+    getStandings()
+  ])
+
+  if (playersData) allPlayers.value = playersData
+  if (teamsData) allTeams.value = teamsData
+}
+
+onMounted(() => {
+  loadData()
+})
+
+// Reload data when favorites change
+watch(() => favorites.value.length, () => {
+  if (favorites.value.length > 0 && (allPlayers.value.length === 0 || allTeams.value.length === 0)) {
+    loadData()
+  }
+})
+
+// Get player favorites with full data
 const playerFavorites = computed(() => {
-  return favorites.value.filter(fav => fav.type === 'PLAYER')
+  return favorites.value
+    .filter(fav => fav.type === 'PLAYER')
+    .map(fav => {
+      const player = allPlayers.value.find(p => p.playerId === fav.id)
+      return player || null
+    })
+    .filter(p => p !== null)
 })
 
+// Get team favorites with full data
 const teamFavorites = computed(() => {
-  return favorites.value.filter(fav => fav.type === 'TEAM')
+  return favorites.value
+    .filter(fav => fav.type === 'TEAM')
+    .map(fav => {
+      const team = allTeams.value.find(t => t.teamCode === fav.id)
+      return team || null
+    })
+    .filter(t => t !== null)
 })
 
-const handleRemove = (favorite) => {
-  removeFavorite(favorite.id)
+const loading = computed(() => playersLoading.value || teamsLoading.value)
+
+const handleRemove = (id) => {
+  removeFavorite(id)
 }
 
 const goToPlayer = (playerId) => {
@@ -106,10 +140,6 @@ const goToPlayer = (playerId) => {
 
 const goToTeam = (teamCode) => {
   router.push(`/team/${teamCode}`)
-}
-
-const handleImageError = (event) => {
-  event.target.style.display = 'none'
 }
 </script>
 
@@ -151,7 +181,6 @@ const handleImageError = (event) => {
   flex-direction: column;
   gap: 0.75rem;
   padding-right: 1.5rem;
-  padding-top: 2.5rem;
 }
 
 /* Player Item Styles (matching TopPointsTable) */
@@ -197,7 +226,7 @@ const handleImageError = (event) => {
   flex: 1;
 }
 
-.player-info {
+.player-stats {
   display: flex;
   gap: 1rem;
   align-items: center;
@@ -238,40 +267,22 @@ const handleImageError = (event) => {
   flex: 1;
 }
 
-.team-info {
+.team-stats {
   display: flex;
   gap: 1rem;
   align-items: center;
 }
 
 /* Shared Styles */
-.image-placeholder {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.05);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  border: 2px solid var(--color-border);
-}
-
-.info-item {
+.stat-item {
   color: var(--color-text-primary);
   font-size: 0.9rem;
   font-weight: normal;
   white-space: nowrap;
 }
 
-.info-badge {
-  color: var(--color-text-primary);
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.25rem 0.5rem;
-  background-color: rgba(255, 170, 0, 0.2);
-  border-radius: 4px;
-  text-transform: uppercase;
+.stat-points {
+  font-weight: bold;
 }
 
 .remove-btn {
@@ -307,5 +318,11 @@ const handleImageError = (event) => {
   font-size: 0.9rem;
   color: var(--color-text-secondary);
   font-weight: 600;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-text-secondary);
 }
 </style>
