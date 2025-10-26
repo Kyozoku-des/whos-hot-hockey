@@ -28,7 +28,7 @@
     </div>
 
     <h2 class="card-title">{{ title }}</h2>
-    <div class="card-content" :class="{ scrollable: isExpanded }" @click.stop>
+    <div class="card-content" :class="{ scrollable: isExpanded }" @click="handleContentClick">
       <slot></slot>
     </div>
   </div>
@@ -55,6 +55,15 @@ const expandCard = () => {
     isExpanded.value = true
     isClosing.value = false
   }
+}
+
+const handleContentClick = (event) => {
+  if (isExpanded.value) {
+    // When expanded, stop propagation to prevent unwanted behavior
+    // Child elements (player/team items) will still handle their own clicks
+    event.stopPropagation()
+  }
+  // When not expanded, let the click bubble up to expandCard to expand the card
 }
 
 const closeExpanded = () => {

@@ -124,7 +124,7 @@ const handleKeydown = (event) => {
       break
     case 'Escape':
       event.preventDefault()
-      closeDropdown()
+      clearSearch()
       break
   }
 }
@@ -139,11 +139,17 @@ const selectResult = (result) => {
 }
 
 const closeDropdown = () => {
+  // Only close the dropdown, keep the search query and filters
   isFocused.value = false
-  searchQuery.value = ''
   searchResults.value = []
   selectedIndex.value = 0
-  searchStore.setQuery('') // Clear the filter query
+}
+
+const clearSearch = () => {
+  // Completely clear search query and filters
+  searchQuery.value = ''
+  searchStore.setQuery('')
+  closeDropdown()
 }
 
 const handleClickOutside = (event) => {
