@@ -328,10 +328,24 @@ public class DataIntegrationService {
             }
 
             JsonNode gameLogs = gameLogData.get("gameLog");
-            List<GameLog> gameLogsToSave = new ArrayList<>();
 
-            int gameNumber = 1;
+            // First, collect all game logs with their dates for sorting
+            List<JsonNode> gameNodeList = new ArrayList<>();
             for (JsonNode gameNode : gameLogs) {
+                gameNodeList.add(gameNode);
+            }
+
+            // Sort by gameDate in ascending order (earliest first)
+            gameNodeList.sort((a, b) -> {
+                String dateA = a.path("gameDate").asText("");
+                String dateB = b.path("gameDate").asText("");
+                return dateA.compareTo(dateB);
+            });
+
+            // Now assign gameNumber starting from 1 for earliest game
+            List<GameLog> gameLogsToSave = new ArrayList<>();
+            int gameNumber = 1;
+            for (JsonNode gameNode : gameNodeList) {
                 GameLog gameLog = parseGameLog(playerId, seasonId, gameNumber, gameNode);
                 gameLogsToSave.add(gameLog);
                 gameNumber++;

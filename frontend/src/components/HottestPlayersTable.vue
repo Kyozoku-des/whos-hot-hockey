@@ -42,9 +42,20 @@ const players = computed(() => {
   const query = searchStore.currentQuery.toLowerCase().trim()
   if (!query) return allPlayers.value
 
+  // Find teams matching the query
+  const matchingTeamCodes = searchStore.searchData
+    .filter(item => item.type === 'TEAM' && item.name.toLowerCase().includes(query))
+    .map(team => team.id)
+
   return allPlayers.value.filter(player => {
+    // Check if player name matches
     const fullName = `${player.firstName} ${player.lastName}`.toLowerCase()
-    return fullName.includes(query)
+    if (fullName.includes(query)) return true
+
+    // Check if player's team matches
+    if (player.teamCode && matchingTeamCodes.includes(player.teamCode)) return true
+
+    return false
   })
 })
 
