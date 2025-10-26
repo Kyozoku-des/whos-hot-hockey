@@ -14,9 +14,9 @@
             />
             <div class="team-stats">
               <h1 class="team-name">{{ team?.teamName }}</h1>
-              <p class="stat-line">Wins: {{ team?.currentSeason?.wins || 0 }}</p>
-              <p class="stat-line">Losses: {{ team?.currentSeason?.losses || 0 }}</p>
-              <p class="stat-line">Points: {{ team?.currentSeason?.points || 0 }}</p>
+              <p class="stat-line">Wins: {{ team?.wins || 0 }}</p>
+              <p class="stat-line">Losses: {{ team?.losses || 0 }}</p>
+              <p class="stat-line">Points: {{ team?.points || 0 }}</p>
             </div>
           </div>
         </div>

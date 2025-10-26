@@ -13,9 +13,9 @@
             />
             <div class="player-stats">
               <h1 class="player-name">{{ player?.firstName }} {{ player?.lastName }}</h1>
-              <p class="stat-line">Points: {{ player?.currentSeason?.points || 0 }}</p>
-              <p class="stat-line">Goals: {{ player?.currentSeason?.goals || 0 }}</p>
-              <p class="stat-line">Assists: {{ player?.currentSeason?.assists || 0 }}</p>
+              <p class="stat-line">Points: {{ player?.points || 0 }}</p>
+              <p class="stat-line">Goals: {{ player?.goals || 0 }}</p>
+              <p class="stat-line">Assists: {{ player?.assists || 0 }}</p>
             </div>
           </div>
         </div>
@@ -43,7 +43,7 @@
             </thead>
             <tbody>
               <tr v-for="game in gameLogs" :key="game.gameId">
-                <td>{{ formatDate(game.date) }}</td>
+                <td>{{ formatDate(game.gameDate) }}</td>
                 <td>{{ game.goals }}</td>
                 <td>{{ game.assists }}</td>
                 <td>{{ game.points }}</td>
