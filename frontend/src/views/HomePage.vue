@@ -9,6 +9,11 @@
     </div>
 
     <div class="content-container">
+      <!-- Favorites Card - Only show if user has favorites -->
+      <ExpandableCard v-if="showFavorites" title="My Favorites" :defaultExpanded="true" class="favorites-card">
+        <FavoritesTable />
+      </ExpandableCard>
+
       <div class="cards-grid">
         <ExpandableCard title="Player standings">
           <TopPointsTable />
@@ -35,10 +40,14 @@
         </ExpandableCard>
       </div>
     </div>
+
+    <!-- Cookie Consent Banner -->
+    <CookieConsent />
   </div>
 </template>
 
 <script setup>
+import { computed, onMounted } from 'vue'
 import ExpandableCard from '../components/ExpandableCard.vue'
 import TopPointsTable from '../components/TopPointsTable.vue'
 import PointStreaksTable from '../components/PointStreaksTable.vue'
@@ -48,6 +57,19 @@ import TeamWinStreaksTable from '../components/TeamWinStreaksTable.vue'
 import TeamHotTable from '../components/TeamHotTable.vue'
 import CurrentSeasonDisplay from '../components/CurrentSeasonDisplay.vue'
 import SearchBar from '../components/SearchBar.vue'
+import FavoritesTable from '../components/FavoritesTable.vue'
+import CookieConsent from '../components/CookieConsent.vue'
+import { useFavorites } from '../composables/useFavorites'
+
+const { initializeFavorites, favoritesCount } = useFavorites()
+
+// Show favorites card only if user has favorites
+const showFavorites = computed(() => favoritesCount.value > 0)
+
+// Initialize favorites on mount
+onMounted(() => {
+  initializeFavorites()
+})
 </script>
 
 <style scoped>
@@ -89,6 +111,12 @@ import SearchBar from '../components/SearchBar.vue'
 
 .content-container {
   padding: 5rem 2rem 2rem 2rem;
+}
+
+.favorites-card {
+  margin-bottom: 2rem;
+  border: 2px solid #FFAA00;
+  box-shadow: 0 4px 12px rgba(255, 170, 0, 0.2);
 }
 
 .cards-grid {
