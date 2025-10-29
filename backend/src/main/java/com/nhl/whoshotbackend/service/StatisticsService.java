@@ -157,8 +157,9 @@ public class StatisticsService {
         // Process players
         List<Player> allPlayers = playerRepository.findBySeasonOrderByPointsDesc(season);
         for (Player player : allPlayers) {
-            calculatePlayerHotRating(player);
+            // Calculate point streak first so we can use it in hot rating
             calculatePlayerPointStreak(player);
+            calculatePlayerHotRating(player);
         }
         playerRepository.saveAll(allPlayers);
         log.info("Hot ratings calculated for {} players", allPlayers.size());
@@ -193,8 +194,9 @@ public class StatisticsService {
             double hotRating = (double) totalPoints / recentGames.size();
             player.setHotRating(hotRating);
 
-            // Hot: PPG > 1.5 over at least 3 games
-            boolean isHot = recentGames.size() >= 3 && hotRating > 1.5;
+            // Hot: PPG > 1.5 over at least 3 games OR point streak > 5 games
+            int currentStreak = player.getCurrentPointStreak() != null ? player.getCurrentPointStreak() : 0;
+            boolean isHot = (recentGames.size() >= 3 && hotRating > 1.5) || (currentStreak > 5);
             player.setHot(isHot);
 
             // Cold: PPG < 0.2 over at least 4 games

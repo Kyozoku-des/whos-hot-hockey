@@ -8,6 +8,7 @@
         v-for="(team, index) in teams"
         :key="team.teamCode"
         class="team-item"
+        :class="{ 'hot-team': team.hot, 'cold-team': team.cold }"
         @click="goToTeam(team.teamCode)"
       >
         <button
@@ -21,11 +22,6 @@
         <div class="team-main">
           <TeamLogo :logoUrl="team.logoUrl" :teamCode="team.teamCode" :alt="team.teamName" size="small" />
           <span class="team-name">{{ team.teamName }}</span>
-          <span class="team-icons">
-            <img v-if="team.hot" src="../assets/flame.png" alt="Hot" class="status-icon" title="Hot streak" />
-            <img v-if="team.cold" src="../assets/snowflake.png" alt="Cold" class="status-icon" title="Cold streak" />
-            <img v-if="team.pointStreak" src="../assets/graph.png" alt="Streak" class="status-icon" title="Point streak" />
-          </span>
         </div>
         <span class="team-stats">
           <span class="stat-item">GP: {{ team.gamesPlayed }}</span>
@@ -172,17 +168,12 @@ const getFavoriteTooltip = (team) => {
   flex: 1;
 }
 
-.team-icons {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  margin-left: 0.5rem;
+.hot-team {
+  background-color: rgba(255, 140, 0, 0.15) !important;
 }
 
-.status-icon {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
+.cold-team {
+  background-color: rgba(135, 206, 250, 0.15) !important;
 }
 
 .team-stats {

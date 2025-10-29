@@ -8,6 +8,7 @@
         v-for="player in players"
         :key="player.playerId"
         class="player-item"
+        :class="{ 'hot-player': player.hot, 'cold-player': player.cold }"
         @click="goToPlayer(player.playerId)"
       >
         <button
@@ -26,7 +27,6 @@
           <span class="stat-item">P: {{ player.points }}</span>
           <span class="stat-item">GP: {{ player.gamesPlayed }}</span>
           <span class="stat-item">L10 PPG: {{ player.last10GamesPPG?.toFixed(2) || '0.00' }}</span>
-          <img v-if="player.hot" src="../assets/flame.png" alt="Hot" class="status-icon" title="Hot player" />
         </span>
       </div>
     </div>
@@ -174,11 +174,12 @@ const getFavoriteTooltip = (player) => {
   white-space: nowrap;
 }
 
-.status-icon {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
-  margin-left: 0.25rem;
+.hot-player {
+  background-color: rgba(255, 140, 0, 0.15) !important;
+}
+
+.cold-player {
+  background-color: rgba(135, 206, 250, 0.15) !important;
 }
 
 .favorite-btn {

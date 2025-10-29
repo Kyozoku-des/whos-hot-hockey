@@ -8,6 +8,7 @@
         v-for="player in players"
         :key="player.playerId"
         class="player-item"
+        :class="{ 'hot-player': player.hot, 'cold-player': player.cold }"
         @click="goToPlayer(player.playerId)"
       >
         <button
@@ -23,9 +24,6 @@
           <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
         </div>
         <span class="player-icons">
-          <img v-if="player.hot" src="../assets/flame.png" alt="Hot" class="status-icon" title="Hot streak (PPG > 1.5)" />
-          <img v-if="player.cold" src="../assets/snowflake.png" alt="Cold" class="status-icon" title="Cold streak (PPG < 0.2)" />
-          <img v-if="player.pointStreak" src="../assets/graph.png" alt="Point Streak" class="status-icon" title="5+ game point streak" />
           <span class="streak-count">{{ player.currentPointStreak }}</span>
         </span>
       </div>
@@ -167,18 +165,20 @@ const getFavoriteTooltip = (player) => {
   align-items: center;
 }
 
-.status-icon {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
-}
-
 .streak-count {
   color: var(--color-text-primary);
   font-size: 1.2rem;
   font-weight: bold;
   min-width: 30px;
   text-align: center;
+}
+
+.hot-player {
+  background-color: rgba(255, 140, 0, 0.15) !important;
+}
+
+.cold-player {
+  background-color: rgba(135, 206, 250, 0.15) !important;
 }
 
 .favorite-btn {
