@@ -198,54 +198,76 @@ public class StatisticsService {
             int currentStreak = player.getCurrentPointStreak() != null ? player.getCurrentPointStreak() : 0;
             boolean isHot = (recentGames.size() >= 3 && hotRating > 1.5) || (currentStreak > 5);
             player.setHot(isHot);
-
-            // Cold: PPG < 0.2 over at least 4 games
-            boolean isCold = recentGames.size() >= 4 && hotRating < 0.2;
-            player.setCold(isCold);
         }
 
-        // Calculate last 10 games PPG
+        // Calculate last 10 games PPG for cold detection
         List<GameLog> last10Games = gameLogRepository.findLastNGamesByPlayer(player.getPlayerId(), 10);
+        double last10PPG;
         if (!last10Games.isEmpty()) {
             int totalPointsLast10 = last10Games.stream()
                     .mapToInt(GameLog::getPoints)
                     .sum();
-            double last10PPG = (double) totalPointsLast10 / last10Games.size();
+            last10PPG = (double) totalPointsLast10 / last10Games.size();
             player.setLast10GamesPPG(last10PPG);
         } else {
-            player.setLast10GamesPPG(player.getPointsPerGame());
+            last10PPG = player.getPointsPerGame();
+            player.setLast10GamesPPG(last10PPG);
         }
+
+        // Cold: 7+ games without a point OR PPG < 0.1 in last 10+ games
+        int pointlessStreak = player.getCurrentPointlessStreak() != null ? player.getCurrentPointlessStreak() : 0;
+        boolean isCold = (pointlessStreak >= 7) || (last10Games.size() >= 10 && last10PPG < 0.1);
+        player.setCold(isCold);
     }
 
     /**
-     * Calculate current point streak for a player.
-     * A point streak is consecutive games with at least one point.
+     * Calculate current point streak and pointless streak for a player.
+     * A point streak is consecutive games with at least one point (starting from most recent).
+     * A pointless streak is consecutive games without a point (starting from most recent).
      * Sets the pointStreak boolean to true if streak >= 5 games.
      */
     private void calculatePlayerPointStreak(Player player) {
         List<GameLog> recentGames = gameLogRepository.findByPlayerIdOrderByGameDateDesc(
                 player.getPlayerId());
 
-        int streak = 0;
-        for (GameLog game : recentGames) {
-            if (game.getPoints() > 0) {
-                streak++;
-            } else {
-                break;
+        int pointStreak = 0;
+        int pointlessStreak = 0;
+
+        // Check if player is on a point streak or pointless streak
+        boolean hasRecentPoint = !recentGames.isEmpty() && recentGames.get(0).getPoints() > 0;
+
+        if (hasRecentPoint) {
+            // Currently on a point streak - count consecutive games with points
+            for (GameLog game : recentGames) {
+                if (game.getPoints() > 0) {
+                    pointStreak++;
+                } else {
+                    break;
+                }
+            }
+        } else {
+            // Currently on a pointless streak - count consecutive games without points
+            for (GameLog game : recentGames) {
+                if (game.getPoints() == 0) {
+                    pointlessStreak++;
+                } else {
+                    break;
+                }
             }
         }
 
-        player.setCurrentPointStreak(streak);
+        player.setCurrentPointStreak(pointStreak);
+        player.setCurrentPointlessStreak(pointlessStreak);
 
         // Point streak flag: true if at least 5 consecutive games with a point
-        player.setPointStreak(streak >= 5);
+        player.setPointStreak(pointStreak >= 5);
     }
 
     /**
      * Calculate hot/cold/streak flags for a team.
-     * Based on win/loss streaks:
+     * Based on win/loss streaks and recent performance:
      * - Hot: Win streak >= 3
-     * - Cold: Loss streak >= 3
+     * - Cold: Loss streak >= 5 OR PPG < 0.1 in last 10+ games
      * - Point streak: Win streak >= 5
      */
     private void calculateTeamStreakFlags(Team team) {
@@ -255,8 +277,33 @@ public class StatisticsService {
         // Hot: Win streak of 3 or more games
         team.setHot(winStreak >= 3);
 
-        // Cold: Loss streak of 3 or more games
-        team.setCold(lossStreak >= 3);
+        // Calculate last 10 games PPG for cold detection
+        List<TeamGame> last10Games = teamGameRepository.findLastNGamesByTeam(team.getTeamCode(), 10);
+        double last10PPG;
+        if (!last10Games.isEmpty()) {
+            int totalPoints = last10Games.stream()
+                    .mapToInt(game -> {
+                        if (game.getWon()) {
+                            return 2; // Win = 2 points
+                        } else if (game.getOvertimeLoss()) {
+                            return 1; // OT/SO loss = 1 point
+                        } else {
+                            return 0; // Regulation loss = 0 points
+                        }
+                    })
+                    .sum();
+            last10PPG = (double) totalPoints / last10Games.size();
+            team.setLast10GamesPPG(last10PPG);
+        } else {
+            // Fallback to season average
+            last10PPG = team.getGamesPlayed() > 0 ?
+                (double) team.getPoints() / team.getGamesPlayed() : 0.0;
+            team.setLast10GamesPPG(last10PPG);
+        }
+
+        // Cold: Loss streak of 5+ games OR PPG < 0.1 in last 10+ games
+        boolean isCold = (lossStreak >= 5) || (last10Games.size() >= 10 && last10PPG < 0.1);
+        team.setCold(isCold);
 
         // Point streak: Win streak of 5 or more games
         team.setPointStreak(winStreak >= 5);

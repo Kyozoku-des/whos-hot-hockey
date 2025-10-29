@@ -87,6 +87,9 @@ public class Player {
     private Integer currentPointStreak; // Consecutive games with a point
 
     @Column
+    private Integer currentPointlessStreak; // Consecutive games without a point
+
+    @Column
     private Double hotRating; // Points per game over last N games (calculated)
 
     @Column

@@ -81,6 +81,9 @@ public class Team {
     private Double last10GamesPointPercentage; // Point percentage over last 10 games (points / (games * 2))
 
     @Column
+    private Double last10GamesPPG; // Points per game over last 10 games
+
+    @Column
     private Boolean hot; // true when recent stretch exceeds hot threshold
 
     @Column
