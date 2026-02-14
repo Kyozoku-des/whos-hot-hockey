@@ -28,7 +28,6 @@ public class PlayerFactory {
      * @param standing player standing row used for totals validation
      * @param gameLogs game-by-game logs used for derived statistics
      * @param seasonId target season identifier
-     * @param gameWindow number of recent games to include for rolling metrics
      * @return constructed player entity ready for persistence
      * @throws PlayerStatisticsException if calculated totals do not match expected standings totals
      */
@@ -36,11 +35,10 @@ public class PlayerFactory {
             PlayerInfoDto info,
             PlayerStandingDto standing,
             List<PlayerGameLogDto> gameLogs,
-            String seasonId,
-            int gameWindow
+            String seasonId
     ) throws PlayerStatisticsException {
         // Calculate statistics separately (pure function)
-        PlayerStatistics statistics = statisticsCalculationService.calculatePlayerStatistics(standing, gameLogs, gameWindow);
+        PlayerStatistics statistics = statisticsCalculationService.calculatePlayerStatistics(standing, gameLogs);
 
         // Build complete player in one place
         return Player.builder()
@@ -59,7 +57,6 @@ public class PlayerFactory {
                 .plusMinus(statistics.plusMinus())
                 .currentPointStreak(statistics.currentPointStreak())
                 .currentPointlessStreak(statistics.currentPointlessStreak())
-                .pointsPerLastNGames(statistics.pointsPerLastNGames())
                 .lastUpdated(statistics.lastUpdated())
                 .build();
     }

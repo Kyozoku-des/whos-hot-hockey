@@ -28,7 +28,7 @@ public class SeasonValidator {
         // If we're in January-June, we're in the second half of the season
         // If we're in July-December, we're in the first half or pre-season of next season
         int startYear;
-        if (month >= 1 && month <= 6) {
+        if (month <= 6) {
             // Jan-June: Still in previous season (e.g., Jan 2026 is in 2025-2026 season)
             startYear = year - 1;
         } else if (month >= 10) {
@@ -49,9 +49,9 @@ public class SeasonValidator {
      * @param seasonId Season ID to validate (e.g., "20252026")
      * @return true if valid, false otherwise
      */
-    public static boolean isValidSeasonId(String seasonId) {
+    public static boolean isNotValidSeasonId(String seasonId) {
         if (seasonId == null || seasonId.length() != 8) {
-            return false;
+            return true;
         }
 
         try {
@@ -60,24 +60,21 @@ public class SeasonValidator {
 
             // End year must be exactly 1 year after start year
             if (endYear != startYear + 1) {
-                return false;
+                return true;
             }
 
             // Check minimum bound
             if (startYear < MIN_SEASON_START_YEAR) {
-                return false;
+                return true;
             }
 
             // Check maximum bound (current season + 1 for future planning)
             String currentSeasonId = getCurrentSeasonId();
             int currentStartYear = Integer.parseInt(currentSeasonId.substring(0, 4));
-            if (startYear > currentStartYear + 1) {
-                return false;
-            }
 
-            return true;
+            return startYear > currentStartYear + 1;
         } catch (NumberFormatException e) {
-            return false;
+            return true;
         }
     }
 
@@ -101,7 +98,7 @@ public class SeasonValidator {
      * @throws IllegalArgumentException if the supplied season ID is invalid
      */
     public static int getStartYear(String seasonId) {
-        if (!isValidSeasonId(seasonId)) {
+        if (isNotValidSeasonId(seasonId)) {
             throw new IllegalArgumentException("Invalid season ID: " + seasonId);
         }
         return Integer.parseInt(seasonId.substring(0, 4));
@@ -115,7 +112,7 @@ public class SeasonValidator {
      * @return Human-readable season string
      */
     public static String formatSeason(String seasonId) {
-        if (!isValidSeasonId(seasonId)) {
+        if (isNotValidSeasonId(seasonId)) {
             return "Invalid Season";
         }
         String startYear = seasonId.substring(0, 4);

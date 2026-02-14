@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
  * @param plusMinus cumulative plus/minus across sampled games
  * @param currentPointStreak current consecutive games with at least one point
  * @param currentPointlessStreak current consecutive games with zero points
- * @param pointsPerLastNGames average points across the last configured N games
  * @param lastUpdated timestamp when this aggregate was generated
  */
 @Builder
@@ -28,6 +27,5 @@ public record PlayerStatistics(
     int plusMinus,
     int currentPointStreak,
     int currentPointlessStreak,
-    double pointsPerLastNGames,
     LocalDateTime lastUpdated
 ) {}

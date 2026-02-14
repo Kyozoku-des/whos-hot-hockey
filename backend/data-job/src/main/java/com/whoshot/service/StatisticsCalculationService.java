@@ -22,14 +22,12 @@ public class StatisticsCalculationService {
      *
      * @param playerStanding standings record containing expected season totals
      * @param playerGameLogs game logs to aggregate
-     * @param n rolling window size for recent-games average
      * @return immutable statistics aggregate
      * @throws PlayerStatisticsException if computed points do not match standings totals
      */
     public PlayerStatistics calculatePlayerStatistics(
             PlayerStandingDto playerStanding,
-            List<PlayerGameLogDto> playerGameLogs,
-            int n
+            List<PlayerGameLogDto> playerGameLogs
     ) throws PlayerStatisticsException {
         int gamesPlayed = 0;
         int points = 0;
@@ -39,7 +37,6 @@ public class StatisticsCalculationService {
         double pointsPerGame;
         int pointStreak = 0;
         int pointlessStreak = 0;
-        double pointsPerLastNGames = 0.0;
 
         for (PlayerGameLogDto gameLog : playerGameLogs) {
             gamesPlayed++;
@@ -54,10 +51,6 @@ public class StatisticsCalculationService {
             } else {
                 pointStreak = 0;
                 pointlessStreak++;
-            }
-
-            if (gamesPlayed == n) {
-                pointsPerLastNGames = points / (double) n;
             }
         }
 
@@ -77,7 +70,6 @@ public class StatisticsCalculationService {
                 .plusMinus(plusMinus)
                 .currentPointStreak(pointStreak)
                 .currentPointlessStreak(pointlessStreak)
-                .pointsPerLastNGames(pointsPerLastNGames)
                 .lastUpdated(LocalDateTime.now())
                 .build();
     }

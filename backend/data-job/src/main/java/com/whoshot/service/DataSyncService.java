@@ -34,7 +34,6 @@ public class DataSyncService {
     private final GameLogRepository gameLogRepository;
     private SeasonDto season;
     private final int gameType = 2; // Regular season
-    private final int n = 10; // Number of recent games to consider for certain calculations
 
     /**
      * Initializes the service by resolving the active season once at startup.
@@ -99,7 +98,7 @@ public class DataSyncService {
             var gameLogs = nhlApiService.getPlayerGameLogs(playerId, seasonId, gameType);
 
             // Create player using factory (handles all construction and statistics calculation)
-            Player player = playerFactory.createFromApiData(playerInfo, playerStanding, gameLogs, seasonId, n);
+            Player player = playerFactory.createFromApiData(playerInfo, playerStanding, gameLogs, seasonId);
 
             playerRepository.save(player);
             playerRepository.flush();
