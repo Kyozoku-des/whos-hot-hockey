@@ -217,13 +217,51 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+
   .team-info-card {
     flex-direction: column;
     text-align: center;
+    padding: 1.5rem 1rem;
+  }
+
+  .team-name {
+    font-size: 1.5rem;
+  }
+
+  .section-title {
+    font-size: 1.2rem;
   }
 
   .stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Reorder sections on mobile: image -> graph -> stats -> roster */
+  .team-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .team-header {
+    order: 1;
+  }
+
+  .section:nth-child(3) {
+    /* Win/Loss Progression graph */
+    order: 2;
+  }
+
+  .section:nth-child(2) {
+    /* Team Statistics */
+    order: 3;
+  }
+
+  .section:nth-child(4) {
+    /* Roster */
+    order: 4;
   }
 }
 </style>
