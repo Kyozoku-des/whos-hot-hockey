@@ -232,9 +232,31 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+
   .player-info-card {
     flex-direction: column;
     text-align: center;
+    padding: 1.5rem 1rem;
+  }
+
+  .player-name {
+    font-size: 1.5rem;
+  }
+
+  .section-title {
+    font-size: 1.2rem;
+  }
+
+  .game-log-table {
+    font-size: 0.85rem;
+  }
+
+  .game-log-table th,
+  .game-log-table td {
+    padding: 0.5rem 0.35rem;
   }
 }
 </style>
