@@ -12,12 +12,26 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Factory responsible for creating {@link Player} entities from NHL API DTOs.
+ */
 @Service
 @RequiredArgsConstructor
 public class PlayerFactory {
 
     private final StatisticsCalculationService statisticsCalculationService;
 
+    /**
+     * Builds a fully populated player entity for a single season from upstream API data.
+     *
+     * @param info player metadata payload
+     * @param standing player standing row used for totals validation
+     * @param gameLogs game-by-game logs used for derived statistics
+     * @param seasonId target season identifier
+     * @param gameWindow number of recent games to include for rolling metrics
+     * @return constructed player entity ready for persistence
+     * @throws PlayerStatisticsException if calculated totals do not match expected standings totals
+     */
     public Player createFromApiData(
             PlayerInfoDto info,
             PlayerStandingDto standing,

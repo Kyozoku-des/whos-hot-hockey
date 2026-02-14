@@ -16,22 +16,35 @@ public interface TeamRepository extends JpaRepository<com.whoshot.entity.Team, c
 
     /**
      * Find a team by its three-letter team code and season.
+     *
+     * @param teamCode team abbreviation code
+     * @param season season identifier
+     * @return matching team if one exists
      */
     Optional<com.whoshot.entity.Team> findByTeamCodeAndSeason(String teamCode, String season);
 
     /**
      * Get all teams for a season ordered by points descending (standings).
+     *
+     * @param season season identifier
+     * @return teams sorted by standings points descending
      */
     List<com.whoshot.entity.Team> findBySeasonOrderByPointsDesc(String season);
 
     /**
      * Get teams with current win streaks for a season, ordered by streak length.
+     *
+     * @param season season identifier
+     * @return teams currently on a win streak
      */
     @Query("SELECT t FROM Team t WHERE t.season = ?1 AND t.currentWinStreak > 0 ORDER BY t.currentWinStreak DESC")
     List<com.whoshot.entity.Team> findTeamsWithWinStreaks(String season);
 
     /**
      * Get teams with current loss streaks for a season, ordered by streak length.
+     *
+     * @param season season identifier
+     * @return teams currently on a losing streak
      */
     @Query("SELECT t FROM Team t WHERE t.season = ?1 AND t.currentLossStreak > 0 ORDER BY t.currentLossStreak DESC")
     List<com.whoshot.entity.Team> findTeamsWithLossStreaks(String season);

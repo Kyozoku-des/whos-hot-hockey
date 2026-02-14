@@ -5,9 +5,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
+/**
+ * Spring configuration that defines task-scheduling infrastructure.
+ */
 @Configuration
 public class SchedulingConfig {
 
+    /**
+     * Creates a thread-pooled scheduler used for periodic and delayed tasks.
+     *
+     * @return initialized TaskScheduler
+     */
     @Bean
     public TaskScheduler taskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();

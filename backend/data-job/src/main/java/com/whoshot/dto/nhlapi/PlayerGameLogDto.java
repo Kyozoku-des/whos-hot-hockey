@@ -3,6 +3,9 @@ package com.whoshot.dto.nhlapi;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
+/**
+ * DTO representing one player's stat line for a single game.
+ */
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PlayerGameLogDto {

@@ -14,6 +14,9 @@ import java.util.List;
 public class BoxScoreDto {
     private PlayerByGameStats playerByGameStats;
 
+    /**
+     * Container for grouped player stats by home and away teams.
+     */
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class PlayerByGameStats {
@@ -21,6 +24,9 @@ public class BoxScoreDto {
         private TeamPlayerStats homeTeam;
     }
 
+    /**
+     * Team-level grouping of skater statistics by position group.
+     */
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class TeamPlayerStats {
@@ -28,6 +34,9 @@ public class BoxScoreDto {
         private List<PlayerStats> defense;
     }
 
+    /**
+     * Per-player boxscore statistics used by synchronization logic.
+     */
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class PlayerStats {

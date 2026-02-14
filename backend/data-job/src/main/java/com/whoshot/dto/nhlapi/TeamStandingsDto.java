@@ -21,6 +21,9 @@ public class TeamStandingsDto {
     private Integer otLosses;
     private Integer gamesPlayed;
 
+    /**
+     * Localized NHL API field that stores its primary value under the "default" key.
+     */
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class LocalizedField {
