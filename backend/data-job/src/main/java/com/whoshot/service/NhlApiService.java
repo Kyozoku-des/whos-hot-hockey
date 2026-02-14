@@ -29,8 +29,9 @@ public class NhlApiService {
     private String statsBaseUrl;
 
     /**
-     * Get the current season ID.
-     * @return Season ID in format YYYYYYYY (e.g., "20252026")
+     * Fetches all available seasons from the NHL statistics API.
+     *
+     * @return ordered list of season metadata
      */
     public List<SeasonDto> getSeasons() {
         String url = statsBaseUrl + "/en/season";
@@ -41,7 +42,9 @@ public class NhlApiService {
     }
 
     /**
-     * Get current standings for all teams.
+     * Retrieves current team standings from the NHL public API.
+     *
+     * @return standings rows for all teams in the current context
      */
     public List<TeamStandingsDto> getTeamStandings() {
         String url = baseUrl + "/v1/standings/now";
@@ -53,6 +56,9 @@ public class NhlApiService {
 
     /**
      * Used only to sort our calculated player stats in the correct order when presenting player standings.
+     *
+     * @param seasonId season identifier in {@code YYYYYYYY} format
+     * @param gameType NHL game type (2 for regular season, 3 for playoffs)
      * @return List of players in standings order
      */
     public List<PlayerStandingDto> getPlayerStandingsOrder(String seasonId, int gameType) {
@@ -83,6 +89,9 @@ public class NhlApiService {
 
     /**
      * Get player landing page information.
+     *
+     * @param playerId NHL player identifier
+     * @return player profile details
      */
     public PlayerInfoDto getPlayerInfo(Long playerId) {
         String url = String.format("%s/v1/player/%d/landing", baseUrl, playerId);

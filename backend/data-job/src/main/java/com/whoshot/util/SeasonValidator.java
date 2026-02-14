@@ -98,6 +98,7 @@ public class SeasonValidator {
      *
      * @param seasonId Season ID in format YYYYYYYY
      * @return Start year of the season
+     * @throws IllegalArgumentException if the supplied season ID is invalid
      */
     public static int getStartYear(String seasonId) {
         if (!isValidSeasonId(seasonId)) {
@@ -122,6 +123,11 @@ public class SeasonValidator {
         return startYear + "-" + endYear;
     }
 
+    /**
+     * Returns the current season identifier.
+     *
+     * @return current season ID in {@code YYYYYYYY} format
+     */
     public String getCurrentSeason() {
         return null;
     }

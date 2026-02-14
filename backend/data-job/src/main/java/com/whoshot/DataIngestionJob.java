@@ -9,6 +9,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class DataIngestionJob {
 
+    /**
+     * Bootstraps the Spring Boot data-ingestion application.
+     *
+     * @param args startup arguments passed from the runtime
+     */
     public static void main(String[] args) {
         SpringApplication.run(DataIngestionJob.class, args);
     }

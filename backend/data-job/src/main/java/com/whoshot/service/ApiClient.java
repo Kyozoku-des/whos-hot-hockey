@@ -14,6 +14,9 @@ import org.springframework.web.client.RestClient;
 
 import java.util.Map;
 
+/**
+ * Reusable HTTP client wrapper that standardizes API calls, error handling, and retries.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -23,6 +26,9 @@ public class ApiClient {
 
     /**
      * Common error handler for 4xx client errors.
+     *
+     * @param url request URL that produced the error
+     * @param httpResponse raw HTTP response used for status extraction
      */
     private void handleClientError(String url, ClientHttpResponse httpResponse) {
         try {
@@ -36,6 +42,9 @@ public class ApiClient {
 
     /**
      * Common error handler for 5xx server errors.
+     *
+     * @param url request URL that produced the error
+     * @param httpResponse raw HTTP response used for status extraction
      */
     private void handleServerError(String url, ClientHttpResponse httpResponse) {
         try {
@@ -47,6 +56,15 @@ public class ApiClient {
         }
     }
 
+    /**
+     * Performs a GET request without custom headers.
+     *
+     * @param url target endpoint URL
+     * @param typeRef expected response body type reference
+     * @param <T> response type
+     * @return deserialized response body
+     * @throws com.whoshot.exception.ApiClientException if the request fails or returns a null body
+     */
     @Retryable(
             retryFor = {com.whoshot.exception.ApiClientException.class},
             backoff = @Backoff(delay = 1000, multiplier = 2)

@@ -17,35 +17,54 @@ public interface PlayerRepository extends JpaRepository<com.whoshot.entity.Playe
 
     /**
      * Get all players for a season ordered by points descending.
+     *
+     * @param season season identifier
+     * @return players sorted by total points descending
      */
     List<com.whoshot.entity.Player> findByIdSeasonOrderByPointsDesc(String season);
 
     /**
      * Get players with current point streaks for a season, ordered by streak length.
+     *
+     * @param season season identifier
+     * @return players currently on a point streak
      */
     @Query("SELECT p FROM Player p WHERE p.id.season = ?1 AND p.currentPointStreak > 0 ORDER BY p.currentPointStreak DESC")
     List<com.whoshot.entity.Player> findPlayersWithPointStreaks(String season);
 
     /**
      * Get "hot" players for a season ordered by hot flag.
+     *
+     * @param season season identifier
+     * @return players flagged as hot for the season
      */
     @Query("SELECT p FROM Player p WHERE p.id.season = ?1 AND p.hot = true ORDER BY p.pointsPerLastNGames DESC")
     List<com.whoshot.entity.Player> findHotPlayers(String season);
 
     /**
      * Get players ordered by last N games PPG descending.
+     *
+     * @param season season identifier
+     * @return players sorted by recent points-per-game average
      */
     @Query("SELECT p FROM Player p WHERE p.id.season = ?1 AND p.pointsPerLastNGames IS NOT NULL ORDER BY p.pointsPerLastNGames DESC")
     List<com.whoshot.entity.Player> findByLast10GamesPPG(String season);
 
     /**
      * Find players by team code for a specific season.
+     *
+     * @param teamCode team abbreviation code
+     * @param season season identifier
+     * @return players on the specified team during the specified season
      */
     List<com.whoshot.entity.Player> findByTeamCodeAndIdSeason(String teamCode, String season);
 
     /**
      * Get all players for search functionality (lightweight data).
      * Returns players ordered by last name, first name.
+     *
+     * @param season season identifier used to scope search results
+     * @return lightweight search records for players
      */
     @Query("SELECT new SearchResult('PLAYER', " +
            "CAST(p.id.playerId AS string), CONCAT(p.firstName, ' ', p.lastName), " +

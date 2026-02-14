@@ -66,12 +66,25 @@ public class Player {
     @Embedded
     @Column private NextGame nextGame;
 
+    /**
+     * Composite primary key for a player row scoped by season.
+     *
+     * @param playerId NHL player identifier
+     * @param season season identifier in {@code YYYYYYYY} format
+     */
     @Embeddable
     public record PlayerId(
             Long playerId,
             String season
     ) implements Serializable {}
 
+    /**
+     * Embedded next-game information for player-facing schedule context.
+     *
+     * @param date scheduled game date
+     * @param opponentAbbrev opponent team abbreviation
+     * @param homeRoadFlag home/road marker provided by upstream API
+     */
     @Embeddable
     public record NextGame(
             String date,

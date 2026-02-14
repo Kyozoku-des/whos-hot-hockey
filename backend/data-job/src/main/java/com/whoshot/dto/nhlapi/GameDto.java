@@ -17,6 +17,9 @@ public class GameDto {
     private TeamInfo awayTeam;
     private TeamInfo homeTeam;
 
+    /**
+     * Team identifier subset included in schedule game objects.
+     */
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class TeamInfo {

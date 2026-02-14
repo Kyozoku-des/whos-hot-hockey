@@ -10,10 +10,22 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Service that computes derived player statistics from raw game-log data.
+ */
 @Slf4j
 @Service
 public class StatisticsCalculationService {
 
+    /**
+     * Calculates aggregate and streak-based statistics for a player.
+     *
+     * @param playerStanding standings record containing expected season totals
+     * @param playerGameLogs game logs to aggregate
+     * @param n rolling window size for recent-games average
+     * @return immutable statistics aggregate
+     * @throws PlayerStatisticsException if computed points do not match standings totals
+     */
     public PlayerStatistics calculatePlayerStatistics(
             PlayerStandingDto playerStanding,
             List<PlayerGameLogDto> playerGameLogs,

@@ -19,6 +19,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Coordinates retrieval, transformation, and persistence of player season data.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -33,15 +36,17 @@ public class DataSyncService {
     private final int gameType = 2; // Regular season
     private final int n = 10; // Number of recent games to consider for certain calculations
 
+    /**
+     * Initializes the service by resolving the active season once at startup.
+     */
     @PostConstruct
     private void init() {
         setSeason();
     }
 
     /**
-     * Get seasons from NHL API and determines the current season ID. If no current season is found, returns latest season.
-     *
-     * @return The current season ID.
+     * Resolves and stores the best season to synchronize based on current date boundaries.
+     * Falls back to the latest available season when the current date does not fall within any regular season range.
      */
     private void setSeason() {
         List<SeasonDto> seasons = nhlApiService.getSeasons();
@@ -64,7 +69,11 @@ public class DataSyncService {
     }
 
     /**
-     * Synchronizes player statistics from the NHL API and recalculates derived statistics.
+     * Synchronizes active-player statistics for the resolved season.
+     * <p>
+     * Side effects: performs external API calls and writes player records to the database.
+     *
+     * @throws PlayerStatisticsException if player identity or point-total validation fails
      */
     @Transactional
     public void syncPlayer() throws PlayerStatisticsException {

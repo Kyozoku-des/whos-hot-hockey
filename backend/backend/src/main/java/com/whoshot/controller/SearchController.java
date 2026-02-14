@@ -25,6 +25,12 @@ public class SearchController {
     private final PlayerRepository playerRepository;
     private final TeamRepository teamRepository;
 
+    /**
+     * Creates the controller with repository dependencies.
+     *
+     * @param playerRepository repository for player-backed search entries
+     * @param teamRepository repository for team-backed search entries
+     */
     public SearchController(
             PlayerRepository playerRepository,
             TeamRepository teamRepository
@@ -36,6 +42,9 @@ public class SearchController {
     /**
      * Get all searchable items (players and teams) for a season.
      * Used for client-side search/autocomplete functionality.
+     *
+     * @param season optional season identifier used to scope results
+     * @return HTTP 200 response containing merged player and team search results
      */
     @GetMapping("/all")
     @Operation(summary = "Get all searchable items",

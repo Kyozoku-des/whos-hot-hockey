@@ -36,6 +36,9 @@ public class PlayerInfoDto {
     private String currentTeamAbbrev;
     private String position;
 
+    /**
+     * Localized string wrapper used by NHL API name fields.
+     */
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class NameDto {

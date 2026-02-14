@@ -14,6 +14,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.concurrent.ScheduledFuture;
 
+/**
+ * Manages runtime scheduling of synchronization jobs based on daily game windows.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -26,6 +29,11 @@ public class DynamicSchedulingService {
     private ScheduledFuture<?> frequentSyncTask;
     private ScheduledFuture<?> exitAppTask;
 
+    /**
+     * Initializes scheduling at application startup.
+     * If no games are scheduled, runs one synchronization and terminates the application.
+     * Side effects: schedules recurring tasks and may exit the JVM.
+     */
     @PostConstruct
     public void init() {
         // Check NHL API for today's game schedule
@@ -50,6 +58,10 @@ public class DynamicSchedulingService {
         taskScheduler.schedule(this::exitApp, appEndTime.toInstant(ZoneOffset.UTC));
     }
 
+    /**
+     * Starts fixed-rate synchronization at one-minute intervals.
+     * Side effect: registers a recurring task in the scheduler.
+     */
     private void startFrequentSync() {
         log.info("Starting frequent sync");
         frequentSyncTask = taskScheduler.scheduleAtFixedRate(() -> {
@@ -62,6 +74,10 @@ public class DynamicSchedulingService {
         );
     }
 
+    /**
+     * Cancels scheduled tasks and exits the Spring application.
+     * Side effect: terminates the JVM process.
+     */
     private void exitApp() {
         if (frequentSyncTask != null) {
             frequentSyncTask.cancel(false);
