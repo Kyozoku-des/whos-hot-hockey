@@ -14,6 +14,8 @@ public class GameDto {
     private Long id;
     private Integer season;
     private String startTimeUTC;
+    private Integer gameType;
+    private GameState gameState;
     private TeamInfo awayTeam;
     private TeamInfo homeTeam;
 

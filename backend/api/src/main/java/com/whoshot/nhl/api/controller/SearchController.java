@@ -53,18 +53,16 @@ public class SearchController {
     public ResponseEntity<List<SearchResultDto>> getAllSearchableItems(
             @RequestParam(required = false) String season) {
 
-        String actualSeason = season != null ? season : null;
-        log.info("GET /api/search/all?season={}", actualSeason);
+        log.info("GET /api/search/all?season={}", season);
 
         // Combine players and teams into a single list
-        List<SearchResultDto> results = new ArrayList<>();
 
         // Add all teams
-        List<SearchResult> teams = teamRepository.findAllForSearch(actualSeason);
-        results.addAll(teams.stream().map(this::toDto).toList());
+        List<SearchResult> teams = teamRepository.findAllForSearch(season);
+        List<SearchResultDto> results = new ArrayList<>(teams.stream().map(this::toDto).toList());
 
         // Add all players
-        List<SearchResult> players = playerRepository.findAllForSearch(actualSeason);
+        List<SearchResult> players = playerRepository.findAllForSearch(season);
         results.addAll(players.stream().map(this::toDto).toList());
 
         log.info("Returning {} searchable items ({} teams, {} players)",

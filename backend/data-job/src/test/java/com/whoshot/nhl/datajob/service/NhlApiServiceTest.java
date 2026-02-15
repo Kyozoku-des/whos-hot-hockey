@@ -189,4 +189,12 @@ class NhlApiServiceTest {
         // Assert
         Assertions.assertNotNull(result, "BoxScoreDto should not be null");
     }
+
+    @Test
+    void testGetLeagueSchedule() {
+        // Act
+        List<GameDto> schedule = nhlApiService.getLeagueSchedule();
+        // Assert
+        Assertions.assertNotNull(schedule, "League schedule should not be null");
+    }
 }

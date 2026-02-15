@@ -37,10 +37,10 @@ public class NhlApiService {
         String url = alternateBaseUrl + "/stats/rest/en/season";
         log.info("Fetching seasons from: {}", url);
 
-        SeasonsResponseDto response = apiClient.get(url, new ParameterizedTypeReference<>() {});
+        SeasonsResponseDto response = apiClient.get(url, new ParameterizedTypeReference<>() {
+        });
         return response.getData();
     }
-
 
     /**
      * Used only to sort our calculated player stats in the correct order when presenting player standings.
@@ -54,10 +54,10 @@ public class NhlApiService {
                 baseUrl, seasonId, gameType);
         log.info("Fetching player standings order from: {}", url);
 
-        PlayerStandingsResponse response = apiClient.get(url, new ParameterizedTypeReference<>() {});
+        PlayerStandingsResponse response = apiClient.get(url, new ParameterizedTypeReference<>() {
+        });
         return response.getPlayers();
     }
-
 
     /**
      * Get player landing page information.
@@ -69,13 +69,15 @@ public class NhlApiService {
         String url = String.format("%s/v1/player/%d/landing", baseUrl, playerId);
         log.info("Fetching player info for player {} from: {}", playerId, url);
 
-        return apiClient.get(url, new ParameterizedTypeReference<>() {});
+        return apiClient.get(url, new ParameterizedTypeReference<>() {
+        });
     }
 
-
     /**
+     * TODO: Check if this data is updated during games.
      * Get game-by-game logs for a specific player.
      * Returns detailed stats for each game the player has played.
+     *
      * @param playerId The player's NHL ID
      * @param seasonId The season ID (e.g., "20252026")
      * @param gameType Game type: 2 = Regular season, 3 = Playoffs
@@ -86,12 +88,14 @@ public class NhlApiService {
                 baseUrl, playerId, seasonId, gameType);
         log.info("Fetching game log for player {} season {} gameType {} from: {}", playerId, seasonId, gameType, url);
 
-        PlayerGameLogsResponse response = apiClient.get(url, new ParameterizedTypeReference<>() {});
+        PlayerGameLogsResponse response = apiClient.get(url, new ParameterizedTypeReference<>() {
+        });
         return response.getGameLog();
     }
 
     /**
      * Get team schedule for a specific season.
+     *
      * @param teamCode Team code (e.g., "COL")
      * @param seasonId Season ID in format YYYYYYYY (e.g., "20252026")
      * @return List of games containing schedule data with game results
@@ -100,10 +104,10 @@ public class NhlApiService {
         String url = String.format("%s/v1/club-schedule-season/%s/%s", baseUrl, teamCode, seasonId);
         log.info("Fetching team schedule for {} season {} from: {}", teamCode, seasonId, url);
 
-        TeamScheduleResponseDto response = apiClient.get(url, new ParameterizedTypeReference<>() {});
+        TeamScheduleResponseDto response = apiClient.get(url, new ParameterizedTypeReference<>() {
+        });
         return response.getGames();
     }
-
 
     /**
      * Retrieves current team standings from the NHL public API.
@@ -114,13 +118,14 @@ public class NhlApiService {
         String url = baseUrl + "/v1/standings/now";
         log.info("Fetching team standings from: {}", url);
 
-        StandingsResponseDto response = apiClient.get(url, new ParameterizedTypeReference<>() {});
+        StandingsResponseDto response = apiClient.get(url, new ParameterizedTypeReference<>() {
+        });
         return response.getStandings();
     }
 
-
     /**
      * Get player statistics for an ongoing game.
+     *
      * @param gameId The game ID
      * @return BoxScore data containing player statistics
      */
@@ -128,6 +133,30 @@ public class NhlApiService {
         String url = String.format("%s/v1/gamecenter/%d/boxscore", baseUrl, gameId);
         log.info("Fetching game boxscore for game {} from: {}", gameId, url);
 
-        return apiClient.get(url, new ParameterizedTypeReference<>() {});
+        return apiClient.get(url, new ParameterizedTypeReference<>() {
+        });
+    }
+
+    /**
+     * Get league schedule as of now.
+     *
+     * @return List of games containing schedule data with game results
+     */
+    public List<GameDto> getLeagueSchedule() {
+        String url = baseUrl + "/v1/schedule/now";
+        log.info("Fetching league schedule from: {}", url);
+
+        LeagueScheduleResponseDto response =
+                apiClient.get(url, new ParameterizedTypeReference<>() {
+                });
+
+        if (response.getGameWeek() == null) {
+            return List.of();
+        }
+
+        return response.getGameWeek().stream()
+                .filter(week -> week.getGames() != null)
+                .flatMap(week -> week.getGames().stream())
+                .toList();
     }
 }

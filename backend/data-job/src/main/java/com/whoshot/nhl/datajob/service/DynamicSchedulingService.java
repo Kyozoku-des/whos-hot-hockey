@@ -24,12 +24,11 @@ import java.util.concurrent.ScheduledFuture;
 @Profile("!test")
 public class DynamicSchedulingService {
     private final TaskScheduler taskScheduler;
-    private final NhlApiService nhlApiService;
     private final DataSyncService dataSyncService;
     private final ApplicationContext applicationContext;
 
     private ScheduledFuture<?> frequentSyncTask;
-    private ScheduledFuture<?> exitAppTask;
+    private LocalDateTime lastGameTime;
 
     /**
      * Initializes scheduling at application startup.
@@ -39,25 +38,23 @@ public class DynamicSchedulingService {
     @PostConstruct
     public void init() {
         // Check NHL API for today's game schedule
-        LocalDateTime firstGameTime = null;
-        LocalDateTime lastGameTime = null;
+        LocalDateTime firstGameTime = dataSyncService.getFirstGameTimeForToday();
 
         if (firstGameTime == null) {
             log.info("No games scheduled for today. Running one sync and exiting.");
             try {
-                dataSyncService.syncPlayer();
+                dataSyncService.syncPlayers();
             } catch (PlayerStatisticsException e) {
                 log.error(e.getMessage(), e);
             }
+
             exitApp();
             return;
         }
 
+        this.lastGameTime = dataSyncService.getLastGameTimeForToday();
         LocalDateTime startFrequentSyncTime = firstGameTime.minusMinutes(5); // 5 minute buffer
-        LocalDateTime appEndTime = lastGameTime.plusMinutes(10); // 10 minute buffer
-
         taskScheduler.schedule(this::startFrequentSync, startFrequentSyncTime.toInstant(ZoneOffset.UTC));
-        taskScheduler.schedule(this::exitApp, appEndTime.toInstant(ZoneOffset.UTC));
     }
 
     /**
@@ -66,11 +63,24 @@ public class DynamicSchedulingService {
      */
     private void startFrequentSync() {
         log.info("Starting frequent sync");
+
         frequentSyncTask = taskScheduler.scheduleAtFixedRate(() -> {
                     try {
-                        dataSyncService.syncPlayer();
+                        dataSyncService.syncPlayers();
+
+                        // Only check for game completion after last game should have started
+                        if (lastGameTime != null && LocalDateTime.now(ZoneOffset.UTC).isAfter(lastGameTime)) {
+                            boolean isAnyGameActive = dataSyncService.isAnyGameActive();
+                            if (!isAnyGameActive) {
+                                log.info("No active games detected. Stopping frequent sync and scheduling app exit.");
+                                if (frequentSyncTask != null) {
+                                    frequentSyncTask.cancel(false);
+                                }
+                                exitApp();
+                            }
+                        }
                     } catch (PlayerStatisticsException e) {
-                        throw new RuntimeException(e);
+                        log.error("Error during player sync: {}", e.getMessage(), e);
                     }
                 }, Duration.ofMinutes(1)
         );
@@ -84,9 +94,7 @@ public class DynamicSchedulingService {
         if (frequentSyncTask != null) {
             frequentSyncTask.cancel(false);
         }
-        if (exitAppTask != null) {
-            exitAppTask.cancel(false);
-        }
+
         log.info("Shutting down application.");
         System.exit(SpringApplication.exit(applicationContext, () -> 0));
     }

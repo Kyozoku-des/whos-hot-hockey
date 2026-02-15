@@ -1,6 +1,8 @@
 package com.whoshot.nhl.datajob.service;
 
 import com.whoshot.nhl.datajob.dto.SeasonDto;
+import com.whoshot.nhl.datajob.dto.nhlapi.GameDto;
+import com.whoshot.nhl.datajob.dto.nhlapi.GameState;
 import com.whoshot.nhl.datajob.dto.nhlapi.PlayerInfoDto;
 import com.whoshot.nhl.datajob.dto.nhlapi.PlayerStandingDto;
 import com.whoshot.nhl.domain.entity.Player;
@@ -10,12 +12,15 @@ import com.whoshot.nhl.domain.repository.GameLogRepository;
 import com.whoshot.nhl.domain.repository.PlayerRepository;
 import com.whoshot.nhl.domain.repository.TeamRepository;
 import jakarta.annotation.PostConstruct;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 
@@ -33,6 +38,10 @@ public class DataSyncService {
     private final TeamRepository teamRepository;
     private final GameLogRepository gameLogRepository;
     private SeasonDto season;
+    @Getter
+    private LocalDateTime firstGameTimeForToday;
+    @Getter
+    private LocalDateTime lastGameTimeForToday;
     private final int gameType = 2; // Regular season
 
     /**
@@ -41,6 +50,7 @@ public class DataSyncService {
     @PostConstruct
     private void init() {
         setSeason();
+        setFirstAndLastGameTimesForToday();
     }
 
     /**
@@ -68,14 +78,36 @@ public class DataSyncService {
     }
 
     /**
+     * Fetches today's game schedule and determines the earliest and latest game start times.
+     */
+    public void setFirstAndLastGameTimesForToday() {
+        List<GameDto> games = nhlApiService.getLeagueSchedule();
+
+        LocalDateTime todayStart = LocalDateTime.now(ZoneOffset.UTC).toLocalDate().atStartOfDay();
+        LocalDateTime todayEnd = todayStart.plusDays(1);
+
+        List<LocalDateTime> todayGameTimes = games.stream()
+                .map(game -> LocalDateTime.parse(game.getStartTimeUTC(), DateTimeFormatter.ISO_DATE_TIME))
+                .filter(time -> !time.isBefore(todayStart) && time.isBefore(todayEnd))
+                .toList();
+
+        firstGameTimeForToday = todayGameTimes.stream()
+                .min(LocalDateTime::compareTo)
+                .orElse(null);
+
+        lastGameTimeForToday = todayGameTimes.stream()
+                .max(LocalDateTime::compareTo)
+                .orElse(null);
+    }
+
+    /**
      * Synchronizes active-player statistics for the resolved season.
-     * <p>
      * Side effects: performs external API calls and writes player records to the database.
      *
      * @throws PlayerStatisticsException if player identity or point-total validation fails
      */
     @Transactional
-    public void syncPlayer() throws PlayerStatisticsException {
+    public void syncPlayers() throws PlayerStatisticsException {
         String seasonId = season.getId();
         var players = nhlApiService.getPlayerStandingsOrder(seasonId, gameType);
 
@@ -86,7 +118,7 @@ public class DataSyncService {
             PlayerInfoDto playerInfo = nhlApiService.getPlayerInfo(playerId);
 
             if (!playerInfo.isActive()) {
-                log.info("Skipping inactive player ID: {}", playerId);
+                log.warn("Skipping inactive player ID: {}. Name: {} {}", playerId, playerInfo.getFirstName(), playerInfo.getLastName());
                 continue;
             }
 
@@ -103,5 +135,17 @@ public class DataSyncService {
             playerRepository.save(player);
             playerRepository.flush();
         }
+    }
+
+    /**
+     * Checks if any game from today's schedule is currently in progress.
+     *
+     * @return true if at least one game has gameState "LIVE"
+     */
+    public boolean isAnyGameActive() {
+        List<GameDto> games = nhlApiService.getLeagueSchedule();
+
+        return games.stream()
+                .anyMatch(game -> game.getGameState() == GameState.LIVE);
     }
 }
