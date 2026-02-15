@@ -5,22 +5,37 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.whoshot</groupId>
-        <artifactId>whos-hot</artifactId>
+        <groupId>com.whoshot.nhl</groupId>
+        <artifactId>whos-hot-nhl</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>api</artifactId>
     <packaging>jar</packaging>
 
-    <name>Backend Module</name>
+    <name>API Module</name>
     <description>REST API module</description>
 
     <dependencies>
         <!-- Domain module dependency -->
         <dependency>
-            <groupId>com.whoshot</groupId>
+            <groupId>com.whoshot.nhl</groupId>
             <artifactId>domain</artifactId>
+        </dependency>
+
+        <!-- SQLite JDBC Driver (runtime) -->
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Hibernate SQLite Dialect (runtime) -->
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-community-dialects</artifactId>
+            <version>6.6.2.Final</version>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- Spring Boot Web Starter -->
@@ -51,7 +66,7 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.nhl.whoshotbackend</groupId>
+            <groupId>com.whoshot.nhl</groupId>
             <artifactId>data-job</artifactId>
             <version>1.0.0-SNAPSHOT</version>
             <scope>compile</scope>
