@@ -1,25 +1,29 @@
 <!--
 Sync Impact Report
 ==================
-Version Change: Initial Creation → 1.0.0
+Version Change: 1.0.0 → 1.1.0
 Ratification Date: 2026-03-08
-Last Amended: 2026-03-08
+Last Amended: 2026-03-29
 
-New Constitution with 3 Core Principles:
-1. Test-First Development (NON-NEGOTIABLE)
-2. Documentation-First
-3. Pragmatic Architecture
+Amendment: Technology Standards update
+- Java 21 → Java 23
+- Spring Boot 3.2.0 → Spring Boot 4.x
+- SQLite → PostgreSQL 16 (Docker)
+- Added Testcontainers for integration testing
+- Added Docker Compose as infrastructure tool
+
+Principles: Unchanged (3 Core Principles retained as-is)
 
 Templates Status:
-✅ plan-template.md - Constitution Check section present, compatible
-✅ spec-template.md - Requirements sections align with documentation principle
-✅ tasks-template.md - Test-first workflow compatible, user story structure supports principles
-⚠️ command files - Generic principles apply, no agent-specific references needed
+✅ plan-template.md - No technology-specific references, compatible
+✅ spec-template.md - No technology-specific references, compatible
+✅ tasks-template.md - No technology-specific references, compatible
+✅ command files - Generic, no updates needed
 
 Follow-up Actions:
-- Validate that all future design documents reference this constitution
-- Ensure plan.md Constitution Check gates are applied during /speckit.plan
-- Monitor adherence during implementation phases
+- Update backend/pom.xml Spring Boot parent to 4.x when upgrading
+- Update CLAUDE.md to reflect Spring Boot 4.x target
+- Update plan.md Technical Context if Spring Boot version changes
 -->
 
 # Who's Hot NHL Constitution
@@ -92,11 +96,11 @@ Design decisions MUST balance simplicity with legitimate complexity:
 The following technology stack is established for consistency:
 
 **Backend**:
-- Language: Java 21
-- Framework: Spring Boot 3.2.0
-- Database: SQLite
+- Language: Java 23
+- Framework: Spring Boot 4.x
+- Database: PostgreSQL 16 (Docker Compose for local development)
 - Build Tool: Maven 3.9+
-- Testing: JUnit 5, Spring Boot Test
+- Testing: JUnit 5, Spring Boot Test, Testcontainers (PostgreSQL)
 - Documentation: SpringDoc OpenAPI (Swagger UI)
 
 **Frontend**:
@@ -112,7 +116,12 @@ The following technology stack is established for consistency:
 - Data Format: JSON
 - CORS: Enabled for localhost development
 
-**Rationale**: Stack has been established in initial implementation. Changes require migration plan and approval.
+**Infrastructure**:
+- Container Runtime: Docker & Docker Compose (PostgreSQL, future services)
+
+**Rationale**: Stack established in initial implementation and updated for
+001-api-data-split (PostgreSQL migration, Java 23 adoption). Further changes
+require migration plan and approval.
 
 ## Development Workflow
 
@@ -178,4 +187,4 @@ When principles appear to conflict:
 
 This constitution is a living document. Use the `/speckit.constitution` command to propose updates. All dependent templates in `.specify/templates/` will be checked and updated for consistency.
 
-**Version**: 1.0.0 | **Ratified**: 2026-03-08 | **Last Amended**: 2026-03-08
+**Version**: 1.1.0 | **Ratified**: 2026-03-08 | **Last Amended**: 2026-03-29

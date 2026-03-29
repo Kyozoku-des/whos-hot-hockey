@@ -57,7 +57,7 @@ Users can view comprehensive statistics for any NHL team including current stand
 1. **Given** a team code (e.g., "TOR"), **When** the team page loads, **Then** the system displays current season standings (wins, losses, OT losses, points, rank)
 2. **Given** a team code, **When** the team page loads, **Then** the system displays the last 10 games with results (opponent, score, date, home/away)
 3. **Given** a team code, **When** the team page loads, **Then** the system displays active win or loss streaks if the team is currently on one
-4. **Given** a team code, **When** the team page loads, **Then** the system displays the team roster with player names, positions, and jersey numbers
+4. **Given** a team code, **When** the team page loads, **Then** the system displays the team roster with player names and positions
 
 ---
 
@@ -71,10 +71,9 @@ Users can view comprehensive statistics for any NHL player including current sea
 
 **Acceptance Scenarios**:
 
-1. **Given** a player ID, **When** the player page loads, **Then** the system displays current season statistics (games, goals, assists, points, plus/minus, etc.)
-2. **Given** a player ID, **When** the player page loads, **Then** the system displays career summary statistics (total seasons, games, goals, assists, points, PPG)
+1. **Given** a player ID, **When** the player page loads, **Then** the system displays current season statistics (games, goals, assists, points, plus/minus, points per game, streaks)
+2. **Given** a player ID, **When** the player page loads, **Then** the system displays player identity information (full name, position, team, headshot, next game)
 3. **Given** a player ID, **When** the player page loads, **Then** the system displays the last 10 games with game-by-game statistics (date, opponent, goals, assists, points, TOI)
-4. **Given** a player ID, **When** the player page loads, **Then** the system displays biographical information (position, team, height, weight, birthplace, age)
 
 ---
 
@@ -116,12 +115,22 @@ Administrators can trigger a one-time full data load to populate the database wi
 ### Edge Cases
 
 - What happens when the NHL API is unavailable or returns errors during a scheduled data fetch? System should log the error, skip the update cycle, and retry on the next scheduled interval without crashing.
-- What happens when a search query matches hundreds of players (e.g., searching "a")? System should limit results to top 50 matches ranked by relevance (current season points) to prevent performance degradation.
+- What happens when a search query matches hundreds of players (e.g., searching "a")? The frontend search store limits displayed suggestions to the top 5 matches ranked by name relevance. The full dataset is loaded once and filtered client-side, so large match sets do not trigger additional API calls.
 - What happens when a team or player page is requested for an ID that doesn't exist in the database? System should return a 404 error with user-friendly messaging.
 - What happens when duplicate detection logic fails and the same goal is added twice? Statistics will be incorrect until the next full data sync corrects the values. System should log duplicate detection failures for monitoring.
 - What happens when the initial data load is triggered while the database already has current season data? System should perform an upsert operation (update existing, insert new) rather than creating duplicates.
 - What happens when a game goes into overtime or shootout affecting multiple statistics? System should handle all game states (regulation, OT, SO) and correctly update wins, OT losses, and individual player stats.
 - What happens when the data-job module is down during a game day? Statistics will become stale until the module is restarted. Frontend should continue serving cached data without errors.
+
+## Clarifications
+
+### Session 2026-03-29
+
+- Q: How is team rank determined when teams have equal points? → A: Rank matches the order returned by NHL API `/v1/standings/now` endpoint, which applies official tie-breaker rules. The data-job stores teams in this order and the API preserves it.
+- Q: Should FR-005 include career stats and bio data not currently in the Player entity? → A: No. FR-005 scoped to identity info, current season stats, and recent games only. Career stats and extended bio are deferred.
+- Q: Should the data-job be a long-running daemon or exit-after-sync process? → A: Long-running daemon with internal hourly scheduling. Must run continuously for 7 days without crashes (SC-008).
+- Q: Should team roster on detail page include jersey numbers? → A: No. Roster shows player names and positions only. Jersey numbers deferred.
+- Q: How is player "points percentage" for last 10 games calculated? → A: Points per game over last 10 games (total points / games played in window). Not a percentage — a PPG metric.
 
 ## Requirements *(mandatory)*
 
@@ -129,18 +138,18 @@ Administrators can trigger a one-time full data load to populate the database wi
 
 #### API Module Requirements
 
-- **FR-001**: API module MUST expose a search endpoint that accepts a query string and returns matching teams and players ranked by relevance for search suggestions dropdown
-- **FR-002**: API module MUST expose an endpoint that returns minimal team data for homepage display including ALL 32 teams with their season statistics (team code, name, wins, losses, points, rank) and their points percentage for the last 10 games
+- **FR-001**: API module MUST expose a search endpoint that returns all teams and players for the active season, enabling client-side filtering and search suggestions in the frontend dropdown
+- **FR-002**: API module MUST expose an endpoint that returns minimal team data for homepage display including ALL 32 teams with their season statistics (team code, name, wins, losses, points, rank) and their points percentage for the last 10 games. Team ordering and rank MUST match the order returned by the NHL API standings endpoint (`/v1/standings/now`), which applies official tie-breaker rules
 - **FR-003**: API module MUST expose an endpoint that returns minimal player data for homepage display including ALL active players with their season statistics (name, team, games, goals, assists, points) and their points percentage for the last 10 games
 - **FR-004**: API module MUST expose an endpoint that returns complete team data for team detail pages (standings, roster, recent games, statistics)
-- **FR-005**: API module MUST expose an endpoint that returns complete player data for player detail pages (bio, current season stats, career stats, recent games)
+- **FR-005**: API module MUST expose an endpoint that returns complete player data for player detail pages (identity info, current season stats, recent games)
 - **FR-006**: API module MUST respond to all requests within 500ms for cached data and 2 seconds for database queries under normal load
 - **FR-007**: API module MUST validate all input parameters and return appropriate HTTP error codes (400 for bad requests, 404 for not found, 500 for server errors)
 - **FR-008**: API module MUST support CORS for frontend requests from the configured frontend domain
 
 #### Data Job Module Requirements
 
-- **FR-009**: Data-job module MUST run an hourly check to determine if any NHL games are scheduled for the current day
+- **FR-009**: Data-job module MUST run as a long-running daemon and perform an hourly check to determine if any NHL games are scheduled for the current day
 - **FR-010**: Data-job module MUST fetch the current day's game schedule from the NHL API during each hourly check
 - **FR-011**: Data-job module MUST transition to game-time mode when games are scheduled for the current day, fetching updated statistics every 1 minute during active games
 - **FR-012**: Data-job module MUST fetch updated statistics only for teams and players participating in currently active games
@@ -153,7 +162,7 @@ Administrators can trigger a one-time full data load to populate the database wi
 
 #### Statistics Calculation Requirements
 
-- **FR-019**: System MUST calculate points percentage for players over their last 10 games (total points earned / maximum possible points in those games)
+- **FR-019**: System MUST calculate points per game for players over their last 10 games (total points earned / games played in window)
 - **FR-020**: System MUST calculate points percentage for teams over their last 10 games (total standings points earned / maximum possible points, where max = 20 points for 10 wins)
 - **FR-021**: System MUST maintain accurate cumulative season statistics (goals, assists, points, games played) for all players
 - **FR-022**: System MUST maintain accurate team standings with points calculated as (wins × 2) + (OT losses × 1)

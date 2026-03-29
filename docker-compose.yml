@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: nhl-stats-db
+    environment:
+      POSTGRES_DB: nhl_stats
+      POSTGRES_USER: whoshot
+      POSTGRES_PASSWORD: whoshot
+    ports:
+      - "5432:5432"
+    volumes:
+      - nhl_pgdata:/var/lib/postgresql/data
+
+volumes:
+  nhl_pgdata:

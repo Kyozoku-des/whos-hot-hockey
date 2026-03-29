@@ -10,7 +10,9 @@ import lombok.NoArgsConstructor;
  * Used for calculating win/loss streaks.
  */
 @Entity
-@Table(name = "team_games")
+@Table(name = "team_games", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"teamCode", "gameId"})
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

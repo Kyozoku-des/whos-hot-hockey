@@ -10,7 +10,9 @@ import lombok.NoArgsConstructor;
  * Used for calculating point streaks and hot/cold ratings.
  */
 @Entity
-@Table(name = "game_logs")
+@Table(name = "game_logs", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"playerId", "gameId"})
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
