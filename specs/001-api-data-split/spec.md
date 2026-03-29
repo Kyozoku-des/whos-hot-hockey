@@ -152,13 +152,16 @@ Administrators can trigger a one-time full data load to populate the database wi
 - **FR-009**: Data-job module MUST run as a long-running daemon and perform an hourly check to determine if any NHL games are scheduled for the current day
 - **FR-010**: Data-job module MUST fetch the current day's game schedule from the NHL API during each hourly check
 - **FR-011**: Data-job module MUST transition to game-time mode when games are scheduled for the current day, fetching updated statistics every 1 minute during active games
-- **FR-012**: Data-job module MUST fetch updated statistics only for teams and players participating in currently active games
+- **FR-012**: During game-time mode, data-job MUST sync only the teams and players participating in currently active games — not all teams and players. Active participants are determined by the team codes from games with a LIVE state.
 - **FR-013**: Data-job module MUST implement duplicate detection to prevent adding the same statistical event multiple times (e.g., same goal added twice)
 - **FR-014**: Data-job module MUST return to hourly schedule-check mode after the last game of the day has concluded
-- **FR-015**: Data-job module MUST provide a trigger mechanism for initial full season data load
+- **FR-015**: Data-job module MUST provide a trigger mechanism for initial full season data load that syncs both team standings data (all 32 teams) and player data (all active players) to the database
 - **FR-016**: Data-job module MUST log all data fetch operations including success/failure status, records updated, and any errors encountered
-- **FR-017**: Data-job module MUST handle NHL API failures gracefully by logging errors and continuing with the next scheduled operation
+- **FR-017**: Data-job module MUST handle NHL API failures gracefully — both during scheduled operations and at startup — by logging errors and continuing without crashing. The application MUST start successfully even if the NHL API is temporarily unreachable.
 - **FR-018**: Data-job module MUST use upsert operations to prevent duplicate database records during data synchronization
+- **FR-024**: Data-job module MUST sync team standings data from the NHL API alongside player data during every sync cycle (hourly full sync and game-time scoped sync). Team and player data are separate sync operations — omitting either leaves the database incomplete.
+- **FR-028**: Data-job module MUST NOT expose an HTTP listener. It operates as a background daemon process with no web server, to avoid port conflicts with the API module.
+- **FR-029**: Data-job module MUST deserialize all NHL API responses defensively. Unknown or unexpected field values (e.g., new enum values added by the NHL API) MUST be handled with fallback defaults rather than causing deserialization failures that crash the application.
 
 #### Statistics Calculation Requirements
 
@@ -209,3 +212,27 @@ Administrators can trigger a one-time full data load to populate the database wi
 - Statistics calculations follow the same formulas currently implemented in the monolithic backend
 - The data-job module will be deployed as a separate process/container with independent lifecycle from the API module
 - Initial season data load will be triggered manually via administrative interface or CLI command, not automatically on startup
+
+## Implementation Learnings
+
+Captured during implementation to inform future feature specs and avoid repeating the same gaps.
+
+### Spec gaps that caused rework
+
+- **"Sync data" did not distinguish between player and team data.** The requirements (FR-009 through FR-018) and user stories (US5, US6) described data sync without ever specifying that team data needed separate sync logic. The existing codebase only had `syncPlayers()` — no team sync existed. This was only discovered when the database had no team data after the initial load. Future specs should explicitly enumerate which entity types a sync operation covers.
+- **"Initial load" acceptance criteria were incomplete.** US6 said "fetches all teams and all players" but the acceptance scenarios didn't verify team data was actually loaded — they were written in a way that could pass with player data alone. Acceptance criteria should verify each entity type independently.
+- **Game-time sync scope was specified but easy to miss.** FR-012 clearly states "only for teams and players participating in currently active games," but the implementation initially synced everything during game time. The requirement was buried in a list of 10 data-job FRs. High-impact behavioral constraints like "only active participants" should be called out in the user story description and acceptance scenarios, not just in requirements.
+
+### Deployment and runtime surprises
+
+- **Two independent modules sharing a framework default to the same port.** The spec described two independent applications but didn't address that both inherited the same embedded web server port. The data-job doesn't serve HTTP traffic at all — this wasn't stated anywhere. When specifying independent modules, state which ones need network listeners and which don't.
+- **Application startup depends on external API availability.** The data-job's initialization fetches from the NHL API before the application fully starts. If the API is unreachable, the app fails to launch entirely. FR-017 (handle API failures gracefully) was written for scheduled operations but should also apply to startup. Specs should consider "what happens if external dependencies are down at startup."
+
+### External API integration
+
+- **External APIs evolve without notice.** The NHL API introduced a `"OFF"` game state that wasn't in the original enum. The app crashed on deserialization. Any enum or fixed-value mapping for external API fields should include a fallback/unknown handler. Specs should require defensive deserialization as a general principle for external API consumers.
+- **Sequential API fetching at scale is slow.** The initial load makes ~1600 sequential HTTP requests (~800 players × 2 calls each). There was no spec requirement around fetch concurrency or performance of the load process itself. SC-006 set a 15-minute target but didn't account for how sequential fetching might make that tight. Bulk data operations should consider concurrency in the spec.
+
+### Spec modeling observations
+
+- **Entity lists mixed persisted and non-persisted concepts.** The spec listed "Schedule" and "Last 10 Games Performance" as key entities, but Schedule is only read from the NHL API (never stored) and last-10 performance is a computed field, not a table. This created confusion during planning. Entity definitions should clearly state whether something is persisted, computed, or transient.

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 
 /**
@@ -38,11 +39,12 @@ public class DynamicSchedulingService {
 
         // Run initial sync
         try {
+            dataSyncService.syncTeams();
             dataSyncService.syncPlayers();
         } catch (PlayerStatisticsException e) {
-            log.error("Error during initial player sync: {}", e.getMessage(), e);
+            log.error("Error during initial sync: {}", e.getMessage(), e);
         } catch (Exception e) {
-            log.error("Unexpected error during initial player sync: {}", e.getMessage(), e);
+            log.error("Unexpected error during initial sync: {}", e.getMessage(), e);
         }
 
         // Check if games are on today and start frequent sync if needed
@@ -77,9 +79,10 @@ public class DynamicSchedulingService {
             } else {
                 log.info("No games scheduled for today. Running one sync and remaining in hourly mode.");
                 try {
+                    dataSyncService.syncTeams();
                     dataSyncService.syncPlayers();
                 } catch (PlayerStatisticsException e) {
-                    log.error("Error during player sync in hourly check: {}", e.getMessage(), e);
+                    log.error("Error during sync in hourly check: {}", e.getMessage(), e);
                 }
             }
         } catch (Exception e) {
@@ -99,7 +102,15 @@ public class DynamicSchedulingService {
 
         frequentSyncTask = taskScheduler.scheduleAtFixedRate(() -> {
                     try {
-                        dataSyncService.syncPlayers();
+                        Set<String> activeTeams = dataSyncService.getActiveGameTeamCodes();
+
+                        if (activeTeams.isEmpty()) {
+                            log.info("No active games right now, skipping scoped sync");
+                        } else {
+                            log.info("Syncing {} teams with active games: {}", activeTeams.size(), activeTeams);
+                            dataSyncService.syncTeamsForCodes(activeTeams);
+                            dataSyncService.syncPlayersForTeams(activeTeams);
+                        }
 
                         // Only check for game completion after last game should have started
                         if (lastGameTime != null && LocalDateTime.now(ZoneOffset.UTC).isAfter(lastGameTime)) {

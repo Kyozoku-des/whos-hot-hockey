@@ -1,11 +1,9 @@
 package com.whoshot.nhl.datajob.service;
 
 import com.whoshot.nhl.datajob.dto.SeasonDto;
-import com.whoshot.nhl.datajob.dto.nhlapi.GameDto;
-import com.whoshot.nhl.datajob.dto.nhlapi.GameState;
-import com.whoshot.nhl.datajob.dto.nhlapi.PlayerInfoDto;
-import com.whoshot.nhl.datajob.dto.nhlapi.PlayerStandingDto;
+import com.whoshot.nhl.datajob.dto.nhlapi.*;
 import com.whoshot.nhl.domain.entity.Player;
+import com.whoshot.nhl.domain.entity.Team;
 import com.whoshot.nhl.datajob.exception.PlayerStatisticsException;
 import com.whoshot.nhl.datajob.factory.PlayerFactory;
 import com.whoshot.nhl.domain.repository.GameLogRepository;
@@ -24,6 +22,8 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Coordinates retrieval, transformation, and persistence of player season data.
@@ -149,6 +149,155 @@ public class DataSyncService {
         }
 
         log.info("Player sync completed: {} players processed", processedCount);
+    }
+
+    /**
+     * Synchronizes team standings from the NHL API for the resolved season.
+     * Fetches standings (which returns teams in official rank order) and persists them.
+     */
+    @Transactional
+    public void syncTeams() {
+        String seasonId = season.getId();
+        log.info("Starting team sync for season {}", seasonId);
+
+        var standings = nhlApiService.getTeamStandings();
+        int processedCount = 0;
+
+        for (TeamStandingsDto standing : standings) {
+            String teamCode = standing.getTeamAbbrev().getDefaultValue();
+
+            Team team = teamRepository.findByTeamCodeAndSeason(teamCode, seasonId)
+                    .orElse(new Team());
+
+            team.setTeamCode(teamCode);
+            team.setSeason(seasonId);
+            team.setTeamName(standing.getTeamName().getDefaultValue());
+            team.setLogoUrl(standing.getTeamLogo());
+            team.setGamesPlayed(standing.getGamesPlayed());
+            team.setWins(standing.getWins());
+            team.setLosses(standing.getLosses());
+            team.setOvertimeLosses(standing.getOtLosses());
+            team.setPoints(standing.getPoints());
+            team.setLastUpdated(LocalDateTime.now().toString());
+
+            try {
+                teamRepository.save(team);
+                processedCount++;
+            } catch (DataIntegrityViolationException e) {
+                log.warn("Constraint violation for team {} in season {}: {}",
+                        teamCode, seasonId, e.getMessage());
+            }
+        }
+
+        teamRepository.flush();
+        log.info("Team sync completed: {} teams processed", processedCount);
+    }
+
+    /**
+     * Synchronizes only players belonging to the specified teams.
+     * Used during game-time sync to limit API calls to active game participants.
+     */
+    @Transactional
+    public void syncPlayersForTeams(Set<String> teamCodes) throws PlayerStatisticsException {
+        String seasonId = season.getId();
+        log.info("Starting scoped player sync for teams {} in season {}", teamCodes, seasonId);
+
+        var players = nhlApiService.getPlayerStandingsOrder(seasonId, gameType);
+        int processedCount = 0;
+
+        for (PlayerStandingDto playerStanding : players) {
+            Long playerId = playerStanding.getId();
+
+            PlayerInfoDto playerInfo = nhlApiService.getPlayerInfo(playerId);
+
+            if (!playerInfo.isActive()) {
+                continue;
+            }
+
+            if (!teamCodes.contains(playerInfo.getCurrentTeamAbbrev())) {
+                continue;
+            }
+
+            if (!Objects.equals(playerInfo.getPlayerId(), playerId)) {
+                throw new PlayerStatisticsException("Player ID mismatch between standings and player info API");
+            }
+
+            var gameLogs = nhlApiService.getPlayerGameLogs(playerId, seasonId, gameType);
+            Player player = playerFactory.createFromApiData(playerInfo, playerStanding, gameLogs, seasonId);
+
+            try {
+                playerRepository.save(player);
+                playerRepository.flush();
+                processedCount++;
+            } catch (DataIntegrityViolationException e) {
+                log.warn("Unique constraint violation for player {} in season {}: {}",
+                        playerId, seasonId, e.getMessage());
+                playerRepository.saveAndFlush(player);
+                processedCount++;
+            }
+        }
+
+        log.info("Scoped player sync completed: {} players processed for teams {}", processedCount, teamCodes);
+    }
+
+    /**
+     * Synchronizes only the specified teams from standings.
+     * Used during game-time sync to limit updates to active game participants.
+     */
+    @Transactional
+    public void syncTeamsForCodes(Set<String> teamCodes) {
+        String seasonId = season.getId();
+        log.info("Starting scoped team sync for teams {} in season {}", teamCodes, seasonId);
+
+        var standings = nhlApiService.getTeamStandings();
+        int processedCount = 0;
+
+        for (TeamStandingsDto standing : standings) {
+            String teamCode = standing.getTeamAbbrev().getDefaultValue();
+
+            if (!teamCodes.contains(teamCode)) {
+                continue;
+            }
+
+            Team team = teamRepository.findByTeamCodeAndSeason(teamCode, seasonId)
+                    .orElse(new Team());
+
+            team.setTeamCode(teamCode);
+            team.setSeason(seasonId);
+            team.setTeamName(standing.getTeamName().getDefaultValue());
+            team.setLogoUrl(standing.getTeamLogo());
+            team.setGamesPlayed(standing.getGamesPlayed());
+            team.setWins(standing.getWins());
+            team.setLosses(standing.getLosses());
+            team.setOvertimeLosses(standing.getOtLosses());
+            team.setPoints(standing.getPoints());
+            team.setLastUpdated(LocalDateTime.now().toString());
+
+            try {
+                teamRepository.save(team);
+                processedCount++;
+            } catch (DataIntegrityViolationException e) {
+                log.warn("Constraint violation for team {} in season {}: {}",
+                        teamCode, seasonId, e.getMessage());
+            }
+        }
+
+        teamRepository.flush();
+        log.info("Scoped team sync completed: {} teams processed", processedCount);
+    }
+
+    /**
+     * Returns the team codes for all teams involved in currently active (LIVE) games.
+     */
+    public Set<String> getActiveGameTeamCodes() {
+        List<GameDto> games = nhlApiService.getLeagueSchedule();
+
+        return games.stream()
+                .filter(game -> game.getGameState() == GameState.LIVE)
+                .flatMap(game -> java.util.stream.Stream.of(
+                        game.getHomeTeam().getAbbrev(),
+                        game.getAwayTeam().getAbbrev()))
+                .collect(Collectors.toSet());
     }
 
     /**

@@ -28,6 +28,10 @@ public class InitialDataLoadService {
         log.info("Initial full-season data load started at {}", start);
 
         try {
+            log.info("Syncing team standings...");
+            dataSyncService.syncTeams();
+
+            log.info("Syncing player data...");
             dataSyncService.syncPlayers();
         } catch (PlayerStatisticsException e) {
             log.error("Initial data load failed due to player statistics error: {}", e.getMessage(), e);
