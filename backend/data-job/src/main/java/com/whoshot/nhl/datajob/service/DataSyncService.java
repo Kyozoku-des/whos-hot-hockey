@@ -15,6 +15,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -109,7 +110,10 @@ public class DataSyncService {
     @Transactional
     public void syncPlayers() throws PlayerStatisticsException {
         String seasonId = season.getId();
+        log.info("Starting player sync for season {}", seasonId);
+
         var players = nhlApiService.getPlayerStandingsOrder(seasonId, gameType);
+        int processedCount = 0;
 
         // Get order from standings API, calculate new statistics and verify points
         for (PlayerStandingDto playerStanding : players) {
@@ -132,9 +136,19 @@ public class DataSyncService {
             // Create player using factory (handles all construction and statistics calculation)
             Player player = playerFactory.createFromApiData(playerInfo, playerStanding, gameLogs, seasonId);
 
-            playerRepository.save(player);
-            playerRepository.flush();
+            try {
+                playerRepository.save(player);
+                playerRepository.flush();
+                processedCount++;
+            } catch (DataIntegrityViolationException e) {
+                log.warn("Unique constraint violation for player {} in season {}, attempting merge: {}",
+                        playerId, seasonId, e.getMessage());
+                playerRepository.saveAndFlush(player);
+                processedCount++;
+            }
         }
+
+        log.info("Player sync completed: {} players processed", processedCount);
     }
 
     /**

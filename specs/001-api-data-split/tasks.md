@@ -168,15 +168,15 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T048 [P] [US5] Unit test for duplicate detection: verify that `DataSyncService.syncPlayers()` does not create duplicate GameLog entries for the same `(playerId, gameId)` — test in `backend/data-job/src/test/java/com/whoshot/nhl/datajob/service/DataSyncServiceTest.java`
-- [ ] T049 [P] [US5] Unit test for scheduling state transitions: verify `DynamicSchedulingService` transitions correctly between hourly mode → game-time mode (1-min) → back to hourly mode — test in `backend/data-job/src/test/java/com/whoshot/nhl/datajob/service/DynamicSchedulingServiceTest.java`
+- [x] T048 [P] [US5] Unit test for duplicate detection: verify that `DataSyncService.syncPlayers()` does not create duplicate GameLog entries for the same `(playerId, gameId)` — test in `backend/data-job/src/test/java/com/whoshot/nhl/datajob/service/DataSyncServiceTest.java`
+- [x] T049 [P] [US5] Unit test for scheduling state transitions: verify `DynamicSchedulingService` transitions correctly between hourly mode → game-time mode (1-min) → back to hourly mode — test in `backend/data-job/src/test/java/com/whoshot/nhl/datajob/service/DynamicSchedulingServiceTest.java`
 
 ### Implementation for User Story 5
 
-- [ ] T050 [US5] Refactor `DynamicSchedulingService` in `backend/data-job/src/main/java/com/whoshot/nhl/datajob/service/DynamicSchedulingService.java`: convert from exit-after-sync to long-running daemon. Replace `System.exit()` calls with return-to-hourly-scheduling logic. Add internal hourly cron (`@Scheduled(cron = "0 0 * * * *")` or `scheduleAtFixedRate`) that checks for games and transitions to 1-minute sync when games are detected (FR-009, FR-014)
-- [ ] T051 [US5] Update `DataSyncService` in `backend/data-job/src/main/java/com/whoshot/nhl/datajob/service/DataSyncService.java` to use upsert/merge strategy for GameLog and TeamGame inserts to handle unique constraint violations gracefully (FR-018)
-- [ ] T052 [US5] Add structured logging to `DataSyncService` for all fetch operations: log success/failure, record counts, and errors (FR-016)
-- [ ] T053 [US5] Add error handling in `DynamicSchedulingService` to catch NHL API failures and continue with next scheduled sync instead of crashing (FR-017)
+- [x] T050 [US5] Refactor `DynamicSchedulingService` in `backend/data-job/src/main/java/com/whoshot/nhl/datajob/service/DynamicSchedulingService.java`: convert from exit-after-sync to long-running daemon. Replace `System.exit()` calls with return-to-hourly-scheduling logic. Add internal hourly cron (`@Scheduled(cron = "0 0 * * * *")` or `scheduleAtFixedRate`) that checks for games and transitions to 1-minute sync when games are detected (FR-009, FR-014)
+- [x] T051 [US5] Update `DataSyncService` in `backend/data-job/src/main/java/com/whoshot/nhl/datajob/service/DataSyncService.java` to use upsert/merge strategy for GameLog and TeamGame inserts to handle unique constraint violations gracefully (FR-018)
+- [x] T052 [US5] Add structured logging to `DataSyncService` for all fetch operations: log success/failure, record counts, and errors (FR-016)
+- [x] T053 [US5] Add error handling in `DynamicSchedulingService` to catch NHL API failures and continue with next scheduled sync instead of crashing (FR-017)
 
 **Checkpoint**: Data-job starts and runs continuously. Performs hourly schedule checks. On game day, transitions to 1-minute sync. Returns to hourly after games finish. No duplicates. Logs all operations.
 
@@ -192,13 +192,13 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T054 [US6] Unit test for `InitialDataLoadService.loadFullSeason()` in `backend/data-job/src/test/java/com/whoshot/nhl/datajob/service/InitialDataLoadServiceTest.java` — verify it calls `NhlApiService` methods for all teams and players, uses upsert operations, and handles API failures gracefully
+- [x] T054 [US6] Unit test for `InitialDataLoadService.loadFullSeason()` in `backend/data-job/src/test/java/com/whoshot/nhl/datajob/service/InitialDataLoadServiceTest.java` — verify it calls `NhlApiService` methods for all teams and players, uses upsert operations, and handles API failures gracefully
 
 ### Implementation for User Story 6
 
-- [ ] T055 [US6] Create `InitialDataLoadService` in `backend/data-job/src/main/java/com/whoshot/nhl/datajob/service/InitialDataLoadService.java` with method `loadFullSeason()` that fetches all teams, all players, and their game logs using existing `NhlApiService` methods. Use upsert operations (FR-018).
-- [ ] T056 [US6] Add CLI trigger for initial load: add Spring Boot `CommandLineRunner` or `@PostConstruct` with a profile/property flag (e.g., `--initial-load=true` or `spring.profiles.active=initial-load`) in `backend/data-job/src/main/java/com/whoshot/nhl/datajob/config/InitialLoadRunner.java` (FR-015)
-- [ ] T057 [US6] Add logging for initial load progress: log team count, player count, and total time in `InitialDataLoadService` (FR-016)
+- [x] T055 [US6] Create `InitialDataLoadService` in `backend/data-job/src/main/java/com/whoshot/nhl/datajob/service/InitialDataLoadService.java` with method `loadFullSeason()` that fetches all teams, all players, and their game logs using existing `NhlApiService` methods. Use upsert operations (FR-018).
+- [x] T056 [US6] Add CLI trigger for initial load: add Spring Boot `CommandLineRunner` or `@PostConstruct` with a profile/property flag (e.g., `--initial-load=true` or `spring.profiles.active=initial-load`) in `backend/data-job/src/main/java/com/whoshot/nhl/datajob/config/InitialLoadRunner.java` (FR-015)
+- [x] T057 [US6] Add logging for initial load progress: log team count, player count, and total time in `InitialDataLoadService` (FR-016)
 
 **Checkpoint**: Run `mvn spring-boot:run -Dspring-boot.run.arguments="--initial-load=true"` → database populated with all teams and players.
 

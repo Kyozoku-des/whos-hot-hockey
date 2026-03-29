@@ -4,8 +4,6 @@ import com.whoshot.nhl.datajob.exception.PlayerStatisticsException;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.SpringApplication;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
@@ -16,7 +14,8 @@ import java.time.ZoneOffset;
 import java.util.concurrent.ScheduledFuture;
 
 /**
- * Manages runtime scheduling of synchronization jobs based on daily game windows.
+ * Long-running daemon that manages runtime scheduling of synchronization jobs based on daily game windows.
+ * Operates in two modes: hourly check (default) and frequent sync (during game windows).
  */
 @Slf4j
 @Service
@@ -25,44 +24,78 @@ import java.util.concurrent.ScheduledFuture;
 public class DynamicSchedulingService {
     private final TaskScheduler taskScheduler;
     private final DataSyncService dataSyncService;
-    private final ApplicationContext applicationContext;
 
     private ScheduledFuture<?> frequentSyncTask;
-    private LocalDateTime lastGameTime;
+    private boolean frequentSyncActive = false;
 
     /**
-     * Initializes scheduling at application startup.
-     * If no games are scheduled, runs one synchronization and terminates the application.
-     * Side effects: schedules recurring tasks and may exit the JVM.
+     * Initializes the daemon at application startup.
+     * Runs an initial sync, then schedules an hourly check for game-day transitions.
      */
     @PostConstruct
     public void init() {
-        // Check NHL API for today's game schedule
-        LocalDateTime firstGameTime = dataSyncService.getFirstGameTimeForToday();
+        log.info("Initializing dynamic scheduling daemon");
 
-        if (firstGameTime == null) {
-            log.info("No games scheduled for today. Running one sync and exiting.");
-            try {
-                dataSyncService.syncPlayers();
-            } catch (PlayerStatisticsException e) {
-                log.error(e.getMessage(), e);
-            }
-
-            exitApp();
-            return;
+        // Run initial sync
+        try {
+            dataSyncService.syncPlayers();
+        } catch (PlayerStatisticsException e) {
+            log.error("Error during initial player sync: {}", e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("Unexpected error during initial player sync: {}", e.getMessage(), e);
         }
 
-        this.lastGameTime = dataSyncService.getLastGameTimeForToday();
-        LocalDateTime startFrequentSyncTime = firstGameTime.minusMinutes(5); // 5 minute buffer
-        taskScheduler.schedule(this::startFrequentSync, startFrequentSyncTime.toInstant(ZoneOffset.UTC));
+        // Check if games are on today and start frequent sync if needed
+        hourlyCheck();
+
+        // Schedule hourly checks for game-day transitions
+        taskScheduler.scheduleAtFixedRate(this::hourlyCheck, Duration.ofHours(1));
+        log.info("Hourly check scheduled");
+    }
+
+    /**
+     * Periodic check that refreshes today's game schedule and transitions between sync modes.
+     * If games are scheduled today and frequent sync is not active, starts frequent sync.
+     * If no games today, runs a single sync and remains in hourly mode.
+     */
+    private void hourlyCheck() {
+        try {
+            log.info("Running hourly schedule check");
+            dataSyncService.setFirstAndLastGameTimesForToday();
+
+            LocalDateTime firstGameTime = dataSyncService.getFirstGameTimeForToday();
+
+            if (firstGameTime != null) {
+                if (!frequentSyncActive) {
+                    log.info("Games detected for today. Scheduling frequent sync to start at {}",
+                            firstGameTime.minusMinutes(5));
+                    LocalDateTime startFrequentSyncTime = firstGameTime.minusMinutes(5);
+                    taskScheduler.schedule(this::startFrequentSync, startFrequentSyncTime.toInstant(ZoneOffset.UTC));
+                } else {
+                    log.info("Games detected for today but frequent sync is already active");
+                }
+            } else {
+                log.info("No games scheduled for today. Running one sync and remaining in hourly mode.");
+                try {
+                    dataSyncService.syncPlayers();
+                } catch (PlayerStatisticsException e) {
+                    log.error("Error during player sync in hourly check: {}", e.getMessage(), e);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error during hourly check, will retry next hour: {}", e.getMessage(), e);
+        }
     }
 
     /**
      * Starts fixed-rate synchronization at one-minute intervals.
-     * Side effect: registers a recurring task in the scheduler.
+     * When all games finish, cancels frequent sync and returns to hourly mode.
      */
     private void startFrequentSync() {
-        log.info("Starting frequent sync");
+        log.info("Entering frequent sync mode");
+        frequentSyncActive = true;
+
+        LocalDateTime lastGameTime = dataSyncService.getLastGameTimeForToday();
 
         frequentSyncTask = taskScheduler.scheduleAtFixedRate(() -> {
                     try {
@@ -72,30 +105,19 @@ public class DynamicSchedulingService {
                         if (lastGameTime != null && LocalDateTime.now(ZoneOffset.UTC).isAfter(lastGameTime)) {
                             boolean isAnyGameActive = dataSyncService.isAnyGameActive();
                             if (!isAnyGameActive) {
-                                log.info("No active games detected. Stopping frequent sync and scheduling app exit.");
+                                log.info("No active games detected. Stopping frequent sync, returning to hourly mode.");
                                 if (frequentSyncTask != null) {
                                     frequentSyncTask.cancel(false);
                                 }
-                                exitApp();
+                                frequentSyncActive = false;
                             }
                         }
                     } catch (PlayerStatisticsException e) {
-                        log.error("Error during player sync: {}", e.getMessage(), e);
+                        log.error("Error during frequent player sync: {}", e.getMessage(), e);
+                    } catch (Exception e) {
+                        log.error("Unexpected error during frequent sync, will retry next interval: {}", e.getMessage(), e);
                     }
                 }, Duration.ofMinutes(1)
         );
-    }
-
-    /**
-     * Cancels scheduled tasks and exits the Spring application.
-     * Side effect: terminates the JVM process.
-     */
-    private void exitApp() {
-        if (frequentSyncTask != null) {
-            frequentSyncTask.cancel(false);
-        }
-
-        log.info("Shutting down application.");
-        System.exit(SpringApplication.exit(applicationContext, () -> 0));
     }
 }
