@@ -61,12 +61,12 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T015 [US1] Controller test for `GET /api/search/all` in `backend/api/src/test/java/com/whoshot/nhl/api/controller/SearchControllerTest.java` using `@WebMvcTest` with mocked repositories — verify 200 status, response contains both player and team entries, and season auto-detection works when param is null
+- [x] T015 [US1] Controller test for `GET /api/search/all` in `backend/api/src/test/java/com/whoshot/nhl/api/controller/SearchControllerTest.java` using `@WebMvcTest` with mocked repositories — verify 200 status, response contains both player and team entries, and season auto-detection works when param is null
 
 ### Implementation for User Story 1
 
-- [ ] T016 [US1] Verify `SearchController` works in new API module by ensuring `PlayerRepository.findAllForSearch()` and `TeamRepository.findAllForSearch()` return data. Test manually: start API, hit `GET /api/search/all` — confirm response contains players and teams.
-- [ ] T017 [US1] Update `SearchController` in `backend/api/src/main/java/com/whoshot/nhl/api/controller/SearchController.java`: add active season auto-detection when `season` param is null (query `CurrentSeasonRepository.findByIsActiveTrue()`)
+- [x] T016 [US1] Verify `SearchController` works in new API module by ensuring `PlayerRepository.findAllForSearch()` and `TeamRepository.findAllForSearch()` return data. Test manually: start API, hit `GET /api/search/all` — confirm response contains players and teams.
+- [x] T017 [US1] Update `SearchController` in `backend/api/src/main/java/com/whoshot/nhl/api/controller/SearchController.java`: add active season auto-detection when `season` param is null (query `CurrentSeasonRepository.findByIsActiveTrue()`)
 
 **Checkpoint**: Search endpoint returns all players and teams. Frontend search bar shows suggestions and filters tables.
 
@@ -82,23 +82,23 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T018 [P] [US2] Unit test for player points per game (last 10) calculation in `backend/data-job/src/test/java/com/whoshot/nhl/datajob/service/StatisticsCalculationServiceTest.java` — test `calculatePlayerPointsPerGameLast10()` with known game log data (FR-019, FR-023)
-- [ ] T019 [P] [US2] Unit test for team points percentage calculation in `backend/data-job/src/test/java/com/whoshot/nhl/datajob/service/StatisticsCalculationServiceTest.java` — test `calculateTeamPointsPercentageLast10()` with known team game data (FR-020, FR-023)
-- [ ] T020 [P] [US2] Controller test for `GET /api/players/standings` in `backend/api/src/test/java/com/whoshot/nhl/api/controller/PlayerControllerTest.java` using `@WebMvcTest` with mocked service — verify response structure and 200 status
-- [ ] T021 [P] [US2] Controller test for `GET /api/teams/standings` in `backend/api/src/test/java/com/whoshot/nhl/api/controller/TeamControllerTest.java` using `@WebMvcTest` with mocked service — verify response structure, 200 status, and that team ordering preserves NHL API standings order (FR-002)
+- [x] T018 [P] [US2] Unit test for player points per game (last 10) calculation in `backend/data-job/src/test/java/com/whoshot/nhl/datajob/service/StatisticsCalculationServiceTest.java` — test `calculatePlayerPointsPerGameLast10()` with known game log data (FR-019, FR-023)
+- [x] T019 [P] [US2] Unit test for team points percentage calculation in `backend/data-job/src/test/java/com/whoshot/nhl/datajob/service/StatisticsCalculationServiceTest.java` — test `calculateTeamPointsPercentageLast10()` with known team game data (FR-020, FR-023)
+- [x] T020 [P] [US2] Controller test for `GET /api/players/standings` in `backend/api/src/test/java/com/whoshot/nhl/api/controller/PlayerControllerTest.java` using `@WebMvcTest` with mocked service — verify response structure and 200 status
+- [x] T021 [P] [US2] Controller test for `GET /api/teams/standings` in `backend/api/src/test/java/com/whoshot/nhl/api/controller/TeamControllerTest.java` using `@WebMvcTest` with mocked service — verify response structure, 200 status, and that team ordering preserves NHL API standings order (FR-002)
 
 ### Implementation for User Story 2
 
-- [ ] T022 [P] [US2] Create `PlayerStandingsDto` in `backend/api/src/main/java/com/whoshot/nhl/api/dto/PlayerStandingsDto.java` with fields: playerId, firstName, lastName, fullName, positionCode, teamCode, teamLogoUrl, headshotUrl, gamesPlayed, goals, assists, points, pointsPerGame, plusMinus, pointsPerLastNGames, hot, cold, currentPointStreak, currentPointlessStreak
-- [ ] T023 [P] [US2] Create `TeamStandingsDto` in `backend/api/src/main/java/com/whoshot/nhl/api/dto/TeamStandingsDto.java` with fields per contracts/api-endpoints.md team standings response
-- [ ] T024 [US2] Create `PlayerService` in `backend/api/src/main/java/com/whoshot/nhl/api/service/PlayerService.java` with method `getPlayerStandings(season)` that queries `PlayerRepository.findByIdSeasonOrderByPointsDesc(season)`, resolves active season when null, and maps to `PlayerStandingsDto`
-- [ ] T025 [US2] Create `TeamService` in `backend/api/src/main/java/com/whoshot/nhl/api/service/TeamService.java` with method `getTeamStandings(season)` that queries `TeamRepository.findBySeasonOrderByPointsDesc(season)`, resolves active season when null, and maps to `TeamStandingsDto`. Team ordering MUST preserve the order from NHL API standings endpoint (FR-002)
-- [ ] T026 [US2] Create `PlayerController` in `backend/api/src/main/java/com/whoshot/nhl/api/controller/PlayerController.java` with `GET /api/players/standings` endpoint returning `List<PlayerStandingsDto>` (FR-003)
-- [ ] T027 [US2] Create `TeamController` in `backend/api/src/main/java/com/whoshot/nhl/api/controller/TeamController.java` with `GET /api/teams/standings` endpoint returning `List<TeamStandingsDto>` (FR-002)
-- [ ] T028 [US2] Add `GET /api/players/point-streaks` to `PlayerController` — calls `PlayerRepository.findPlayersWithPointStreaks(season)` and maps to DTO (existing frontend component: `PointStreaksTable.vue`)
-- [ ] T029 [US2] Add `GET /api/players/hot` to `PlayerController` — calls `PlayerRepository.findHotPlayers(season)` and maps to DTO (existing frontend component: `HottestPlayersTable.vue`)
-- [ ] T030 [US2] Add `GET /api/teams/win-streaks` to `TeamController` — calls `TeamRepository.findTeamsWithWinStreaks(season)` and maps to DTO (existing frontend component: `TeamWinStreaksTable.vue`)
-- [ ] T031 [US2] Add `GET /api/teams/loss-streaks` to `TeamController` — calls `TeamRepository.findTeamsWithLossStreaks(season)` and maps to DTO (existing frontend component: `TeamWinStreaksTable.vue`)
+- [x] T022 [P] [US2] Create `PlayerStandingsDto` in `backend/api/src/main/java/com/whoshot/nhl/api/dto/PlayerStandingsDto.java` with fields: playerId, firstName, lastName, fullName, positionCode, teamCode, teamLogoUrl, headshotUrl, gamesPlayed, goals, assists, points, pointsPerGame, plusMinus, pointsPerLastNGames, hot, cold, currentPointStreak, currentPointlessStreak
+- [x] T023 [P] [US2] Create `TeamStandingsDto` in `backend/api/src/main/java/com/whoshot/nhl/api/dto/TeamStandingsDto.java` with fields per contracts/api-endpoints.md team standings response
+- [x] T024 [US2] Create `PlayerService` in `backend/api/src/main/java/com/whoshot/nhl/api/service/PlayerService.java` with method `getPlayerStandings(season)` that queries `PlayerRepository.findByIdSeasonOrderByPointsDesc(season)`, resolves active season when null, and maps to `PlayerStandingsDto`
+- [x] T025 [US2] Create `TeamService` in `backend/api/src/main/java/com/whoshot/nhl/api/service/TeamService.java` with method `getTeamStandings(season)` that queries `TeamRepository.findBySeasonOrderByPointsDesc(season)`, resolves active season when null, and maps to `TeamStandingsDto`. Team ordering MUST preserve the order from NHL API standings endpoint (FR-002)
+- [x] T026 [US2] Create `PlayerController` in `backend/api/src/main/java/com/whoshot/nhl/api/controller/PlayerController.java` with `GET /api/players/standings` endpoint returning `List<PlayerStandingsDto>` (FR-003)
+- [x] T027 [US2] Create `TeamController` in `backend/api/src/main/java/com/whoshot/nhl/api/controller/TeamController.java` with `GET /api/teams/standings` endpoint returning `List<TeamStandingsDto>` (FR-002)
+- [x] T028 [US2] Add `GET /api/players/point-streaks` to `PlayerController` — calls `PlayerRepository.findPlayersWithPointStreaks(season)` and maps to DTO (existing frontend component: `PointStreaksTable.vue`)
+- [x] T029 [US2] Add `GET /api/players/hot` to `PlayerController` — calls `PlayerRepository.findHotPlayers(season)` and maps to DTO (existing frontend component: `HottestPlayersTable.vue`)
+- [x] T030 [US2] Add `GET /api/teams/win-streaks` to `TeamController` — calls `TeamRepository.findTeamsWithWinStreaks(season)` and maps to DTO (existing frontend component: `TeamWinStreaksTable.vue`)
+- [x] T031 [US2] Add `GET /api/teams/loss-streaks` to `TeamController` — calls `TeamRepository.findTeamsWithLossStreaks(season)` and maps to DTO (existing frontend component: `TeamWinStreaksTable.vue`)
 
 **Checkpoint**: Homepage loads with all 4 data tables populated. All players and all 32 teams displayed with points percentage columns.
 
@@ -114,17 +114,17 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T032 [P] [US3] Controller test for `GET /api/teams/{teamCode}` in `backend/api/src/test/java/com/whoshot/nhl/api/controller/TeamControllerTest.java` — verify 200 with team data and roster, 404 for unknown team code
-- [ ] T033 [P] [US3] Controller test for `GET /api/teams/{teamCode}/game-log` in `backend/api/src/test/java/com/whoshot/nhl/api/controller/TeamControllerTest.java` — verify 200 with game log list
+- [x] T032 [P] [US3] Controller test for `GET /api/teams/{teamCode}` in `backend/api/src/test/java/com/whoshot/nhl/api/controller/TeamControllerTest.java` — verify 200 with team data and roster, 404 for unknown team code
+- [x] T033 [P] [US3] Controller test for `GET /api/teams/{teamCode}/game-log` in `backend/api/src/test/java/com/whoshot/nhl/api/controller/TeamControllerTest.java` — verify 200 with game log list
 
 ### Implementation for User Story 3
 
-- [ ] T034 [P] [US3] Create `TeamDetailDto` in `backend/api/src/main/java/com/whoshot/nhl/api/dto/TeamDetailDto.java` with all Team fields plus `roster` (list of `RosterPlayerDto`: playerId, fullName, positionCode, teamCode, headshotUrl) per contracts/api-endpoints.md
-- [ ] T035 [P] [US3] Create `TeamGameLogDto` in `backend/api/src/main/java/com/whoshot/nhl/api/dto/TeamGameLogDto.java` with fields: gameId, gameDate, opponentTeamCode, homeGame, goalsFor, goalsAgainst, won, overtimeLoss, gameType, gameNumber
-- [ ] T036 [US3] Add `getTeamDetail(teamCode, season)` method to `TeamService` in `backend/api/src/main/java/com/whoshot/nhl/api/service/TeamService.java` — queries team data + roster (players with matching teamCode), throws 404 if team not found
-- [ ] T037 [US3] Add `getTeamGameLog(teamCode, season)` method to `TeamService` — queries `TeamGameRepository` for recent games, maps to `TeamGameLogDto`
-- [ ] T038 [US3] Add `GET /api/teams/{teamCode}` endpoint to `TeamController` returning `TeamDetailDto` (FR-004)
-- [ ] T039 [US3] Add `GET /api/teams/{teamCode}/game-log` endpoint to `TeamController` returning `List<TeamGameLogDto>` (FR-004)
+- [x] T034 [P] [US3] Create `TeamDetailDto` in `backend/api/src/main/java/com/whoshot/nhl/api/dto/TeamDetailDto.java` with all Team fields plus `roster` (list of `RosterPlayerDto`: playerId, fullName, positionCode, teamCode, headshotUrl) per contracts/api-endpoints.md
+- [x] T035 [P] [US3] Create `TeamGameLogDto` in `backend/api/src/main/java/com/whoshot/nhl/api/dto/TeamGameLogDto.java` with fields: gameId, gameDate, opponentTeamCode, homeGame, goalsFor, goalsAgainst, won, overtimeLoss, gameType, gameNumber
+- [x] T036 [US3] Add `getTeamDetail(teamCode, season)` method to `TeamService` in `backend/api/src/main/java/com/whoshot/nhl/api/service/TeamService.java` — queries team data + roster (players with matching teamCode), throws 404 if team not found
+- [x] T037 [US3] Add `getTeamGameLog(teamCode, season)` method to `TeamService` — queries `TeamGameRepository` for recent games, maps to `TeamGameLogDto`
+- [x] T038 [US3] Add `GET /api/teams/{teamCode}` endpoint to `TeamController` returning `TeamDetailDto` (FR-004)
+- [x] T039 [US3] Add `GET /api/teams/{teamCode}/game-log` endpoint to `TeamController` returning `List<TeamGameLogDto>` (FR-004)
 
 **Checkpoint**: Team detail page at `/team/TOR` shows full team stats, recent game results, and player roster.
 
@@ -140,17 +140,17 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T040 [P] [US4] Controller test for `GET /api/players/{playerId}` in `backend/api/src/test/java/com/whoshot/nhl/api/controller/PlayerControllerTest.java` — verify 200 with player data, 404 for unknown player
-- [ ] T041 [P] [US4] Controller test for `GET /api/players/{playerId}/game-log` in `backend/api/src/test/java/com/whoshot/nhl/api/controller/PlayerControllerTest.java` — verify 200 with game log list
+- [x] T040 [P] [US4] Controller test for `GET /api/players/{playerId}` in `backend/api/src/test/java/com/whoshot/nhl/api/controller/PlayerControllerTest.java` — verify 200 with player data, 404 for unknown player
+- [x] T041 [P] [US4] Controller test for `GET /api/players/{playerId}/game-log` in `backend/api/src/test/java/com/whoshot/nhl/api/controller/PlayerControllerTest.java` — verify 200 with game log list
 
 ### Implementation for User Story 4
 
-- [ ] T042 [P] [US4] Create `PlayerDetailDto` in `backend/api/src/main/java/com/whoshot/nhl/api/dto/PlayerDetailDto.java` with all Player fields including nextGame embedded object per contracts/api-endpoints.md
-- [ ] T043 [P] [US4] Create `PlayerGameLogDto` in `backend/api/src/main/java/com/whoshot/nhl/api/dto/PlayerGameLogDto.java` with fields: gameId, gameDate, opponentTeamCode, homeGame, goals, assists, points, plusMinus, shots, timeOnIce, gameWon, gameNumber
-- [ ] T044 [US4] Add `getPlayerDetail(playerId, season)` method to `PlayerService` in `backend/api/src/main/java/com/whoshot/nhl/api/service/PlayerService.java` — queries Player entity, throws 404 if not found
-- [ ] T045 [US4] Add `getPlayerGameLog(playerId, season)` method to `PlayerService` — queries `GameLogRepository.findByPlayerIdAndSeasonIdOrderByGameNumberAsc(playerId, seasonId)`, maps to `PlayerGameLogDto`
-- [ ] T046 [US4] Add `GET /api/players/{playerId}` endpoint to `PlayerController` returning `PlayerDetailDto` (FR-005)
-- [ ] T047 [US4] Add `GET /api/players/{playerId}/game-log` endpoint to `PlayerController` returning `List<PlayerGameLogDto>` (FR-005)
+- [x] T042 [P] [US4] Create `PlayerDetailDto` in `backend/api/src/main/java/com/whoshot/nhl/api/dto/PlayerDetailDto.java` with all Player fields including nextGame embedded object per contracts/api-endpoints.md
+- [x] T043 [P] [US4] Create `PlayerGameLogDto` in `backend/api/src/main/java/com/whoshot/nhl/api/dto/PlayerGameLogDto.java` with fields: gameId, gameDate, opponentTeamCode, homeGame, goals, assists, points, plusMinus, shots, timeOnIce, gameWon, gameNumber
+- [x] T044 [US4] Add `getPlayerDetail(playerId, season)` method to `PlayerService` in `backend/api/src/main/java/com/whoshot/nhl/api/service/PlayerService.java` — queries Player entity, throws 404 if not found
+- [x] T045 [US4] Add `getPlayerGameLog(playerId, season)` method to `PlayerService` — queries `GameLogRepository.findByPlayerIdAndSeasonIdOrderByGameNumberAsc(playerId, seasonId)`, maps to `PlayerGameLogDto`
+- [x] T046 [US4] Add `GET /api/players/{playerId}` endpoint to `PlayerController` returning `PlayerDetailDto` (FR-005)
+- [x] T047 [US4] Add `GET /api/players/{playerId}/game-log` endpoint to `PlayerController` returning `List<PlayerGameLogDto>` (FR-005)
 
 **Checkpoint**: Player detail page at `/player/8478402` shows full player stats, identity info, and game-by-game log.
 

@@ -1,11 +1,14 @@
 package com.whoshot.nhl.api.controller;
 
 import com.whoshot.nhl.api.dto.SearchResultDto;
+import com.whoshot.nhl.domain.entity.CurrentSeason;
 import com.whoshot.nhl.domain.entity.SearchResult;
+import com.whoshot.nhl.domain.repository.CurrentSeasonRepository;
 import com.whoshot.nhl.domain.repository.PlayerRepository;
 import com.whoshot.nhl.domain.repository.TeamRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,62 +16,45 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * REST controller for search functionality.
- */
 @RestController
 @RequestMapping("/api/search")
 @Tag(name = "Search", description = "Search for players and teams")
 @Slf4j
-@CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class SearchController {
 
     private final PlayerRepository playerRepository;
     private final TeamRepository teamRepository;
+    private final CurrentSeasonRepository currentSeasonRepository;
 
-    /**
-     * Creates the controller with repository dependencies.
-     *
-     * @param playerRepository repository for player-backed search entries
-     * @param teamRepository repository for team-backed search entries
-     */
-    public SearchController(
-            PlayerRepository playerRepository,
-            TeamRepository teamRepository
-            ) {
-        this.playerRepository = playerRepository;
-        this.teamRepository = teamRepository;
-    }
-
-    /**
-     * Get all searchable items (players and teams) for a season.
-     * Used for client-side search/autocomplete functionality.
-     *
-     * @param season optional season identifier used to scope results
-     * @return HTTP 200 response containing merged player and team search results
-     */
     @GetMapping("/all")
     @Operation(summary = "Get all searchable items",
                description = "Returns all players and teams for autocomplete search functionality")
     public ResponseEntity<List<SearchResultDto>> getAllSearchableItems(
             @RequestParam(required = false) String season) {
 
-        log.info("GET /api/search/all?season={}", season);
+        String resolvedSeason = resolveSeason(season);
+        log.info("GET /api/search/all?season={} (resolved: {})", season, resolvedSeason);
 
-        // Combine players and teams into a single list
-
-        // Add all teams
-        List<SearchResult> teams = teamRepository.findAllForSearch(season);
+        List<SearchResult> teams = teamRepository.findAllForSearch(resolvedSeason);
         List<SearchResultDto> results = new ArrayList<>(teams.stream().map(this::toDto).toList());
 
-        // Add all players
-        List<SearchResult> players = playerRepository.findAllForSearch(season);
+        List<SearchResult> players = playerRepository.findAllForSearch(resolvedSeason);
         results.addAll(players.stream().map(this::toDto).toList());
 
         log.info("Returning {} searchable items ({} teams, {} players)",
                 results.size(), teams.size(), players.size());
 
         return ResponseEntity.ok(results);
+    }
+
+    private String resolveSeason(String season) {
+        if (season != null && !season.isBlank()) {
+            return season;
+        }
+        return currentSeasonRepository.findByIsActiveTrue()
+                .map(CurrentSeason::getSeasonId)
+                .orElse(null);
     }
 
     private SearchResultDto toDto(SearchResult sr) {
