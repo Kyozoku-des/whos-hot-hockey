@@ -208,11 +208,11 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T058 [P] Update `backend/api/API_REFERENCE.md` to document all new endpoints per contracts/api-endpoints.md (Constitution Principle II)
-- [ ] T059 [P] Update `backend/README.md` with new architecture (two independent apps), PostgreSQL setup, and Docker Compose instructions
-- [ ] T060 Delete `backend/data-job/nhl_stats.db` SQLite database file — no longer needed after PostgreSQL migration
-- [ ] T061 Run full test suite (`cd backend && mvn test`) and verify all tests pass against PostgreSQL via Testcontainers
-- [ ] T062 Run quickstart.md validation: follow all steps in `specs/001-api-data-split/quickstart.md` on a clean setup and verify everything works end-to-end
+- [x] T058 [P] Update `backend/api/API_REFERENCE.md` to document all new endpoints per contracts/api-endpoints.md (Constitution Principle II)
+- [x] T059 [P] Update `backend/README.md` with new architecture (two independent apps), PostgreSQL setup, and Docker Compose instructions
+- [x] T060 Delete `backend/data-job/nhl_stats.db` SQLite database file — no longer needed after PostgreSQL migration
+- [x] T061 Run full test suite (`cd backend && mvn test`) and verify all tests pass against PostgreSQL via Testcontainers
+- [x] T062 Run quickstart.md validation: follow all steps in `specs/001-api-data-split/quickstart.md` on a clean setup and verify everything works end-to-end
 
 ---
 
