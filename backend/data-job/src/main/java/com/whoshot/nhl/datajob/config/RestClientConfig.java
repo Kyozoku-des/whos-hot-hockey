@@ -14,18 +14,21 @@ import java.time.Duration;
 public class RestClientConfig {
 
     /**
-     * Builds a {@link RestClient} configured with request factory timeouts.
-     *
-     * @param builder builder injected by Spring Boot
-     * @return configured RestClient instance
+     * Bounds connection and response waits and releases HTTP resources on shutdown.
      */
     @Bean
-    public RestClient restClient(RestClient.Builder builder) {
+    public HttpComponentsClientHttpRequestFactory nhlRequestFactory() {
         HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(Duration.ofSeconds(5));
+        requestFactory.setConnectionRequestTimeout(Duration.ofSeconds(5));
         requestFactory.setReadTimeout(Duration.ofSeconds(10));
+        return requestFactory;
+    }
 
+    @Bean
+    public RestClient restClient(RestClient.Builder builder, HttpComponentsClientHttpRequestFactory nhlRequestFactory) {
         return builder
-                .requestFactory(requestFactory)
+                .requestFactory(nhlRequestFactory)
                 .build();
     }
 }

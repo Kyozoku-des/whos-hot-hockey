@@ -17,25 +17,15 @@
     <description>Data integration module - fetches and processes NHL API data</description>
 
     <dependencies>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
         <!-- Common module dependency -->
         <dependency>
             <groupId>com.whoshot.nhl</groupId>
             <artifactId>domain</artifactId>
-        </dependency>
-
-        <!-- SQLite JDBC Driver (runtime) -->
-        <dependency>
-            <groupId>org.xerial</groupId>
-            <artifactId>sqlite-jdbc</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
-        <!-- Hibernate SQLite Dialect (runtime) -->
-        <dependency>
-            <groupId>org.hibernate.orm</groupId>
-            <artifactId>hibernate-community-dialects</artifactId>
-            <version>6.6.2.Final</version>
-            <scope>runtime</scope>
         </dependency>
 
         <!-- Spring Boot Web Starter -->

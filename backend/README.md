@@ -14,7 +14,7 @@ A Spring Boot backend service that provides REST APIs for NHL statistics with a 
 ## Technology Stack
 
 - **Framework**: Spring Boot 3.2.0
-- **Database**: SQLite
+- **Database**: PostgreSQL
 - **Build Tool**: Maven
 - **Java Version**: 21
 - **Documentation**: SpringDoc OpenAPI (Swagger UI)
@@ -25,6 +25,9 @@ A Spring Boot backend service that provides REST APIs for NHL statistics with a 
 - Maven 3.9+
 
 ## Getting Started
+
+Start the PostgreSQL container first. See [database setup and Flyway migrations](DATABASE.md)
+for connection settings, lifecycle commands, and schema verification.
 
 ### Build the project
 
@@ -90,7 +93,7 @@ External NHL API
       ↓
 Integration Service (fetch data)
       ↓
-SQLite Database (persist data)
+PostgreSQL Database (persist data)
       ↓
 Repository Layer (query data)
       ↓

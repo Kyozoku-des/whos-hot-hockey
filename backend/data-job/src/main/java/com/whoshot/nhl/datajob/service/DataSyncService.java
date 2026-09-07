@@ -11,8 +11,8 @@ import com.whoshot.nhl.datajob.factory.PlayerFactory;
 import com.whoshot.nhl.domain.repository.GameLogRepository;
 import com.whoshot.nhl.domain.repository.PlayerRepository;
 import com.whoshot.nhl.domain.repository.TeamRepository;
-import jakarta.annotation.PostConstruct;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,7 +22,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Comparator;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 
 /**
  * Coordinates retrieval, transformation, and persistence of player season data.
@@ -47,38 +49,35 @@ public class DataSyncService {
     /**
      * Initializes the service by resolving the active season once at startup.
      */
-    @PostConstruct
-    private void init() {
+    public void initialize() {
+        checkInterrupted();
         setSeason();
+        checkInterrupted();
         setFirstAndLastGameTimesForToday();
     }
 
     /**
-     * Resolves and stores the best season to synchronize based on current date boundaries.
-     * Falls back to the latest available season when the current date does not fall within any regular season range.
+     * Resolves and stores the best season to synchronize based on current date
+     * boundaries.
+     * Retains the most recently started season during playoffs and the offseason.
      */
     private void setSeason() {
-        List<SeasonDto> seasons = nhlApiService.getSeasons();
+        this.season = selectSeason(nhlApiService.getSeasons(), LocalDateTime.now(ZoneOffset.UTC));
+        log.info("Season selected for synchronization: {}", season.getId());
+    }
 
-        for (SeasonDto season : seasons) {
-            LocalDateTime now = LocalDateTime.now();
-            LocalDateTime startDate = season.getStartDate();
-            LocalDateTime endDate = season.getRegularSeasonEndDate();
-
-            String seasonId = season.getId();
-            if (now.isAfter(startDate) && now.isBefore(endDate)) {
-                log.info("Current season determined: {}", seasonId);
-                this.season = season;
-                return;
-            }
-        }
-
-        log.info("No current season found, using latest season: {}", seasons.getLast().getId());
-        this.season = seasons.getLast();
+    static SeasonDto selectSeason(List<SeasonDto> seasons, LocalDateTime now) {
+        return seasons.stream()
+                .filter(Objects::nonNull)
+                .filter(candidate -> candidate.getStartDate() != null)
+                .filter(candidate -> !candidate.getStartDate().isAfter(now))
+                .max(Comparator.comparing((@NonNull SeasonDto candidate) -> candidate.getStartDate()))
+                .orElseThrow(() -> new IllegalStateException("NHL API returned no season that has started"));
     }
 
     /**
-     * Fetches today's game schedule and determines the earliest and latest game start times.
+     * Fetches today's game schedule and determines the earliest and latest game
+     * start times.
      */
     public void setFirstAndLastGameTimesForToday() {
         List<GameDto> games = nhlApiService.getLeagueSchedule();
@@ -102,23 +101,29 @@ public class DataSyncService {
 
     /**
      * Synchronizes active-player statistics for the resolved season.
-     * Side effects: performs external API calls and writes player records to the database.
+     * Side effects: performs external API calls and writes player records to the
+     * database.
      *
-     * @throws PlayerStatisticsException if player identity or point-total validation fails
+     * @throws PlayerStatisticsException if player identity or point-total
+     *                                   validation fails
      */
     @Transactional
     public void syncPlayers() throws PlayerStatisticsException {
+        checkInterrupted();
         String seasonId = season.getId();
         var players = nhlApiService.getPlayerStandingsOrder(seasonId, gameType);
 
         // Get order from standings API, calculate new statistics and verify points
         for (PlayerStandingDto playerStanding : players) {
+            checkInterrupted();
             Long playerId = playerStanding.getId();
 
             PlayerInfoDto playerInfo = nhlApiService.getPlayerInfo(playerId);
+            checkInterrupted();
 
             if (!playerInfo.isActive()) {
-                log.warn("Skipping inactive player ID: {}. Name: {} {}", playerId, playerInfo.getFirstName(), playerInfo.getLastName());
+                log.warn("Skipping inactive player ID: {}. Name: {} {}", playerId, playerInfo.getFirstName(),
+                        playerInfo.getLastName());
                 continue;
             }
 
@@ -128,12 +133,21 @@ public class DataSyncService {
 
             // Fetch game logs for the season
             var gameLogs = nhlApiService.getPlayerGameLogs(playerId, seasonId, gameType);
+            checkInterrupted();
 
-            // Create player using factory (handles all construction and statistics calculation)
+            // Create player using factory (handles all construction and statistics
+            // calculation)
             Player player = playerFactory.createFromApiData(playerInfo, playerStanding, gameLogs, seasonId);
 
             playerRepository.save(player);
             playerRepository.flush();
+        }
+        checkInterrupted();
+    }
+
+    private static void checkInterrupted() {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new CancellationException("Player synchronization was stopped");
         }
     }
 
