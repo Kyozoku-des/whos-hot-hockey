@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -59,13 +60,16 @@ public class DataSyncService {
 
     /**
      * Resolves and stores the best season to synchronize based on current date boundaries.
-     * Falls back to the latest available season when the current date does not fall within any regular season range.
+     * During the off-season (no season's date range contains today, e.g. between the end of
+     * the regular season and the start of the next), falls back to the most recently
+     * completed season rather than the newest season record, since the newest record may
+     * describe a season that has not started yet and has no game data available.
      */
     private void setSeason() {
         List<SeasonDto> seasons = nhlApiService.getSeasons();
+        LocalDateTime now = LocalDateTime.now();
 
         for (SeasonDto season : seasons) {
-            LocalDateTime now = LocalDateTime.now();
             LocalDateTime startDate = season.getStartDate();
             LocalDateTime endDate = season.getRegularSeasonEndDate();
 
@@ -78,13 +82,34 @@ public class DataSyncService {
             }
         }
 
-        log.info("No current season found, using latest season: {}", seasons.getLast().getId());
-        this.season = seasons.getLast();
+        SeasonDto mostRecentlyCompleted = seasons.stream()
+                .filter(s -> now.isAfter(s.getRegularSeasonEndDate()))
+                .max(Comparator.comparing(SeasonDto::getRegularSeasonEndDate))
+                .orElse(seasons.getLast());
+
+        log.info("No current season found (off-season), using most recently completed season: {}",
+                mostRecentlyCompleted.getId());
+        this.season = mostRecentlyCompleted;
         persistCurrentSeason(this.season);
     }
 
+    /**
+     * Persists the resolved season as the sole active season. Deactivates any other season
+     * previously marked active so that {@code findByIsActiveTrue()} always returns at most
+     * one row; leaving more than one active row throws IncorrectResultSizeDataAccessException
+     * for every API request that resolves the default season (players, teams, search).
+     */
+    @Transactional
     private void persistCurrentSeason(SeasonDto season) {
         String seasonId = season.getId();
+
+        currentSeasonRepository.findAllByIsActiveTrue().stream()
+                .filter(active -> !active.getSeasonId().equals(seasonId))
+                .forEach(active -> {
+                    active.setIsActive(false);
+                    currentSeasonRepository.save(active);
+                });
+
         CurrentSeason currentSeason = currentSeasonRepository.findBySeasonId(seasonId)
                 .orElse(new CurrentSeason());
         currentSeason.setSeasonId(seasonId);

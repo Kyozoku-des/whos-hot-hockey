@@ -4,6 +4,7 @@ import com.whoshot.nhl.domain.entity.CurrentSeason;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -18,6 +19,16 @@ public interface CurrentSeasonRepository extends JpaRepository<CurrentSeason, Lo
      * @return active season record if present
      */
     Optional<CurrentSeason> findByIsActiveTrue();
+
+    /**
+     * Find all seasons currently marked active.
+     * There should only ever be one, but this exists so callers can detect and repair
+     * the invariant violation (multiple active rows) rather than fail on the derived
+     * single-result query above.
+     *
+     * @return all season records marked active
+     */
+    List<CurrentSeason> findAllByIsActiveTrue();
 
     /**
      * Find season by season ID.
