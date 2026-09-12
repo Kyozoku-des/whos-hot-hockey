@@ -27,5 +27,6 @@ public record PlayerStatistics(
     int plusMinus,
     int currentPointStreak,
     int currentPointlessStreak,
+    double pointsPerLastNGames,
     LocalDateTime lastUpdated
 ) {}

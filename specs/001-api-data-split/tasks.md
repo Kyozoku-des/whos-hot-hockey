@@ -19,7 +19,7 @@
 
 **Purpose**: PostgreSQL migration, Docker setup, API module independence
 
-- [x] T001 Create `docker-compose.yml` at repository root with PostgreSQL 16 service (db: `nhl_stats`, user: `whoshot`, password: `whoshot`, port: 5432)
+- [x] T001 Create `docker-compose.yml` at repository root with PostgreSQL 16 service (db: `nhl_stats`, user: `whoshot`, password: `whoshot`, port: 5432) — works with both podman-compose and docker compose
 - [x] T002 Update `backend/pom.xml` parent POM: replace `sqlite-jdbc` with `org.postgresql:postgresql` in `<dependencyManagement>`
 - [x] T003 [P] Update `backend/domain/pom.xml`: replace SQLite JDBC + Hibernate Community Dialects dependencies with PostgreSQL driver
 - [x] T004 [P] Update `backend/api/pom.xml`: remove dependency on `data-job` module, keep only `domain` dependency. Add PostgreSQL driver. Add Spring Boot Starter Web. Add `spring-boot-maven-plugin` for independent execution.
@@ -29,7 +29,7 @@
 - [x] T008 [P] Update `backend/data-job/src/main/resources/application.properties`: replace SQLite config with PostgreSQL connection, remove `hikari.maximum-pool-size=1`, remove `app.sqlite.path`
 - [x] T009 [P] Remove `backend/domain/src/main/resources/application.properties` (empty file, not needed)
 
-**Checkpoint**: Both API and data-job modules can start independently against Docker PostgreSQL. Run `docker compose up -d`, then `cd backend && mvn clean install -DskipTests` to verify compilation.
+**Checkpoint**: Both API and data-job modules can start independently against PostgreSQL. Run `podman-compose up -d postgres` (or `docker compose up -d postgres`), then `cd backend && mvn clean install -DskipTests` to verify compilation.
 
 ---
 

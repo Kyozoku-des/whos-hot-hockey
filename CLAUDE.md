@@ -7,7 +7,7 @@ Auto-generated from all feature plans. Last updated: 2026-03-27
 - **Language**: Java 23
 - **Backend Framework**: Spring Boot 3.5.6
 - **Dependencies**: Spring Data JPA, Spring Web, Spring Retry, SpringDoc OpenAPI, Lombok, PostgreSQL Driver
-- **Database**: PostgreSQL 16 (Docker) — migrating from SQLite
+- **Database**: PostgreSQL 16 (Podman/Docker)
 - **Testing**: JUnit 5, Spring Boot Test, Testcontainers
 - **Frontend**: Vue 3 (Composition API), Pinia, Vue Router, Chart.js, Vite
 - **Build**: Maven 3.9+ (multi-module), npm
@@ -46,9 +46,19 @@ cd backend && mvn test                   # Run all tests
 cd frontend && npm run dev               # Dev server (port 3000)
 cd frontend && npm run build             # Production build
 
-# Database
-docker compose up -d                     # Start PostgreSQL (port 5432)
-docker compose down                      # Stop PostgreSQL
+# All services (using Podman or Docker)
+podman-compose up -d                     # Start all services (PostgreSQL, API, data-job, frontend)
+podman-compose down                      # Stop all services
+
+# Or with Docker
+docker compose up -d                     # Start all services
+docker compose down                      # Stop all services
+
+# Individual services
+podman-compose up -d postgres            # Start only PostgreSQL
+podman-compose up -d backend-api         # Start only API
+podman-compose up -d data-job            # Start only data sync
+podman-compose up -d frontend            # Start only frontend
 ```
 
 ## Code Style

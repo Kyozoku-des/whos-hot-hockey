@@ -5,7 +5,7 @@
 
 ## R-001: PostgreSQL Migration from SQLite
 
-**Decision**: Migrate from SQLite to PostgreSQL 16, running locally via Docker Compose.
+**Decision**: Migrate from SQLite to PostgreSQL 16, running locally via Podman Compose or Docker Compose.
 
 **Rationale**: The spec requires two independent applications (API and data-job) accessing the same database concurrently. SQLite is single-writer and the current HikariCP pool is limited to 1 connection. PostgreSQL supports concurrent connections natively, enabling both apps to read/write simultaneously.
 
@@ -21,7 +21,7 @@
 - `GenerationType.IDENTITY` works with PostgreSQL (uses `SERIAL`/`BIGSERIAL`)
 - Composite keys (`@EmbeddedId`, `@IdClass`) work identically
 - `ddl-auto=update` works for dev; Flyway can be added later for production
-- Add `docker-compose.yml` with PostgreSQL 16 service
+- Add `docker-compose.yml` with PostgreSQL 16 service (works with both podman-compose and docker compose)
 
 ## R-002: API Module Independence
 

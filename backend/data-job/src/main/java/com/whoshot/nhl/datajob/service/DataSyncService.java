@@ -6,6 +6,8 @@ import com.whoshot.nhl.domain.entity.Player;
 import com.whoshot.nhl.domain.entity.Team;
 import com.whoshot.nhl.datajob.exception.PlayerStatisticsException;
 import com.whoshot.nhl.datajob.factory.PlayerFactory;
+import com.whoshot.nhl.domain.entity.CurrentSeason;
+import com.whoshot.nhl.domain.repository.CurrentSeasonRepository;
 import com.whoshot.nhl.domain.repository.GameLogRepository;
 import com.whoshot.nhl.domain.repository.PlayerRepository;
 import com.whoshot.nhl.domain.repository.TeamRepository;
@@ -38,6 +40,7 @@ public class DataSyncService {
     private final PlayerFactory playerFactory;
     private final TeamRepository teamRepository;
     private final GameLogRepository gameLogRepository;
+    private final CurrentSeasonRepository currentSeasonRepository;
     private SeasonDto season;
     @Getter
     private LocalDateTime firstGameTimeForToday;
@@ -70,12 +73,27 @@ public class DataSyncService {
             if (now.isAfter(startDate) && now.isBefore(endDate)) {
                 log.info("Current season determined: {}", seasonId);
                 this.season = season;
+                persistCurrentSeason(season);
                 return;
             }
         }
 
         log.info("No current season found, using latest season: {}", seasons.getLast().getId());
         this.season = seasons.getLast();
+        persistCurrentSeason(this.season);
+    }
+
+    private void persistCurrentSeason(SeasonDto season) {
+        String seasonId = season.getId();
+        CurrentSeason currentSeason = currentSeasonRepository.findBySeasonId(seasonId)
+                .orElse(new CurrentSeason());
+        currentSeason.setSeasonId(seasonId);
+        currentSeason.setSeasonDisplayName(
+                seasonId.substring(0, 4) + "-" + seasonId.substring(4));
+        currentSeason.setIsActive(true);
+        currentSeason.setLastUpdated(LocalDateTime.now().toString());
+        currentSeasonRepository.save(currentSeason);
+        log.info("Persisted active season to current_season table: {}", seasonId);
     }
 
     /**
@@ -178,6 +196,32 @@ public class DataSyncService {
             team.setLosses(standing.getLosses());
             team.setOvertimeLosses(standing.getOtLosses());
             team.setPoints(standing.getPoints());
+            team.setPointPercentage(standing.getPointPctg());
+            team.setGoalsFor(standing.getGoalFor());
+            team.setGoalsAgainst(standing.getGoalAgainst());
+            team.setGoalDifferential(standing.getGoalDifferential());
+            team.setConferenceName(standing.getConferenceName());
+            team.setDivisionName(standing.getDivisionName());
+
+            // Streaks
+            if ("W".equals(standing.getStreakCode())) {
+                team.setCurrentWinStreak(standing.getStreakCount());
+                team.setCurrentLossStreak(0);
+            } else if ("L".equals(standing.getStreakCode()) || "OT".equals(standing.getStreakCode())) {
+                team.setCurrentWinStreak(0);
+                team.setCurrentLossStreak(standing.getStreakCount());
+            }
+
+            // Last 10 games
+            if (standing.getL10Wins() != null && standing.getL10Losses() != null && standing.getL10OtLosses() != null) {
+                int l10Games = standing.getL10Wins() + standing.getL10Losses() + standing.getL10OtLosses();
+                if (l10Games > 0) {
+                    int l10Points = standing.getL10Wins() * 2 + standing.getL10OtLosses();
+                    team.setLast10GamesPointPercentage((double) l10Points / (l10Games * 2));
+                    team.setLast10GamesPPG((double) l10Points / l10Games);
+                }
+            }
+
             team.setLastUpdated(LocalDateTime.now().toString());
 
             try {
@@ -271,6 +315,30 @@ public class DataSyncService {
             team.setLosses(standing.getLosses());
             team.setOvertimeLosses(standing.getOtLosses());
             team.setPoints(standing.getPoints());
+            team.setPointPercentage(standing.getPointPctg());
+            team.setGoalsFor(standing.getGoalFor());
+            team.setGoalsAgainst(standing.getGoalAgainst());
+            team.setGoalDifferential(standing.getGoalDifferential());
+            team.setConferenceName(standing.getConferenceName());
+            team.setDivisionName(standing.getDivisionName());
+
+            if ("W".equals(standing.getStreakCode())) {
+                team.setCurrentWinStreak(standing.getStreakCount());
+                team.setCurrentLossStreak(0);
+            } else if ("L".equals(standing.getStreakCode()) || "OT".equals(standing.getStreakCode())) {
+                team.setCurrentWinStreak(0);
+                team.setCurrentLossStreak(standing.getStreakCount());
+            }
+
+            if (standing.getL10Wins() != null && standing.getL10Losses() != null && standing.getL10OtLosses() != null) {
+                int l10Games = standing.getL10Wins() + standing.getL10Losses() + standing.getL10OtLosses();
+                if (l10Games > 0) {
+                    int l10Points = standing.getL10Wins() * 2 + standing.getL10OtLosses();
+                    team.setLast10GamesPointPercentage((double) l10Points / (l10Games * 2));
+                    team.setLast10GamesPPG((double) l10Points / l10Games);
+                }
+            }
+
             team.setLastUpdated(LocalDateTime.now().toString());
 
             try {

@@ -5,15 +5,15 @@
 
 ## Summary
 
-Split the monolithic backend into two independent Spring Boot applications: an **API module** serving 5 REST endpoints to the Vue frontend, and a **data-job module** running as a standalone batch/scheduler process. Migrate from SQLite to PostgreSQL (Docker) to enable concurrent access from both applications. Implement last-10-games points percentage calculations with unit tests.
+Split the monolithic backend into two independent Spring Boot applications: an **API module** serving 5 REST endpoints to the Vue frontend, and a **data-job module** running as a standalone batch/scheduler process. Migrate from SQLite to PostgreSQL (Podman/Docker) to enable concurrent access from both applications. Implement last-10-games points percentage calculations with unit tests.
 
 ## Technical Context
 
 **Language/Version**: Java 23, Spring Boot 3.5.6
 **Primary Dependencies**: Spring Data JPA, Spring Web, Spring Retry, SpringDoc OpenAPI, Lombok, PostgreSQL Driver
-**Storage**: PostgreSQL 16 (Docker) — migrating from SQLite
+**Storage**: PostgreSQL 16 (Podman/Docker) — migrating from SQLite
 **Testing**: JUnit 5, Spring Boot Test, Testcontainers (PostgreSQL)
-**Target Platform**: Local development (Docker Compose for PostgreSQL)
+**Target Platform**: Local development (Podman Compose or Docker Compose for PostgreSQL)
 **Project Type**: Web service (multi-module Maven: domain, api, data-job)
 **Performance Goals**: Homepage < 2s, search < 300ms, API responses < 500ms cached
 **Constraints**: API and data-job must be independently deployable; shared domain module for entities
@@ -41,7 +41,7 @@ Split the monolithic backend into two independent Spring Boot applications: an *
 |-----------|--------|-------|
 | I. Test-First Development | PASS | Unit tests for StatisticsCalculationService (player + team points percentage). Controller tests for all 5 endpoints. Repository integration tests with Testcontainers. |
 | II. Documentation-First | PASS | Contracts, data model, and quickstart documented in specs directory. |
-| III. Pragmatic Architecture | PASS | Existing service/repository pattern preserved. PostgreSQL migration is minimum change for concurrent access. Docker Compose keeps local setup simple. |
+| III. Pragmatic Architecture | PASS | Existing service/repository pattern preserved. PostgreSQL migration is minimum change for concurrent access. Podman/Docker Compose keeps local setup simple. |
 
 ## Project Structure
 
@@ -105,7 +105,7 @@ frontend/
     ├── components/                # existing — already built
     └── views/                     # existing — already built
 
-docker-compose.yml                 # NEW: PostgreSQL container
+docker-compose.yml                 # NEW: All services (PostgreSQL, API, data-job, frontend)
 ```
 
 **Structure Decision**: Existing multi-module Maven structure is preserved. The API module gets its own `@SpringBootApplication` and is decoupled from the data-job module dependency. Both modules depend on `domain` for shared entities/repositories. The API module does NOT depend on data-job (removing current circular dependency).
@@ -115,5 +115,5 @@ docker-compose.yml                 # NEW: PostgreSQL container
 | Decision | Why Needed | Simpler Alternative Rejected Because |
 |----------|------------|--------------------------------------|
 | PostgreSQL migration | API and data-job need concurrent DB access | SQLite limits connection pool to 1; cannot run two apps against same SQLite file reliably |
-| Docker Compose | PostgreSQL needs a server process | Manual PostgreSQL install is less reproducible; Docker is standard for local dev |
+| Podman/Docker Compose | PostgreSQL needs a server process | Manual PostgreSQL install is less reproducible; Podman/Docker is standard for local dev |
 | Separate @SpringBootApplication for API | API must run independently of data-job | Current design couples API into data-job's process; violates independent deployment requirement |

@@ -14,7 +14,7 @@ A Spring Boot backend that provides REST APIs for NHL statistics with a focus on
 ## Technology Stack
 
 - **Framework**: Spring Boot 3.2.0
-- **Database**: PostgreSQL 16 (via Docker Compose)
+- **Database**: PostgreSQL 16 (via Podman/Docker Compose)
 - **Build Tool**: Maven
 - **Java Version**: 21
 - **Documentation**: SpringDoc OpenAPI (Swagger UI)
@@ -31,14 +31,31 @@ The backend is organized as a Maven multi-module project with two independent Sp
 
 - Java 21 or higher
 - Maven 3.9+
-- Docker & Docker Compose
+- Podman & podman-compose (or Docker & Docker Compose)
 
 ## Getting Started
 
-### 1. Start PostgreSQL
+### 1. Start All Services (Recommended)
 
+Using Podman:
+```bash
+podman-compose up -d
+```
+
+Or using Docker:
 ```bash
 docker compose up -d
+```
+
+This starts PostgreSQL, the API server, data-job daemon, and frontend.
+
+### Alternative: Manual Setup
+
+If you prefer to run services manually for development:
+
+**Start only PostgreSQL:**
+```bash
+podman-compose up -d postgres
 ```
 
 ### 2. Initial data load

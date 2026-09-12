@@ -6,28 +6,49 @@
 
 - Java 23+ (JDK)
 - Maven 3.9+
-- Docker & Docker Compose
+- Podman & podman-compose (or Docker & Docker Compose)
 - Node.js 18+ (for frontend)
 
-## 1. Start PostgreSQL
+## 1. Start All Services (Recommended)
 
 From the repository root:
 
 ```bash
+podman-compose up -d
+```
+
+Or with Docker:
+```bash
 docker compose up -d
 ```
 
-This starts PostgreSQL 16 on port `5432` with:
-- Database: `nhl_stats`
-- Username: `whoshot`
-- Password: `whoshot`
+This starts:
+- **PostgreSQL 16** on port `5432` (db: `nhl_stats`, user: `whoshot`, password: `whoshot`)
+- **Backend API** on port `8080`
+- **Data-job** (NHL data sync daemon)
+- **Frontend** on port `3000`
 
-Verify it's running:
+Verify services are running:
 ```bash
+podman-compose ps
+# or
 docker compose ps
 ```
 
-## 2. Build the Backend
+**For initial data load**, set the environment variable before starting:
+```bash
+DATA_JOB_PROFILE=initial-load podman-compose up -d
+```
+
+## Alternative: Manual Development Setup
+
+If you prefer to run services manually for development, start only PostgreSQL:
+
+```bash
+podman-compose up -d postgres
+```
+
+## 2. Build the Backend (Manual Setup Only)
 
 ```bash
 cd backend
@@ -36,7 +57,7 @@ mvn clean install -DskipTests
 
 This builds all three modules: `domain`, `data-job`, `api`.
 
-## 3. Run the API Module
+## 3. Run the API Module (Manual Setup Only)
 
 ```bash
 cd backend/api
@@ -45,7 +66,7 @@ mvn spring-boot:run
 
 The API starts on `http://localhost:8080`. Swagger UI is available at `http://localhost:8080/swagger-ui.html`.
 
-## 4. Run the Data-Job Module
+## 4. Run the Data-Job Module (Manual Setup Only)
 
 In a separate terminal:
 
@@ -56,7 +77,7 @@ mvn spring-boot:run
 
 The data-job connects to the NHL API, syncs data, and exits when done (non-game day) or runs continuous sync during game times.
 
-## 5. Run the Frontend
+## 5. Run the Frontend (Manual Setup Only)
 
 In a separate terminal:
 

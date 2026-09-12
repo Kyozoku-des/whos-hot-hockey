@@ -10,6 +10,55 @@ services:
       - "5432:5432"
     volumes:
       - nhl_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U whoshot -d nhl_stats"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend-api:
+    build:
+      context: ./backend
+      target: api
+    container_name: nhl-backend-api
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nhl_stats
+      SPRING_DATASOURCE_USERNAME: whoshot
+      SPRING_DATASOURCE_PASSWORD: whoshot
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  data-job:
+    build:
+      context: ./backend
+      target: data-job
+    container_name: nhl-data-job
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nhl_stats
+      SPRING_DATASOURCE_USERNAME: whoshot
+      SPRING_DATASOURCE_PASSWORD: whoshot
+      SPRING_PROFILES_ACTIVE: ${DATA_JOB_PROFILE:-default}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nhl-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080
+    depends_on:
+      - backend-api
+    restart: unless-stopped
 
 volumes:
   nhl_pgdata:

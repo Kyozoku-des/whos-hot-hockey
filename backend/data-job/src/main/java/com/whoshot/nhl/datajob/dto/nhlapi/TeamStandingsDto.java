@@ -20,6 +20,17 @@ public class TeamStandingsDto {
     private Integer losses;
     private Integer otLosses;
     private Integer gamesPlayed;
+    private String streakCode;       // "W", "L", "OT"
+    private Integer streakCount;
+    private Integer l10Wins;
+    private Integer l10Losses;
+    private Integer l10OtLosses;
+    private Double pointPctg;
+    private String conferenceName;
+    private String divisionName;
+    private Integer goalFor;
+    private Integer goalAgainst;
+    private Integer goalDifferential;
 
     /**
      * Localized NHL API field that stores its primary value under the "default" key.

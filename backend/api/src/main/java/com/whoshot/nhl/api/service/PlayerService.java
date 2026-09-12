@@ -59,7 +59,7 @@ public class PlayerService {
      */
     public List<PlayerStandingsDto> getHotPlayers(String season) {
         String resolved = resolveSeason(season);
-        return playerRepository.findHotPlayers(resolved).stream()
+        return playerRepository.findByLast10GamesPPG(resolved).stream()
                 .map(this::toStandingsDto)
                 .toList();
     }
