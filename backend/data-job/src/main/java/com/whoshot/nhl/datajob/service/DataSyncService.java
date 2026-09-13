@@ -203,51 +203,33 @@ public class DataSyncService {
         String seasonId = season.getId();
         log.info("Starting team sync for season {}", seasonId);
 
+        int processedCount = persistStandings(seasonId, null);
+
+        log.info("Team sync completed: {} teams processed", processedCount);
+    }
+
+    /**
+     * Fetches standings and persists them for the resolved season.
+     *
+     * @param seasonId      season the standings belong to
+     * @param onlyTeamCodes when non-null, only these team codes are persisted
+     * @return number of teams successfully saved
+     */
+    private int persistStandings(String seasonId, Set<String> onlyTeamCodes) {
         var standings = nhlApiService.getTeamStandings();
         int processedCount = 0;
 
         for (TeamStandingsDto standing : standings) {
             String teamCode = standing.getTeamAbbrev().getDefaultValue();
 
+            if (onlyTeamCodes != null && !onlyTeamCodes.contains(teamCode)) {
+                continue;
+            }
+
             Team team = teamRepository.findByTeamCodeAndSeason(teamCode, seasonId)
                     .orElse(new Team());
 
-            team.setTeamCode(teamCode);
-            team.setSeason(seasonId);
-            team.setTeamName(standing.getTeamName().getDefaultValue());
-            team.setLogoUrl(standing.getTeamLogo());
-            team.setGamesPlayed(standing.getGamesPlayed());
-            team.setWins(standing.getWins());
-            team.setLosses(standing.getLosses());
-            team.setOvertimeLosses(standing.getOtLosses());
-            team.setPoints(standing.getPoints());
-            team.setPointPercentage(standing.getPointPctg());
-            team.setGoalsFor(standing.getGoalFor());
-            team.setGoalsAgainst(standing.getGoalAgainst());
-            team.setGoalDifferential(standing.getGoalDifferential());
-            team.setConferenceName(standing.getConferenceName());
-            team.setDivisionName(standing.getDivisionName());
-
-            // Streaks
-            if ("W".equals(standing.getStreakCode())) {
-                team.setCurrentWinStreak(standing.getStreakCount());
-                team.setCurrentLossStreak(0);
-            } else if ("L".equals(standing.getStreakCode()) || "OT".equals(standing.getStreakCode())) {
-                team.setCurrentWinStreak(0);
-                team.setCurrentLossStreak(standing.getStreakCount());
-            }
-
-            // Last 10 games
-            if (standing.getL10Wins() != null && standing.getL10Losses() != null && standing.getL10OtLosses() != null) {
-                int l10Games = standing.getL10Wins() + standing.getL10Losses() + standing.getL10OtLosses();
-                if (l10Games > 0) {
-                    int l10Points = standing.getL10Wins() * 2 + standing.getL10OtLosses();
-                    team.setLast10GamesPointPercentage((double) l10Points / (l10Games * 2));
-                    team.setLast10GamesPPG((double) l10Points / l10Games);
-                }
-            }
-
-            team.setLastUpdated(LocalDateTime.now().toString());
+            applyStandings(team, standing, seasonId);
 
             try {
                 teamRepository.save(team);
@@ -259,7 +241,49 @@ public class DataSyncService {
         }
 
         teamRepository.flush();
-        log.info("Team sync completed: {} teams processed", processedCount);
+        return processedCount;
+    }
+
+    /**
+     * Copies one standings row onto a Team entity.
+     */
+    private void applyStandings(Team team, TeamStandingsDto standing, String seasonId) {
+        team.setTeamCode(standing.getTeamAbbrev().getDefaultValue());
+        team.setSeason(seasonId);
+        team.setTeamName(standing.getTeamName().getDefaultValue());
+        team.setLogoUrl(standing.getTeamLogo());
+        team.setGamesPlayed(standing.getGamesPlayed());
+        team.setWins(standing.getWins());
+        team.setLosses(standing.getLosses());
+        team.setOvertimeLosses(standing.getOtLosses());
+        team.setPoints(standing.getPoints());
+        team.setPointPercentage(standing.getPointPctg());
+        team.setGoalsFor(standing.getGoalFor());
+        team.setGoalsAgainst(standing.getGoalAgainst());
+        team.setGoalDifferential(standing.getGoalDifferential());
+        team.setConferenceName(standing.getConferenceName());
+        team.setDivisionName(standing.getDivisionName());
+
+        // Streaks
+        if ("W".equals(standing.getStreakCode())) {
+            team.setCurrentWinStreak(standing.getStreakCount());
+            team.setCurrentLossStreak(0);
+        } else if ("L".equals(standing.getStreakCode()) || "OT".equals(standing.getStreakCode())) {
+            team.setCurrentWinStreak(0);
+            team.setCurrentLossStreak(standing.getStreakCount());
+        }
+
+        // Last 10 games
+        if (standing.getL10Wins() != null && standing.getL10Losses() != null && standing.getL10OtLosses() != null) {
+            int l10Games = standing.getL10Wins() + standing.getL10Losses() + standing.getL10OtLosses();
+            if (l10Games > 0) {
+                int l10Points = standing.getL10Wins() * 2 + standing.getL10OtLosses();
+                team.setLast10GamesPointPercentage((double) l10Points / (l10Games * 2));
+                team.setLast10GamesPPG((double) l10Points / l10Games);
+            }
+        }
+
+        team.setLastUpdated(LocalDateTime.now().toString());
     }
 
     /**
@@ -318,64 +342,8 @@ public class DataSyncService {
         String seasonId = season.getId();
         log.info("Starting scoped team sync for teams {} in season {}", teamCodes, seasonId);
 
-        var standings = nhlApiService.getTeamStandings();
-        int processedCount = 0;
+        int processedCount = persistStandings(seasonId, teamCodes);
 
-        for (TeamStandingsDto standing : standings) {
-            String teamCode = standing.getTeamAbbrev().getDefaultValue();
-
-            if (!teamCodes.contains(teamCode)) {
-                continue;
-            }
-
-            Team team = teamRepository.findByTeamCodeAndSeason(teamCode, seasonId)
-                    .orElse(new Team());
-
-            team.setTeamCode(teamCode);
-            team.setSeason(seasonId);
-            team.setTeamName(standing.getTeamName().getDefaultValue());
-            team.setLogoUrl(standing.getTeamLogo());
-            team.setGamesPlayed(standing.getGamesPlayed());
-            team.setWins(standing.getWins());
-            team.setLosses(standing.getLosses());
-            team.setOvertimeLosses(standing.getOtLosses());
-            team.setPoints(standing.getPoints());
-            team.setPointPercentage(standing.getPointPctg());
-            team.setGoalsFor(standing.getGoalFor());
-            team.setGoalsAgainst(standing.getGoalAgainst());
-            team.setGoalDifferential(standing.getGoalDifferential());
-            team.setConferenceName(standing.getConferenceName());
-            team.setDivisionName(standing.getDivisionName());
-
-            if ("W".equals(standing.getStreakCode())) {
-                team.setCurrentWinStreak(standing.getStreakCount());
-                team.setCurrentLossStreak(0);
-            } else if ("L".equals(standing.getStreakCode()) || "OT".equals(standing.getStreakCode())) {
-                team.setCurrentWinStreak(0);
-                team.setCurrentLossStreak(standing.getStreakCount());
-            }
-
-            if (standing.getL10Wins() != null && standing.getL10Losses() != null && standing.getL10OtLosses() != null) {
-                int l10Games = standing.getL10Wins() + standing.getL10Losses() + standing.getL10OtLosses();
-                if (l10Games > 0) {
-                    int l10Points = standing.getL10Wins() * 2 + standing.getL10OtLosses();
-                    team.setLast10GamesPointPercentage((double) l10Points / (l10Games * 2));
-                    team.setLast10GamesPPG((double) l10Points / l10Games);
-                }
-            }
-
-            team.setLastUpdated(LocalDateTime.now().toString());
-
-            try {
-                teamRepository.save(team);
-                processedCount++;
-            } catch (DataIntegrityViolationException e) {
-                log.warn("Constraint violation for team {} in season {}: {}",
-                        teamCode, seasonId, e.getMessage());
-            }
-        }
-
-        teamRepository.flush();
         log.info("Scoped team sync completed: {} teams processed", processedCount);
     }
 

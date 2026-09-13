@@ -1,5 +1,6 @@
 package com.whoshot.nhl.api.controller;
 
+import com.whoshot.nhl.api.dto.SearchIndexDto;
 import com.whoshot.nhl.api.dto.SearchResultDto;
 import com.whoshot.nhl.domain.entity.CurrentSeason;
 import com.whoshot.nhl.domain.entity.SearchResult;
@@ -28,9 +29,11 @@ public class SearchController {
     private final CurrentSeasonRepository currentSeasonRepository;
 
     @GetMapping("/all")
-    @Operation(summary = "Get all searchable items",
-               description = "Returns all players and teams for autocomplete search functionality")
-    public ResponseEntity<List<SearchResultDto>> getAllSearchableItems(
+    @Operation(summary = "Get the full search index",
+               description = "Returns every player and team for one season as a single index. "
+                       + "Clients cache this and filter it locally for autocomplete; the "
+                       + "season on the envelope tells them when the cached copy is stale.")
+    public ResponseEntity<SearchIndexDto> getAllSearchableItems(
             @RequestParam(required = false) String season) {
 
         String resolvedSeason = resolveSeason(season);
@@ -45,7 +48,7 @@ public class SearchController {
         log.info("Returning {} searchable items ({} teams, {} players)",
                 results.size(), teams.size(), players.size());
 
-        return ResponseEntity.ok(results);
+        return ResponseEntity.ok(new SearchIndexDto(resolvedSeason, results.size(), results));
     }
 
     private String resolveSeason(String season) {
@@ -61,7 +64,7 @@ public class SearchController {
         return new SearchResultDto(
                 sr.getType(), sr.getId(), sr.getName(),
                 sr.getSecondaryInfo(), sr.getTeamCode(),
-                sr.getImageUrl(), sr.getSeason()
+                sr.getImageUrl()
         );
     }
 }

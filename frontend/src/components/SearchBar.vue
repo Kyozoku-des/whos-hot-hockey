@@ -10,7 +10,7 @@
         placeholder="Search players or teams..."
         class="search-input"
       />
-      <span v-if="isSearching" class="search-icon">🔍</span>
+      <span class="search-icon">🔍</span>
     </div>
 
     <div v-if="showDropdown" class="search-dropdown">
@@ -66,9 +66,7 @@ const searchQuery = ref('')
 const searchResults = ref([])
 const selectedIndex = ref(0)
 const isFocused = ref(false)
-const isSearching = ref(false)
 const searchBarRef = ref(null)
-let debounceTimeout = null
 
 // Computed
 const showDropdown = computed(() => {
@@ -76,22 +74,12 @@ const showDropdown = computed(() => {
 })
 
 // Methods
+// The index is already in memory, so there is no request to debounce — filtering
+// ~800 rows is trivial. Run the dropdown search on the same tick as the table
+// filtering so the two never disagree about what the user typed.
 const handleInput = () => {
-  isSearching.value = true
-
-  // Update the current query immediately for real-time table filtering
   searchStore.setQuery(searchQuery.value)
-
-  // Clear previous timeout
-  if (debounceTimeout) {
-    clearTimeout(debounceTimeout)
-  }
-
-  // Debounce for 1 second (for dropdown results)
-  debounceTimeout = setTimeout(() => {
-    performSearch()
-    isSearching.value = false
-  }, 1000)
+  performSearch()
 }
 
 const performSearch = () => {
@@ -162,23 +150,18 @@ const handleImageError = (event) => {
   event.target.style.display = 'none'
 }
 
-// Load search data on mount
+// Load search data on mount. The store skips the request when it already holds
+// a fresh index, and replaces the cache when the season has rolled over.
 onMounted(async () => {
-  if (!searchStore.isLoaded) {
-    await searchStore.loadSearchData(async () => {
-      return await fetchData('/search/all')
-    })
-  }
+  await searchStore.loadSearchData(async () => {
+    return await fetchData('/search/all')
+  })
 
   // Add click outside listener
   document.addEventListener('click', handleClickOutside)
 })
 
 onUnmounted(() => {
-  // Clean up
-  if (debounceTimeout) {
-    clearTimeout(debounceTimeout)
-  }
   document.removeEventListener('click', handleClickOutside)
 })
 </script>

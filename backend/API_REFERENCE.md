@@ -10,19 +10,34 @@ All endpoints return JSON. The `season` query parameter is optional on every end
 
 ### GET /api/search/all
 
-Returns all players and teams for search/autocomplete.
+Returns the full search index for one season: every team followed by every player.
 
 - **Query params**: `season` (optional)
-- **Description**: Returns a combined list of players and teams matching the given season, suitable for populating search or autocomplete UI.
+- **Description**: Clients fetch this once, cache it, and filter locally for autocomplete — there is no server-side query parameter. `season` on the envelope identifies which season the index belongs to, so a cached copy can be invalidated when the season rolls over; it is deliberately not repeated on each result.
+- **Size**: ~800 entries, ~146 KB raw / ~16 KB gzipped. Responses are gzipped (`server.compression.enabled`).
 
 **Example response:**
 ```json
 {
-  "players": [
-    { "playerId": 8478402, "name": "Connor McDavid", "teamCode": "EDM", "position": "C" }
-  ],
-  "teams": [
-    { "teamCode": "EDM", "name": "Edmonton Oilers" }
+  "season": "20252026",
+  "count": 2,
+  "results": [
+    {
+      "type": "TEAM",
+      "id": "EDM",
+      "name": "Edmonton Oilers",
+      "secondaryInfo": "Pacific",
+      "teamCode": "EDM",
+      "imageUrl": "https://assets.nhle.com/logos/nhl/svg/EDM_light.svg"
+    },
+    {
+      "type": "PLAYER",
+      "id": "8478402",
+      "name": "Connor McDavid",
+      "secondaryInfo": "C",
+      "teamCode": "EDM",
+      "imageUrl": "https://assets.nhle.com/mugs/nhl/20252026/EDM/8478402.png"
+    }
   ]
 }
 ```

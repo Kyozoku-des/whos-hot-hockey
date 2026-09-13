@@ -49,9 +49,13 @@ class SearchControllerTest {
 
         mockMvc.perform(get("/api/search/all").param("season", season))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].type").value("TEAM"))
-                .andExpect(jsonPath("$[1].type").value("PLAYER"));
+                .andExpect(jsonPath("$.season").value(season))
+                .andExpect(jsonPath("$.count").value(2))
+                .andExpect(jsonPath("$.results", hasSize(2)))
+                .andExpect(jsonPath("$.results[0].type").value("TEAM"))
+                .andExpect(jsonPath("$.results[1].type").value("PLAYER"))
+                // The season lives on the envelope only, not repeated per row.
+                .andExpect(jsonPath("$.results[0].season").doesNotExist());
     }
 
     @Test
@@ -68,6 +72,8 @@ class SearchControllerTest {
 
         mockMvc.perform(get("/api/search/all"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(0)));
+                .andExpect(jsonPath("$.season").value(activeSeason))
+                .andExpect(jsonPath("$.count").value(0))
+                .andExpect(jsonPath("$.results", hasSize(0)));
     }
 }
