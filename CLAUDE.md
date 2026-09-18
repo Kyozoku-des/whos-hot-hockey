@@ -1,8 +1,10 @@
-# Who's Hot NHL Development Guidelines
+﻿# Who's Hot NHL Development Guidelines
 
 Auto-generated from all feature plans. Last updated: 2026-03-27
 
 ## Active Technologies
+- Java 23 + Spring Boot 3.5.6 (Spring Data JPA, Spring Retry, Lombok), PostgreSQL driver (002-season-backfill)
+- PostgreSQL 16 — existing tables `players`, `teams`, `game_logs`, `team_games`; no schema change (002-season-backfill)
 
 - **Language**: Java 23
 - **Backend Framework**: Spring Boot 3.5.6
@@ -84,6 +86,7 @@ See `.specify/memory/constitution.md` for core principles:
 3. **Pragmatic Architecture**: Justify complexity, YAGNI
 
 ## Recent Changes
+- 002-season-backfill: Added Java 23 + Spring Boot 3.5.6 (Spring Data JPA, Spring Retry, Lombok), PostgreSQL driver
 
 - **001-api-data-split**: Backend modularization — splitting API and data-job into independent applications, PostgreSQL migration
 

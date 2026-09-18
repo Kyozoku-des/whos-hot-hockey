@@ -37,6 +37,11 @@ public class DynamicSchedulingService {
     public void init() {
         log.info("Initializing dynamic scheduling daemon");
 
+        // Resolve and persist the active season. Deliberately not done at DataSyncService
+        // construction time (see resolveActiveSeasonForLiveSync javadoc) so that other processes
+        // sharing DataSyncService, such as the season backfill, never touch it.
+        dataSyncService.resolveActiveSeasonForLiveSync();
+
         // Run initial sync
         try {
             dataSyncService.syncTeams();

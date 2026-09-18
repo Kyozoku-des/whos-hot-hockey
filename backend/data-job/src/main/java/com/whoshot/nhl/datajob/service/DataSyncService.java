@@ -7,11 +7,11 @@ import com.whoshot.nhl.domain.entity.Team;
 import com.whoshot.nhl.datajob.exception.PlayerStatisticsException;
 import com.whoshot.nhl.datajob.factory.PlayerFactory;
 import com.whoshot.nhl.domain.entity.CurrentSeason;
+import com.whoshot.nhl.domain.entity.TeamGame;
 import com.whoshot.nhl.domain.repository.CurrentSeasonRepository;
-import com.whoshot.nhl.domain.repository.GameLogRepository;
 import com.whoshot.nhl.domain.repository.PlayerRepository;
+import com.whoshot.nhl.domain.repository.TeamGameRepository;
 import com.whoshot.nhl.domain.repository.TeamRepository;
-import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,8 +40,9 @@ public class DataSyncService {
     private final PlayerRepository playerRepository;
     private final PlayerFactory playerFactory;
     private final TeamRepository teamRepository;
-    private final GameLogRepository gameLogRepository;
     private final CurrentSeasonRepository currentSeasonRepository;
+    private final TeamGameRepository teamGameRepository;
+    private final GameLogWriter gameLogWriter;
     private SeasonDto season;
     @Getter
     private LocalDateTime firstGameTimeForToday;
@@ -50,10 +51,14 @@ public class DataSyncService {
     private final int gameType = 2; // Regular season
 
     /**
-     * Initializes the service by resolving the active season once at startup.
+     * Resolves and persists the active season, and captures today's game window.
+     * <p>
+     * This is <b>not</b> triggered automatically at construction time: merely booting a Spring
+     * context containing this bean (as a backfill process does) must not mutate which season the
+     * application treats as active (FR-005). The live-sync startup path
+     * ({@link DynamicSchedulingService#init()}) calls this explicitly instead.
      */
-    @PostConstruct
-    private void init() {
+    public void resolveActiveSeasonForLiveSync() {
         setSeason();
         setFirstAndLastGameTimesForToday();
     }
@@ -157,6 +162,9 @@ public class DataSyncService {
 
         var players = nhlApiService.getPlayerStandingsOrder(seasonId, gameType);
         int processedCount = 0;
+        // Game logs already written for the season, used to resolve gameWon for each player's
+        // game log (research R-005). Fetched once, up front, rather than per player.
+        List<TeamGame> teamGamesForSeason = teamGameRepository.findBySeasonId(seasonId);
 
         // Get order from standings API, calculate new statistics and verify points
         for (PlayerStandingDto playerStanding : players) {
@@ -189,6 +197,11 @@ public class DataSyncService {
                 playerRepository.saveAndFlush(player);
                 processedCount++;
             }
+
+            // Populate the game-log graph's current-season line (research R-003): nothing else in
+            // the codebase writes game_logs, so without this the graph has no current-season data
+            // to compare a backfilled previous season against.
+            gameLogWriter.writePlayerGameLogs(playerId, seasonId, gameLogs, teamGamesForSeason);
         }
 
         log.info("Player sync completed: {} players processed", processedCount);
@@ -203,20 +216,41 @@ public class DataSyncService {
         String seasonId = season.getId();
         log.info("Starting team sync for season {}", seasonId);
 
-        int processedCount = persistStandings(seasonId, null);
+        var standings = nhlApiService.getTeamStandings();
+        int processedCount = persistStandings(seasonId, null, standings);
+        writeTeamGamesForStandings(seasonId, standings);
 
         log.info("Team sync completed: {} teams processed", processedCount);
     }
 
     /**
-     * Fetches standings and persists them for the resolved season.
+     * Populates the game-log graph's current-season line for each team (research R-003), the
+     * team-side counterpart of the write in {@link #syncPlayers()}.
+     */
+    private void writeTeamGamesForStandings(String seasonId, List<TeamStandingsDto> standings) {
+        for (TeamStandingsDto standing : standings) {
+            String teamCode = standing.getTeamAbbrev().getDefaultValue();
+            try {
+                var schedule = nhlApiService.getTeamSchedule(teamCode, seasonId);
+                gameLogWriter.writeTeamGames(teamCode, seasonId, schedule);
+            } catch (Exception e) {
+                log.warn("Could not write team games for {} in season {}: {}", teamCode, seasonId, e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Persists an already-fetched list of standings rows for the given season. Season-parameterised
+     * so callers can supply either today's standings (live sync) or a historical date's standings
+     * (backfill, via {@link NhlApiService#getTeamStandings(String)}) without this method knowing
+     * which.
      *
      * @param seasonId      season the standings belong to
      * @param onlyTeamCodes when non-null, only these team codes are persisted
+     * @param standings     standings rows to persist, in official rank order
      * @return number of teams successfully saved
      */
-    private int persistStandings(String seasonId, Set<String> onlyTeamCodes) {
-        var standings = nhlApiService.getTeamStandings();
+    int persistStandings(String seasonId, Set<String> onlyTeamCodes, List<TeamStandingsDto> standings) {
         int processedCount = 0;
 
         for (TeamStandingsDto standing : standings) {
@@ -342,7 +376,7 @@ public class DataSyncService {
         String seasonId = season.getId();
         log.info("Starting scoped team sync for teams {} in season {}", teamCodes, seasonId);
 
-        int processedCount = persistStandings(seasonId, teamCodes);
+        int processedCount = persistStandings(seasonId, teamCodes, nhlApiService.getTeamStandings());
 
         log.info("Scoped team sync completed: {} teams processed", processedCount);
     }
