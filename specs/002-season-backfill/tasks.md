@@ -109,8 +109,8 @@ description: "Task list for 002-season-backfill"
 ### Tests for User Story 2 (write first, must fail) ⚠️
 
 - [X] T034 [P] [US2] Write integration test in `backend/data-job/src/test/java/com/whoshot/nhl/datajob/backfill/LiveSyncGameLogWriteIT.java` asserting that a current-season sync writes `game_logs` and `team_games` rows for the synced players and teams (research R-003)
-- [ ] T035 [P] [US2] Write integration test in `backend/api/src/test/java/com/whoshot/nhl/api/service/SeasonScopedGameLogIT.java` asserting `getPlayerGameLog(id, "20242025")` returns rows in ascending `game_number` and `getTeamGameLog(code, "20242025")` returns rows in descending `game_date`, with backfilled data present (FR-011)
-- [ ] T036 [P] [US2] Write test asserting a player absent from the backfilled season returns an empty list rather than an error or zeroed rows, in `backend/api/src/test/java/com/whoshot/nhl/api/service/SeasonScopedGameLogIT.java` (FR-012, spec US2 AS-2)
+- [X] T035 [P] [US2] Write integration test in `backend/api/src/test/java/com/whoshot/nhl/api/service/SeasonScopedGameLogIT.java` asserting `getPlayerGameLog(id, "20242025")` returns rows in ascending `game_number` and `getTeamGameLog(code, "20242025")` returns rows in descending `game_date`, with backfilled data present (FR-011)
+- [X] T036 [P] [US2] Write test asserting a player absent from the backfilled season returns an empty list rather than an error or zeroed rows, in `backend/api/src/test/java/com/whoshot/nhl/api/service/SeasonScopedGameLogIT.java` (FR-012, spec US2 AS-2)
 
 ### Implementation for User Story 2
 
@@ -132,10 +132,10 @@ description: "Task list for 002-season-backfill"
 ### Tests for User Story 3 (write first, must fail) ⚠️
 
 - [X] T041 [P] [US3] Write integration test in `backend/data-job/src/test/java/com/whoshot/nhl/datajob/backfill/BackfillIdempotencyIT.java` asserting a second run of the same season produces identical row counts across `players`, `teams`, `game_logs`, `team_games` with no duplicates (FR-006, SC-004)
-- [ ] T042 [P] [US3] Write integration test in `backend/data-job/src/test/java/com/whoshot/nhl/datajob/backfill/BackfillResumeIT.java` asserting that a run interrupted partway, then re-run, yields the same final state as an uninterrupted run (spec US3 AS-2)
-- [ ] T043 [P] [US3] Write unit test in `backend/data-job/src/test/java/com/whoshot/nhl/datajob/service/BackfillFailureIsolationTest.java` asserting a `PlayerStatisticsException` and an exhausted-retry `ApiClientException` each skip only that player and appear in the summary with a reason, while a failed seasons/standings fetch is fatal (FR-007, research R-012)
+- [X] T042 [P] [US3] Write integration test in `backend/data-job/src/test/java/com/whoshot/nhl/datajob/backfill/BackfillResumeIT.java` asserting that a run interrupted partway, then re-run, yields the same final state as an uninterrupted run (spec US3 AS-2)
+- [X] T043 [P] [US3] Write unit test in `backend/data-job/src/test/java/com/whoshot/nhl/datajob/service/BackfillFailureIsolationTest.java` asserting a `PlayerStatisticsException` and an exhausted-retry `ApiClientException` each skip only that player and appear in the summary with a reason, while a failed seasons/standings fetch is fatal (FR-007, research R-012)
 - [X] T044 [P] [US3] Write unit test in `backend/data-job/src/test/java/com/whoshot/nhl/datajob/model/BackfillSummaryTest.java` asserting the rendered summary contains season, duration, all four counts, the skip list with reasons, and the result line, in the format of contracts/cli-contract.md (FR-008)
-- [ ] T045 [P] [US3] Write integration test in `backend/data-job/src/test/java/com/whoshot/nhl/datajob/backfill/BackfillConcurrencyIT.java` asserting a second concurrent run for the same season exits 3 and writes nothing, and that the lock releases when the first run's connection closes (FR-014, research R-011)
+- [X] T045 [P] [US3] Write integration test in `backend/data-job/src/test/java/com/whoshot/nhl/datajob/backfill/BackfillConcurrencyIT.java` asserting a second concurrent run for the same season exits 3 and writes nothing, and that the lock releases when the first run's connection closes (FR-014, research R-011)
 
 ### Implementation for User Story 3
 
@@ -153,7 +153,7 @@ description: "Task list for 002-season-backfill"
 ## Phase 6: Polish & Cross-Cutting Concerns
 
 - [X] T052 [P] Add a "Backfilling a past season" section to `backend/README.md`, sourced from `specs/002-season-backfill/quickstart.md` (Constitution Principle II)
-- [ ] T053 [P] Add a note to `API_CONTRACT.md` that `/players/{id}/game-log` and `/teams/{code}/game-log` return data for any loaded season via `?season=`, and that an unloaded season returns an empty list — no endpoint change
+- [X] T053 [P] Add a note to `API_CONTRACT.md` (root file is empty since 001; note added to `backend/API_REFERENCE.md`) that `/players/{id}/game-log` and `/teams/{code}/game-log` return data for any loaded season via `?season=`, and that an unloaded season returns an empty list — no endpoint change
 - [X] T054 [P] Remove the dead `SeasonValidator.getCurrentSeason()` method (returns `null`, unused) from `backend/data-job/src/main/java/com/whoshot/nhl/datajob/util/SeasonValidator.java` (research residual risks)
 - [ ] T055 Run a real full-season backfill of 20242025 against a dev database and record the actual duration, request count, and skip-list size; if the points-mismatch skip rate is high, raise it as a finding rather than silently accepting it (plan.md Risks)
 - [ ] T056 Execute every verification step in `specs/002-season-backfill/quickstart.md` end to end, including the SQL checks and the browser check

@@ -129,20 +129,32 @@ Player detail with identity info and season stats.
 
 ### GET /api/players/{playerId}/game-log
 
-Player game-by-game log for the season.
+Player game-by-game log for a season, ordered by `gameNumber` ascending.
 
 - **Path params**: `playerId` (int) - NHL player ID
 - **Query params**: `season` (optional)
+
+**Season scoping**: `season` (e.g. `20242025`) selects any season present in the database, including
+past seasons loaded with the backfill (see `README.md`, "Backfilling a past season"). Omitted, it
+defaults to the active season. A season that was never loaded, or one the player/team has no games
+in, returns `200` with an empty list `[]` — never an error or zeroed rows.
 
 **Example response:**
 ```json
 [
   {
-    "gameDate": "2025-01-15",
-    "opponent": "TOR",
+    "gameId": 2024020015,
+    "gameDate": "2024-10-10",
+    "opponentTeamCode": "TOR",
+    "homeGame": true,
     "goals": 1,
     "assists": 2,
-    "points": 3
+    "points": 3,
+    "plusMinus": 2,
+    "shots": 4,
+    "timeOnIce": 1265,
+    "gameWon": true,
+    "gameNumber": 1
   }
 ]
 ```
@@ -231,19 +243,30 @@ Team detail with roster.
 
 ### GET /api/teams/{teamCode}/game-log
 
-Team game results for the season.
+Team game results for a season, ordered by `gameDate` descending.
 
 - **Path params**: `teamCode` (string) - Three-letter team code
 - **Query params**: `season` (optional)
+
+**Season scoping**: `season` (e.g. `20242025`) selects any season present in the database, including
+past seasons loaded with the backfill (see `README.md`, "Backfilling a past season"). Omitted, it
+defaults to the active season. A season that was never loaded, or one the player/team has no games
+in, returns `200` with an empty list `[]` — never an error or zeroed rows.
 
 **Example response:**
 ```json
 [
   {
-    "gameDate": "2025-01-15",
-    "opponent": "TOR",
-    "result": "W",
-    "score": "4-2"
+    "gameId": 2024020015,
+    "gameDate": "2024-10-10",
+    "opponentTeamCode": "TOR",
+    "homeGame": true,
+    "goalsFor": 4,
+    "goalsAgainst": 2,
+    "won": true,
+    "overtimeLoss": false,
+    "gameType": "2",
+    "gameNumber": 1
   }
 ]
 ```

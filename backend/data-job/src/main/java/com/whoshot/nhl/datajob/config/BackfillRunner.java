@@ -47,13 +47,24 @@ public class BackfillRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        exit(execute());
+    }
+
+    /**
+     * Validates the request, runs the backfill and maps the outcome to a process exit code.
+     *
+     * @return the exit code defined in contracts/cli-contract.md
+     */
+    int execute() {
         BackfillRequest request;
         try {
             request = BackfillRequest.validate(seasonId, nhlApiService.getSeasons());
         } catch (BackfillValidationException e) {
             log.error("Backfill request rejected: {}", e.getMessage());
-            exit(EXIT_VALIDATION_FAILED);
-            return;
+            return EXIT_VALIDATION_FAILED;
+        } catch (RuntimeException e) {
+            log.error("Fatal: could not load the season list to validate {}: {}", seasonId, e.getMessage(), e);
+            return EXIT_UPSTREAM_FAILURE;
         }
 
         log.info("Starting backfill for season {} (dryRun={})", request.seasonId(), dryRun);
@@ -63,12 +74,14 @@ public class BackfillRunner implements CommandLineRunner {
             summary = seasonBackfillService.run(request, dryRun);
         } catch (SeasonBackfillService.AlreadyRunningException e) {
             log.error(e.getMessage());
-            exit(EXIT_ALREADY_RUNNING);
-            return;
+            return EXIT_ALREADY_RUNNING;
+        } catch (RuntimeException e) {
+            log.error("Fatal: backfill for season {} aborted: {}", request.seasonId(), e.getMessage(), e);
+            return EXIT_UPSTREAM_FAILURE;
         }
 
         log.info("\n{}", summary.render());
-        exit(summary.success() ? EXIT_SUCCESS : EXIT_UPSTREAM_FAILURE);
+        return summary.success() ? EXIT_SUCCESS : EXIT_UPSTREAM_FAILURE;
     }
 
     private void exit(int code) {
