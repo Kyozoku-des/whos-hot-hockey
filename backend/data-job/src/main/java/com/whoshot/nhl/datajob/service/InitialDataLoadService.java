@@ -28,6 +28,7 @@ public class InitialDataLoadService {
         log.info("Initial full-season data load started at {}", start);
 
         try {
+            dataSyncService.initialize();
             log.info("Syncing team standings...");
             dataSyncService.syncTeams();
 

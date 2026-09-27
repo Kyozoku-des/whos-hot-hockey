@@ -1,20 +1,22 @@
+name: whos-hot-nhl
+
 services:
   postgres:
-    image: postgres:16
-    container_name: nhl-stats-db
+    image: postgres:17
+    restart: unless-stopped
     environment:
       POSTGRES_DB: nhl_stats
       POSTGRES_USER: whoshot
-      POSTGRES_PASSWORD: whoshot
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-whoshot_local}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
-      - nhl_pgdata:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U whoshot -d nhl_stats"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 12
 
   backend-api:
     build:
@@ -26,7 +28,7 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nhl_stats
       SPRING_DATASOURCE_USERNAME: whoshot
-      SPRING_DATASOURCE_PASSWORD: whoshot
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-whoshot_local}
     depends_on:
       postgres:
         condition: service_healthy
@@ -40,7 +42,7 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nhl_stats
       SPRING_DATASOURCE_USERNAME: whoshot
-      SPRING_DATASOURCE_PASSWORD: whoshot
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-whoshot_local}
       SPRING_PROFILES_ACTIVE: ${DATA_JOB_PROFILE:-default}
     depends_on:
       postgres:
@@ -62,4 +64,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  nhl_pgdata:
+  postgres_data:

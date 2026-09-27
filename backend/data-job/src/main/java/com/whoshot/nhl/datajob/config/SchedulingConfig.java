@@ -21,7 +21,9 @@ public class SchedulingConfig {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
         scheduler.setPoolSize(5);
         scheduler.setThreadNamePrefix("dynamic-scheduler-");
-        scheduler.initialize();
+        scheduler.setWaitForTasksToCompleteOnShutdown(false);
+        scheduler.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+        scheduler.setAwaitTerminationSeconds(15);
         return scheduler;
     }
 }
