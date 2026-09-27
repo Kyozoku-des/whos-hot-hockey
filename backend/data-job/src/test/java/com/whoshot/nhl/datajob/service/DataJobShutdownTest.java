@@ -59,23 +59,24 @@ class DataJobShutdownTest {
             assertTrue(scheduled.await(5, TimeUnit.SECONDS));
             assertTimeoutPreemptively(Duration.ofSeconds(5), context::close);
             assertTrue(scheduler.getScheduledThreadPoolExecutor().isTerminated());
-            verify(sync, never()).syncPlayers();
+            verify(sync).syncPlayers();
         }
     }
 
     @Test
-    void successfulOneShotClosesContextWithoutExitingJvm() throws Exception {
+    void noGameDayKeepsDaemonRunningAndSchedulesNextCheck() throws Exception {
         var sync = mock(DataSyncService.class);
-        var closed = new CountDownLatch(1);
+        var finished = new CountDownLatch(1);
+        when(sync.getLastGameTimeForToday()).thenAnswer(invocation -> {
+            finished.countDown();
+            return null;
+        });
         try (var context = context(sync)) {
-            context.addApplicationListener(event -> {
-                if (event instanceof ContextClosedEvent) {
-                    closed.countDown();
-                }
-            });
             context.getBean(DynamicSchedulingService.class).init();
-            assertTrue(closed.await(5, TimeUnit.SECONDS));
+            assertTrue(finished.await(5, TimeUnit.SECONDS));
+            assertTrue(context.isActive());
             verify(sync).initialize();
+            verify(sync).syncTeams();
             verify(sync).syncPlayers();
         }
     }
@@ -83,7 +84,7 @@ class DataJobShutdownTest {
     @Test
     void interruptedPlayerSyncStopsBeforeAnyApiCall() {
         var api = mock(NhlApiService.class);
-        var sync = new DataSyncService(api, null, null, null, null);
+        var sync = new DataSyncService(api, null, null, null, null, null);
         try {
             Thread.currentThread().interrupt();
             assertThrows(CancellationException.class, sync::syncPlayers);

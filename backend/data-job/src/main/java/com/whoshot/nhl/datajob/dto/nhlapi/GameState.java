@@ -10,7 +10,11 @@ import lombok.Getter;
 @Getter
 public enum GameState {
     FUT,
+    PRE,
     LIVE,
+    CRIT,
+    OVER,
+    OFF,
     FINAL,
     UNKNOWN;
 

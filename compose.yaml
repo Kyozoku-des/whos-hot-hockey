@@ -18,5 +18,50 @@ services:
       timeout: 5s
       retries: 12
 
+  backend-api:
+    build:
+      context: ./backend
+      target: api
+    container_name: nhl-backend-api
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nhl_stats
+      SPRING_DATASOURCE_USERNAME: whoshot
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-whoshot_local}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  data-job:
+    build:
+      context: ./backend
+      target: data-job
+    container_name: nhl-data-job
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nhl_stats
+      SPRING_DATASOURCE_USERNAME: whoshot
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-whoshot_local}
+      SPRING_PROFILES_ACTIVE: ${DATA_JOB_PROFILE:-default}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nhl-frontend
+    ports:
+      - "3000:3000"
+    # No VITE_API_BASE_URL here: Vite inlines import.meta.env at build time, so a
+    # runtime env var has no effect on the already-built bundle. The app uses a
+    # relative /api base and nginx proxies it to backend-api.
+    depends_on:
+      - backend-api
+    restart: unless-stopped
+
 volumes:
   postgres_data:

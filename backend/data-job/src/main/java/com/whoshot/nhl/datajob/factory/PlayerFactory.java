@@ -57,6 +57,7 @@ public class PlayerFactory {
                 .plusMinus(statistics.plusMinus())
                 .currentPointStreak(statistics.currentPointStreak())
                 .currentPointlessStreak(statistics.currentPointlessStreak())
+                .pointsPerLastNGames(statistics.pointsPerLastNGames())
                 .lastUpdated(statistics.lastUpdated())
                 .build();
     }

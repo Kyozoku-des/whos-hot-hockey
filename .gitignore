@@ -1,1 +1,18 @@
 /.idea
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+.env
+.env.*
+!.env.example
+/.vscode
+
+.claude/settings.local.json
+.playwright-cli/
+
+# Local debugging artifacts (browser accessibility dumps, screenshots).
+# Root-level only, so real assets under frontend/src/assets stay tracked.
+/.tmpchk/
+/frontend-*.yml
+/*.png

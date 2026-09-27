@@ -1,18 +1,49 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+
+// The data-job re-syncs hourly, so a cached index older than this may be
+// missing players or carrying a season that has since rolled over.
+const CACHE_TTL_MS = 30 * 60 * 1000
 
 export const useSearchStore = defineStore('search', () => {
   // State
   const searchData = ref([])
+  const loadedSeason = ref(null) // season the cached index belongs to
   const isLoaded = ref(false)
   const lastUpdated = ref(null)
   const currentQuery = ref('') // Current search query for real-time filtering
 
+  // Getters
+  const isStale = computed(() => {
+    if (!isLoaded.value || !lastUpdated.value) return true
+    return Date.now() - lastUpdated.value.getTime() > CACHE_TTL_MS
+  })
+
   // Actions
-  const loadSearchData = async (fetchFn) => {
+
+  /**
+   * Load the search index. No-op when a fresh copy is already cached unless
+   * `force` is set. `fetchFn` must resolve to a { season, count, results }
+   * envelope; the season is what lets us notice a season rollover and drop
+   * the previous season's index instead of serving it forever.
+   */
+  const loadSearchData = async (fetchFn, { force = false } = {}) => {
+    if (isLoaded.value && !isStale.value && !force) {
+      return true
+    }
+
     try {
-      const data = await fetchFn()
-      searchData.value = data || []
+      const index = await fetchFn()
+      if (!index) {
+        return false
+      }
+
+      if (loadedSeason.value && index.season && loadedSeason.value !== index.season) {
+        console.info(`Search index season changed ${loadedSeason.value} -> ${index.season}, replacing cache`)
+      }
+
+      searchData.value = index.results || []
+      loadedSeason.value = index.season || null
       isLoaded.value = true
       lastUpdated.value = new Date()
       return true
@@ -53,6 +84,7 @@ export const useSearchStore = defineStore('search', () => {
 
   const clearCache = () => {
     searchData.value = []
+    loadedSeason.value = null
     isLoaded.value = false
     lastUpdated.value = null
     currentQuery.value = ''
@@ -65,9 +97,12 @@ export const useSearchStore = defineStore('search', () => {
   return {
     // State
     searchData,
+    loadedSeason,
     isLoaded,
     lastUpdated,
     currentQuery,
+    // Getters
+    isStale,
     // Actions
     loadSearchData,
     searchItems,

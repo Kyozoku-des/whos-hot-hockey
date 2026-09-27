@@ -1,10 +1,8 @@
 package com.whoshot.nhl.datajob.service;
 
-import com.whoshot.nhl.datajob.exception.PlayerStatisticsException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
@@ -14,25 +12,26 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 
-/** Runs ingestion outside Spring's startup locks and cancels work during shutdown. */
+/** A single cancellable task chain prevents overlapping ingestion and pending game timers. */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Profile("!test")
+@Profile("!test & !initial-load")
 public class DynamicSchedulingService {
     private final TaskScheduler taskScheduler;
     private final DataSyncService dataSyncService;
-    private final ConfigurableApplicationContext applicationContext;
-
     private ScheduledFuture<?> syncTask;
     private volatile boolean stopping;
     private LocalDateTime lastGameTime;
+    private Set<String> previousActiveTeams = Set.of();
 
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
-        schedule(this::initializeAndSchedule, Instant.now());
+        schedule(this::hourlyCheck, Instant.now());
     }
 
     private synchronized void schedule(Runnable work, Instant when) {
@@ -41,65 +40,60 @@ public class DynamicSchedulingService {
         }
     }
 
-    private void initializeAndSchedule() {
+    private void hourlyCheck() {
+        if (stopping) return;
         try {
+            // Refresh season as well as schedule so a daemon survives season rollover.
             dataSyncService.initialize();
-            if (stopping) {
-                return;
-            }
+            dataSyncService.syncTeams();
+            dataSyncService.syncPlayers();
             LocalDateTime firstGameTime = dataSyncService.getFirstGameTimeForToday();
-            if (firstGameTime == null) {
-                log.info("No games scheduled for today. Running one sync and exiting.");
-                dataSyncService.syncPlayers();
-                closeApplication();
+            lastGameTime = dataSyncService.getLastGameTimeForToday();
+            if (firstGameTime != null) {
+                Instant start = firstGameTime.minusMinutes(5).toInstant(ZoneOffset.UTC);
+                if (start.isAfter(Instant.now().plusSeconds(3600))) {
+                    schedule(this::hourlyCheck, Instant.now().plusSeconds(3600));
+                } else {
+                    schedule(this::syncAndReschedule, start.isBefore(Instant.now()) ? Instant.now() : start);
+                }
                 return;
             }
-            lastGameTime = dataSyncService.getLastGameTimeForToday();
-            schedule(this::syncAndReschedule, firstGameTime.minusMinutes(5).toInstant(ZoneOffset.UTC));
         } catch (Exception e) {
-            if (!stopping) {
-                log.error("Data job initialization or initial sync failed", e);
-                closeApplication();
-            }
+            if (!stopping) log.error("Hourly synchronization failed; retrying next hour", e);
         }
+        schedule(this::hourlyCheck, Instant.now().plusSeconds(3600));
     }
 
     private void syncAndReschedule() {
-        if (stopping) {
-            return;
-        }
+        if (stopping) return;
         try {
-            dataSyncService.syncPlayers();
-            if (stopping) {
-                return;
+            Set<String> activeTeams = dataSyncService.getActiveGameTeamCodes();
+            Set<String> teamsToSync = new HashSet<>(previousActiveTeams);
+            teamsToSync.addAll(activeTeams);
+            if (!teamsToSync.isEmpty()) {
+                dataSyncService.syncTeamsForCodes(teamsToSync);
+                dataSyncService.syncPlayersForTeams(teamsToSync);
             }
+            // Retain participants through their first completed poll for final statistics.
+            previousActiveTeams = Set.copyOf(activeTeams);
             if (lastGameTime != null && LocalDateTime.now(ZoneOffset.UTC).isAfter(lastGameTime)
-                    && !dataSyncService.isAnyGameActive()) {
-                log.info("No active games detected. Shutting down application.");
-                closeApplication();
+                    && activeTeams.isEmpty()) {
+                // Also covers a game that completed entirely between two polls.
+                dataSyncService.syncTeams();
+                dataSyncService.syncPlayers();
+                schedule(this::hourlyCheck, Instant.now().plusSeconds(3600));
                 return;
             }
-        } catch (PlayerStatisticsException | RuntimeException e) {
-            if (!stopping) {
-                log.error("Error during player sync", e);
-            }
+        } catch (Exception e) {
+            if (!stopping) log.error("Game-time synchronization failed; retrying next minute", e);
         }
-        // Delay from completion so a slow sync cannot trigger a catch-up loop.
+        // Delay from completion, avoiding catch-up loops when ingestion takes over a minute.
         schedule(this::syncAndReschedule, Instant.now().plusSeconds(60));
-    }
-
-    private void closeApplication() {
-        if (!stopping) {
-            // Close outside the scheduler so shutdown never waits for its own worker.
-            Thread.ofPlatform().name("data-job-shutdown").start(applicationContext::close);
-        }
     }
 
     @EventListener(ContextClosedEvent.class)
     public synchronized void stop() {
         stopping = true;
-        if (syncTask != null) {
-            syncTask.cancel(true);
-        }
+        if (syncTask != null) syncTask.cancel(true);
     }
 }

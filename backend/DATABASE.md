@@ -3,7 +3,7 @@
 From the repository root, with Docker Desktop running:
 
 ```powershell
-docker compose up -d --wait
+docker compose up -d --wait postgres
 docker compose ps
 ```
 

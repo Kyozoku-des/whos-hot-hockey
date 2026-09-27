@@ -1,0 +1,11 @@
+# Never bake a developer's local environment into the image. Vite inlines
+# import.meta.env at build time, so a stray .env here silently overrides the
+# relative /api default and hardcodes someone's localhost into the bundle.
+.env
+.env.*
+!.env.example
+
+node_modules
+dist
+npm-debug.log*
+.vite

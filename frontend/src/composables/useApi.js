@@ -1,6 +1,10 @@
 import { ref } from 'vue'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
+// Relative by default: nginx (prod) and the Vite dev server both proxy /api to
+// the backend, so the bundle is not baked against a specific host. VITE_API_BASE_URL
+// must be supplied at BUILD time (Vite inlines import.meta.env), not at runtime,
+// and must already include the /api suffix.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 export function useApi() {
   const loading = ref(false)

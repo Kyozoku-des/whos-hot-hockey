@@ -21,5 +21,4 @@ public class SearchResultDto {
     private String secondaryInfo; // player position or team abbreviation
     private String teamCode; // player's team code (null for teams)
     private String imageUrl; // headshot or logo
-    private String season; // season ID for context
 }

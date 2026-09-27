@@ -35,8 +35,6 @@ public class StatisticsCalculationService {
         int assists = 0;
         int plusMinus = 0;
         double pointsPerGame;
-        int pointStreak = 0;
-        int pointlessStreak = 0;
 
         for (PlayerGameLogDto gameLog : playerGameLogs) {
             gamesPlayed++;
@@ -44,13 +42,27 @@ public class StatisticsCalculationService {
             goals += gameLog.getGoals() != null ? gameLog.getGoals() : 0;
             assists += gameLog.getAssists() != null ? gameLog.getAssists() : 0;
             plusMinus += gameLog.getPlusMinus() != null ? gameLog.getPlusMinus() : 0;
+        }
 
-            if (points > 0) {
+        // Calculate streaks from most recent game backwards (game logs are most-recent-first)
+        int pointStreak = 0;
+        int pointlessStreak = 0;
+        for (PlayerGameLogDto gameLog : playerGameLogs) {
+            int gamePoints = gameLog.getPoints() != null ? gameLog.getPoints() : 0;
+            if (gamePoints > 0) {
                 pointStreak++;
-                pointlessStreak = 0;
             } else {
-                pointStreak = 0;
-                pointlessStreak++;
+                break;
+            }
+        }
+        if (pointStreak == 0) {
+            for (PlayerGameLogDto gameLog : playerGameLogs) {
+                int gamePoints = gameLog.getPoints() != null ? gameLog.getPoints() : 0;
+                if (gamePoints == 0) {
+                    pointlessStreak++;
+                } else {
+                    break;
+                }
             }
         }
 
@@ -61,6 +73,15 @@ public class StatisticsCalculationService {
 
         pointsPerGame = gamesPlayed > 0 ? (double) points / gamesPlayed : 0.0;
 
+        // Calculate PPG for last N games (most recent games are first in the list)
+        int lastN = Math.min(10, playerGameLogs.size());
+        int lastNPoints = 0;
+        for (int i = 0; i < lastN; i++) {
+            PlayerGameLogDto gameLog = playerGameLogs.get(i);
+            lastNPoints += gameLog.getPoints() != null ? gameLog.getPoints() : 0;
+        }
+        double pointsPerLastNGames = lastN > 0 ? (double) lastNPoints / lastN : 0.0;
+
         return PlayerStatistics.builder()
                 .gamesPlayed(gamesPlayed)
                 .points(points)
@@ -70,6 +91,7 @@ public class StatisticsCalculationService {
                 .plusMinus(plusMinus)
                 .currentPointStreak(pointStreak)
                 .currentPointlessStreak(pointlessStreak)
+                .pointsPerLastNGames(pointsPerLastNGames)
                 .lastUpdated(LocalDateTime.now())
                 .build();
     }
