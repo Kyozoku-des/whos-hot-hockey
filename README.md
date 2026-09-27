@@ -5,7 +5,7 @@ A full-stack application for tracking NHL statistics with a focus on identifying
 ## Tech Stack
 
 - **Frontend**: Vue 3, Pinia, Vue Router, Chart.js, Vite
-- **Backend**: Spring Boot 3.5.6 (Java 23), PostgreSQL 16
+- **Backend**: Spring Boot 3.5.6 (Java 23), PostgreSQL 17
 - **Infrastructure**: Podman/Docker Compose
 
 ## Quick Start
@@ -39,10 +39,13 @@ The application will be available at:
 To populate the database with current NHL season data:
 
 ```bash
-DATA_JOB_PROFILE=initial-load podman-compose up -d
+podman-compose stop data-job
+podman-compose run --rm -e SPRING_PROFILES_ACTIVE=initial-load data-job
+podman-compose up -d data-job
 ```
 
-This runs the data-job in initial-load mode, which fetches all teams, players, and game logs from the NHL API.
+This runs a one-shot load of team standings and player statistics, then resumes the daemon.
+Game logs are currently used for player calculations but are not persisted for the game-log endpoints.
 
 ### Stopping Services
 

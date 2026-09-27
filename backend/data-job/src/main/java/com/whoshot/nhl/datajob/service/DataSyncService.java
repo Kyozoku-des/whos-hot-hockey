@@ -24,6 +24,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -51,51 +52,30 @@ public class DataSyncService {
     private final int gameType = 2; // Regular season
 
     /**
-     * Resolves and persists the active season, and captures today's game window.
-     * <p>
-     * This is <b>not</b> triggered automatically at construction time: merely booting a Spring
-     * context containing this bean (as a backfill process does) must not mutate which season the
-     * application treats as active (FR-005). The live-sync startup path
-     * ({@link DynamicSchedulingService#init()}) calls this explicitly instead.
+     * Refreshes the active season and daily game window for live sync only.
+     * Called explicitly by the scheduler; constructing this bean for backfill has no side effects.
      */
-    public void resolveActiveSeasonForLiveSync() {
+    @Transactional
+    public void initialize() {
+        checkInterrupted();
         setSeason();
+        checkInterrupted();
         setFirstAndLastGameTimesForToday();
     }
 
-    /**
-     * Resolves and stores the best season to synchronize based on current date boundaries.
-     * During the off-season (no season's date range contains today, e.g. between the end of
-     * the regular season and the start of the next), falls back to the most recently
-     * completed season rather than the newest season record, since the newest record may
-     * describe a season that has not started yet and has no game data available.
-     */
+    /** Retains the most recently started season during playoffs and the offseason. */
     private void setSeason() {
-        List<SeasonDto> seasons = nhlApiService.getSeasons();
-        LocalDateTime now = LocalDateTime.now();
-
-        for (SeasonDto season : seasons) {
-            LocalDateTime startDate = season.getStartDate();
-            LocalDateTime endDate = season.getRegularSeasonEndDate();
-
-            String seasonId = season.getId();
-            if (now.isAfter(startDate) && now.isBefore(endDate)) {
-                log.info("Current season determined: {}", seasonId);
-                this.season = season;
-                persistCurrentSeason(season);
-                return;
-            }
-        }
-
-        SeasonDto mostRecentlyCompleted = seasons.stream()
-                .filter(s -> now.isAfter(s.getRegularSeasonEndDate()))
-                .max(Comparator.comparing(SeasonDto::getRegularSeasonEndDate))
-                .orElse(seasons.getLast());
-
-        log.info("No current season found (off-season), using most recently completed season: {}",
-                mostRecentlyCompleted.getId());
-        this.season = mostRecentlyCompleted;
+        this.season = selectSeason(nhlApiService.getSeasons(), LocalDateTime.now(ZoneOffset.UTC));
         persistCurrentSeason(this.season);
+    }
+
+    static SeasonDto selectSeason(List<SeasonDto> seasons, LocalDateTime now) {
+        return seasons.stream()
+                .filter(Objects::nonNull)
+                .filter(candidate -> candidate.getStartDate() != null)
+                .filter(candidate -> !candidate.getStartDate().isAfter(now))
+                .max(Comparator.comparing(SeasonDto::getStartDate))
+                .orElseThrow(() -> new IllegalStateException("NHL API returned no season that has started"));
     }
 
     /**
@@ -104,7 +84,6 @@ public class DataSyncService {
      * one row; leaving more than one active row throws IncorrectResultSizeDataAccessException
      * for every API request that resolves the default season (players, teams, search).
      */
-    @Transactional
     private void persistCurrentSeason(SeasonDto season) {
         String seasonId = season.getId();
 
@@ -127,7 +106,8 @@ public class DataSyncService {
     }
 
     /**
-     * Fetches today's game schedule and determines the earliest and latest game start times.
+     * Fetches today's game schedule and determines the earliest and latest game
+     * start times.
      */
     public void setFirstAndLastGameTimesForToday() {
         List<GameDto> games = nhlApiService.getLeagueSchedule();
@@ -151,12 +131,15 @@ public class DataSyncService {
 
     /**
      * Synchronizes active-player statistics for the resolved season.
-     * Side effects: performs external API calls and writes player records to the database.
+     * Side effects: performs external API calls and writes player records to the
+     * database.
      *
-     * @throws PlayerStatisticsException if player identity or point-total validation fails
+     * @throws PlayerStatisticsException if player identity or point-total
+     *                                   validation fails
      */
     @Transactional
     public void syncPlayers() throws PlayerStatisticsException {
+        checkInterrupted();
         String seasonId = season.getId();
         log.info("Starting player sync for season {}", seasonId);
 
@@ -168,12 +151,15 @@ public class DataSyncService {
 
         // Get order from standings API, calculate new statistics and verify points
         for (PlayerStandingDto playerStanding : players) {
+            checkInterrupted();
             Long playerId = playerStanding.getId();
 
             PlayerInfoDto playerInfo = nhlApiService.getPlayerInfo(playerId);
+            checkInterrupted();
 
             if (!playerInfo.isActive()) {
-                log.warn("Skipping inactive player ID: {}. Name: {} {}", playerId, playerInfo.getFirstName(), playerInfo.getLastName());
+                log.warn("Skipping inactive player ID: {}. Name: {} {}", playerId, playerInfo.getFirstName(),
+                        playerInfo.getLastName());
                 continue;
             }
 
@@ -183,8 +169,10 @@ public class DataSyncService {
 
             // Fetch game logs for the season
             var gameLogs = nhlApiService.getPlayerGameLogs(playerId, seasonId, gameType);
+            checkInterrupted();
 
-            // Create player using factory (handles all construction and statistics calculation)
+            // Create player using factory (handles all construction and statistics
+            // calculation)
             Player player = playerFactory.createFromApiData(playerInfo, playerStanding, gameLogs, seasonId);
 
             try {
@@ -213,6 +201,7 @@ public class DataSyncService {
      */
     @Transactional
     public void syncTeams() {
+        checkInterrupted();
         String seasonId = season.getId();
         log.info("Starting team sync for season {}", seasonId);
 
@@ -254,6 +243,7 @@ public class DataSyncService {
         int processedCount = 0;
 
         for (TeamStandingsDto standing : standings) {
+            checkInterrupted();
             String teamCode = standing.getTeamAbbrev().getDefaultValue();
 
             if (onlyTeamCodes != null && !onlyTeamCodes.contains(teamCode)) {
@@ -326,6 +316,7 @@ public class DataSyncService {
      */
     @Transactional
     public void syncPlayersForTeams(Set<String> teamCodes) throws PlayerStatisticsException {
+        checkInterrupted();
         String seasonId = season.getId();
         log.info("Starting scoped player sync for teams {} in season {}", teamCodes, seasonId);
 
@@ -333,6 +324,7 @@ public class DataSyncService {
         int processedCount = 0;
 
         for (PlayerStandingDto playerStanding : players) {
+            checkInterrupted();
             Long playerId = playerStanding.getId();
 
             PlayerInfoDto playerInfo = nhlApiService.getPlayerInfo(playerId);
@@ -373,6 +365,7 @@ public class DataSyncService {
      */
     @Transactional
     public void syncTeamsForCodes(Set<String> teamCodes) {
+        checkInterrupted();
         String seasonId = season.getId();
         log.info("Starting scoped team sync for teams {} in season {}", teamCodes, seasonId);
 
@@ -388,22 +381,24 @@ public class DataSyncService {
         List<GameDto> games = nhlApiService.getLeagueSchedule();
 
         return games.stream()
-                .filter(game -> game.getGameState() == GameState.LIVE)
+                .filter(game -> (game.getGameState() == GameState.LIVE || game.getGameState() == GameState.CRIT || game.getGameState() == GameState.PRE))
                 .flatMap(game -> java.util.stream.Stream.of(
                         game.getHomeTeam().getAbbrev(),
                         game.getAwayTeam().getAbbrev()))
                 .collect(Collectors.toSet());
     }
 
-    /**
-     * Checks if any game from today's schedule is currently in progress.
-     *
-     * @return true if at least one game has gameState "LIVE"
-     */
+    private static void checkInterrupted() {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new CancellationException("Synchronization was stopped");
+        }
+    }
+
+    /** Checks for live, critical, or pre-game entries in the current schedule. */
     public boolean isAnyGameActive() {
         List<GameDto> games = nhlApiService.getLeagueSchedule();
 
         return games.stream()
-                .anyMatch(game -> game.getGameState() == GameState.LIVE);
+                .anyMatch(game -> (game.getGameState() == GameState.LIVE || game.getGameState() == GameState.CRIT || game.getGameState() == GameState.PRE));
     }
 }

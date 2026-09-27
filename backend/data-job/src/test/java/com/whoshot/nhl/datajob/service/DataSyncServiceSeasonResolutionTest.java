@@ -62,11 +62,11 @@ class DataSyncServiceSeasonResolutionTest {
     void setSeason_offSeason_picksMostRecentlyCompletedSeason_notNewestRecord() throws Exception {
         // Today falls between the end of last season and the start of next season (off-season).
         SeasonDto completed = season("20252026",
-                LocalDateTime.of(2025, 10, 1, 0, 0),
-                LocalDateTime.of(2026, 4, 15, 0, 0));
+                LocalDateTime.now(java.time.ZoneOffset.UTC).minusYears(1),
+                LocalDateTime.now(java.time.ZoneOffset.UTC).minusMonths(1));
         SeasonDto notYetStarted = season("20262027",
-                LocalDateTime.of(2026, 10, 1, 0, 0),
-                LocalDateTime.of(2027, 4, 15, 0, 0));
+                LocalDateTime.now(java.time.ZoneOffset.UTC).plusMonths(1),
+                LocalDateTime.now(java.time.ZoneOffset.UTC).plusYears(1));
 
         when(nhlApiService.getSeasons()).thenReturn(List.of(completed, notYetStarted));
         when(currentSeasonRepository.findAllByIsActiveTrue()).thenReturn(List.of());
@@ -82,11 +82,11 @@ class DataSyncServiceSeasonResolutionTest {
     @Test
     void setSeason_deactivatesPreviouslyActiveSeason_whenSeasonChanges() throws Exception {
         SeasonDto completed = season("20252026",
-                LocalDateTime.of(2025, 10, 1, 0, 0),
-                LocalDateTime.of(2026, 4, 15, 0, 0));
+                LocalDateTime.now(java.time.ZoneOffset.UTC).minusYears(1),
+                LocalDateTime.now(java.time.ZoneOffset.UTC).minusMonths(1));
         SeasonDto notYetStarted = season("20262027",
-                LocalDateTime.of(2026, 10, 1, 0, 0),
-                LocalDateTime.of(2027, 4, 15, 0, 0));
+                LocalDateTime.now(java.time.ZoneOffset.UTC).plusMonths(1),
+                LocalDateTime.now(java.time.ZoneOffset.UTC).plusYears(1));
 
         CurrentSeason stalePreviouslyActive = new CurrentSeason();
         stalePreviouslyActive.setSeasonId("20262027");

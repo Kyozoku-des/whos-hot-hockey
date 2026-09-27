@@ -27,7 +27,10 @@ class InitialDataLoadServiceTest {
     void loadFullSeason_callsSyncPlayers() throws PlayerStatisticsException {
         initialDataLoadService.loadFullSeason();
 
-        verify(dataSyncService).syncPlayers();
+        var order = org.mockito.Mockito.inOrder(dataSyncService);
+        order.verify(dataSyncService).initialize();
+        order.verify(dataSyncService).syncTeams();
+        order.verify(dataSyncService).syncPlayers();
     }
 
     @Test

@@ -17,17 +17,15 @@
     <description>Data integration module - fetches and processes NHL API data</description>
 
     <dependencies>
-        <!-- Common module dependency -->
-        <dependency>
-            <groupId>com.whoshot.nhl</groupId>
-            <artifactId>domain</artifactId>
-        </dependency>
-
-        <!-- PostgreSQL JDBC Driver (runtime) -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
+        </dependency>
+        <!-- Common module dependency -->
+        <dependency>
+            <groupId>com.whoshot.nhl</groupId>
+            <artifactId>domain</artifactId>
         </dependency>
 
         <!-- Spring Boot Web Starter -->

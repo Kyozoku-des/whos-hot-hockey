@@ -49,7 +49,7 @@ class LiveSyncGameLogWriteIT extends PostgresIntegrationTestBase {
         when(nhlApiService.getPlayerInfo(PLAYER_ID)).thenReturn(
                 BackfillFixtures.playerInfo(PLAYER_ID, true, "COL"));
 
-        dataSyncService.resolveActiveSeasonForLiveSync();
+        dataSyncService.initialize();
         dataSyncService.syncTeams();
         dataSyncService.syncPlayers();
 

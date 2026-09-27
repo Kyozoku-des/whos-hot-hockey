@@ -17,17 +17,15 @@
     <description>REST API module</description>
 
     <dependencies>
-        <!-- Domain module dependency -->
-        <dependency>
-            <groupId>com.whoshot.nhl</groupId>
-            <artifactId>domain</artifactId>
-        </dependency>
-
-        <!-- PostgreSQL JDBC Driver (runtime) -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
+        </dependency>
+        <!-- Domain module dependency -->
+        <dependency>
+            <groupId>com.whoshot.nhl</groupId>
+            <artifactId>domain</artifactId>
         </dependency>
 
         <!-- Spring Boot Web Starter -->
