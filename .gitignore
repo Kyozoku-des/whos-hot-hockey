@@ -6,7 +6,7 @@ Thumbs.db
 .env
 .env.*
 !.env.example
-.vscode
+/.vscode
 
 .claude/settings.local.json
 .playwright-cli/
