@@ -48,6 +48,7 @@
           <TeamGameLogGraph
             :current-season-data="teamGameLogs"
             :previous-season-data="previousSeasonTeamGameLogs"
+            :previous-season="previousSeason"
           />
         </div>
 
@@ -73,6 +74,7 @@ const { loading, error, getTeamDetails, getTeamGameLog } = useTeamStats()
 const team = ref(null)
 const teamGameLogs = ref([])
 const previousSeasonTeamGameLogs = ref([])
+const previousSeason = ref('')
 
 // Calculate previous season ID
 const calculatePreviousSeason = () => {
@@ -93,6 +95,7 @@ const calculatePreviousSeason = () => {
 }
 
 onMounted(async () => {
+  previousSeason.value = calculatePreviousSeason()
   const teamId = route.params.id
 
   const teamData = await getTeamDetails(teamId)
@@ -107,8 +110,7 @@ onMounted(async () => {
   }
 
   // Fetch previous season game log
-  const previousSeason = calculatePreviousSeason()
-  const previousSeasonData = await getTeamGameLog(teamId, previousSeason)
+  const previousSeasonData = await getTeamGameLog(teamId, previousSeason.value)
   if (previousSeasonData) {
     previousSeasonTeamGameLogs.value = previousSeasonData
   }

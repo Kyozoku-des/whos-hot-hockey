@@ -22,7 +22,7 @@ mvn spring-boot:run \
 Or from the jar:
 
 ```bash
-java -jar target/data-job.jar \
+java -jar target/data-job-1.0.0-SNAPSHOT.jar \
   --spring.profiles.active=backfill \
   --backfill.season=20242025
 ```
@@ -36,12 +36,12 @@ podman-compose run --rm \
   data-job
 ```
 
-Expect **10–25 minutes** for a full season — roughly 2100 upstream requests, deliberately paced to avoid getting throttled. Progress prints every 25 records.
+Expect **10–25 minutes** for a full season, deliberately paced to avoid getting throttled. Progress prints every 25 records. Measured for 20242025 on 2026-09-27: 10m35s, 1,667 upstream requests, 0 skipped (T055).
 
 ## Check it worked first (dry run)
 
 ```bash
-java -jar target/data-job.jar \
+java -jar target/data-job-1.0.0-SNAPSHOT.jar \
   --spring.profiles.active=backfill \
   --backfill.season=20242025 \
   --backfill.dry-run=true
@@ -53,12 +53,12 @@ Validates the season and reports what it *would* write, without touching the dat
 
 ```
 === Backfill summary: season 20242025 ===
-Duration:        00:18:41
+Duration:        00:10:35
 Teams:           32
-Team games:      1312
-Players:         1021
-Player game logs: 41288
-Skipped:         3
+Team games:      2624
+Players:         815
+Player game logs: 46727
+Skipped:         1
   - player 8478402: points mismatch (calculated 87, standings 88)
 Result:          SUCCESS
 ```
@@ -96,8 +96,8 @@ psql -h localhost -U whoshot -d nhl_stats \
 Then through the API:
 
 ```bash
-curl "http://localhost:8080/players/8478402/game-log?season=20242025"
-curl "http://localhost:8080/teams/COL/game-log?season=20242025"
+curl "http://localhost:8080/api/players/8478402/game-log?season=20242025"
+curl "http://localhost:8080/api/teams/COL/game-log?season=20242025"
 ```
 
 And in the browser: open any player or team page. The game-log graph draws the previous season as a second line automatically once that season is loaded — no frontend change or configuration involved.

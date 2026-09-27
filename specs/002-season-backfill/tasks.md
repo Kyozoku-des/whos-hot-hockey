@@ -114,10 +114,10 @@ description: "Task list for 002-season-backfill"
 
 ### Implementation for User Story 2
 
-- [X] T037 [US2] Call `GameLogWriter` from the live player sync in `backend/data-job/src/main/java/com/whoshot/nhl/datajob/service/DataSyncService.java` (`syncPlayers` and `syncPlayersForTeams`) so current-season game logs are persisted (T034 green)
+- [X] T037 [US2] Call `GameLogWriter` from the live player sync in `backend/data-job/src/main/java/com/whoshot/nhl/datajob/service/DataSyncService.java` (`syncPlayers` and `syncPlayersForTeams`) so current-season game logs are persisted (T034 green). Note: only the full `syncPlayers` writes game logs; the 60-second scoped `syncPlayersForTeams` does not, so current-season graph data refreshes with the hourly/end-of-day full sync
 - [X] T038 [US2] Call `GameLogWriter` for team games from the live team sync path in `DataSyncService`, using the season schedule for the active season
 - [X] T039 [US2] Remove the now-genuinely-used `GameLogRepository` injection comment/dead state in `DataSyncService` and confirm no unused repository injections remain
-- [ ] T040 [US2] Manually verify per quickstart.md: backfill 20242025, open a player page and a team page, confirm two lines render and a rookie's page degrades cleanly (SC-007)
+- [X] T040 [US2] Manually verify per quickstart.md: backfill 20242025, open a player page and a team page, confirm two lines render and a rookie's page degrades cleanly (SC-007)
 
 **Checkpoint**: US1 and US2 both work — past seasons load and the comparison graphs render
 
@@ -155,8 +155,8 @@ description: "Task list for 002-season-backfill"
 - [X] T052 [P] Add a "Backfilling a past season" section to `backend/README.md`, sourced from `specs/002-season-backfill/quickstart.md` (Constitution Principle II)
 - [X] T053 [P] Add a note to `API_CONTRACT.md` (root file is empty since 001; note added to `backend/API_REFERENCE.md`) that `/players/{id}/game-log` and `/teams/{code}/game-log` return data for any loaded season via `?season=`, and that an unloaded season returns an empty list — no endpoint change
 - [X] T054 [P] Remove the dead `SeasonValidator.getCurrentSeason()` method (returns `null`, unused) from `backend/data-job/src/main/java/com/whoshot/nhl/datajob/util/SeasonValidator.java` (research residual risks)
-- [ ] T055 Run a real full-season backfill of 20242025 against a dev database and record the actual duration, request count, and skip-list size; if the points-mismatch skip rate is high, raise it as a finding rather than silently accepting it (plan.md Risks)
-- [ ] T056 Execute every verification step in `specs/002-season-backfill/quickstart.md` end to end, including the SQL checks and the browser check
+- [X] T055 Run a real full-season backfill of 20242025 against a dev database and record the actual duration, request count, and skip-list size; if the points-mismatch skip rate is high, raise it as a finding rather than silently accepting it (plan.md Risks) — Done 2026-09-27: 10m35s, 1,667 requests, 0 skips; re-run identical (idempotent)
+- [X] T056 Execute every verification step in `specs/002-season-backfill/quickstart.md` end to end, including the SQL checks and the browser check
 - [X] T057 Run `cd backend && mvn test` and confirm the full suite is green, including the pre-existing API and data-job tests
 
 ---

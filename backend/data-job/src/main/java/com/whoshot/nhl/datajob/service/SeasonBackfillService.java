@@ -42,6 +42,8 @@ import java.util.Objects;
 @Service
 public class SeasonBackfillService {
 
+    private static final int PROGRESS_INTERVAL = 25;
+
     private final NhlApiService nhlApiService;
     private final DataSyncService dataSyncService;
     private final PlayerRepository playerRepository;
@@ -140,7 +142,9 @@ public class SeasonBackfillService {
                 .map(s -> s.getTeamAbbrev().getDefaultValue())
                 .toList();
 
+        int teamsDone = 0;
         for (String teamCode : teamCodes) {
+            logProgress(summary, "team-games", teamsDone++, teamCodes.size());
             pace();
             try {
                 List<GameDto> schedule = nhlApiService.getTeamSchedule(teamCode, seasonId);
@@ -164,7 +168,9 @@ public class SeasonBackfillService {
         List<TeamGame> teamGamesForSeason = teamGameRepository.findBySeasonId(seasonId);
         int processed = 0;
 
+        int playersDone = 0;
         for (PlayerStandingDto playerStanding : playerStandings) {
+            logProgress(summary, "players", playersDone++, playerStandings.size());
             Long playerId = playerStanding.getId();
             pace();
             try {
@@ -201,6 +207,18 @@ public class SeasonBackfillService {
 
         log.info("Backfill for season {} processed {} players", seasonId, processed);
         return summary.finish();
+    }
+
+    /**
+     * Logs progress every {@value #PROGRESS_INTERVAL} records (FR-008), in the format
+     * {@code Backfill {season}: phase={phase} {n}/{total} ({pct}%) elapsed={hh:mm:ss}}.
+     */
+    private static void logProgress(BackfillSummary summary, String phase, int done, int total) {
+        if (done == 0 || done % PROGRESS_INTERVAL != 0) {
+            return;
+        }
+        log.info("Backfill {}: phase={} {}/{} ({}%) elapsed={}", summary.seasonId(), phase, done, total,
+                done * 100 / total, BackfillSummary.formatDuration(summary.duration()));
     }
 
     private void pace() {

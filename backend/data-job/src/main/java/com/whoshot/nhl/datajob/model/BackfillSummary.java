@@ -120,7 +120,7 @@ public class BackfillSummary {
         return sb.toString();
     }
 
-    static String formatDuration(Duration duration) {
+    public static String formatDuration(Duration duration) {
         long totalSeconds = duration.getSeconds();
         return String.format("%02d:%02d:%02d",
                 totalSeconds / 3600, (totalSeconds % 3600) / 60, totalSeconds % 60);
