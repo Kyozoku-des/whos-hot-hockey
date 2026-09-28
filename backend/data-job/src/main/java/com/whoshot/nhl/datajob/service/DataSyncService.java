@@ -271,7 +271,7 @@ public class DataSyncService {
     /**
      * Copies one standings row onto a Team entity.
      */
-    private void applyStandings(Team team, TeamStandingsDto standing, String seasonId) {
+    static void applyStandings(Team team, TeamStandingsDto standing, String seasonId) {
         team.setTeamCode(standing.getTeamAbbrev().getDefaultValue());
         team.setSeason(seasonId);
         team.setTeamName(standing.getTeamName().getDefaultValue());
