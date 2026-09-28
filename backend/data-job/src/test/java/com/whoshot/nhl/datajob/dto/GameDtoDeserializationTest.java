@@ -20,6 +20,7 @@ class GameDtoDeserializationTest {
               "season": 20242025,
               "gameType": 2,
               "startTimeUTC": "2025-01-15T00:00:00Z",
+              "gameDate": "2025-01-14",
               "gameState": "OFF",
               "gameOutcome": { "lastPeriodType": "OT" },
               "homeTeam": { "abbrev": "COL", "score": 3 },
@@ -37,5 +38,6 @@ class GameDtoDeserializationTest {
         assertEquals(2, game.getAwayTeam().getScore());
         assertNotNull(game.getGameOutcome());
         assertEquals("OT", game.getGameOutcome().getLastPeriodType());
+        assertEquals("2025-01-14", game.getGameDate());
     }
 }

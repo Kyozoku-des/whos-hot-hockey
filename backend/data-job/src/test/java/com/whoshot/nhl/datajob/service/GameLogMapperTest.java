@@ -10,6 +10,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -37,6 +38,24 @@ class GameLogMapperTest {
     void toiParsedToSeconds() {
         assertEquals(21 * 60 + 5, GameLogWriter.toiSeconds("21:05"));
         assertEquals(0, GameLogWriter.toiSeconds(null));
+    }
+
+    @Test
+    void malformedToi_isRejectedAsInvalidRecord_notNumberFormatException() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> GameLogWriter.toiSeconds("21:xx"));
+        assertTrue(e.getMessage().contains("21:xx"), e.getMessage());
+    }
+
+    @Test
+    void validatePlayerGameLogs_namesTheBadGame() {
+        List<PlayerGameLogDto> logs = List.of(
+                gameLog(1L, "2025-01-01", "MTL", "H", 0, 0, 0, "18:00"),
+                gameLog(2L, "2025-01-03", "TOR", "R", 0, 0, 0, "bad"));
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> GameLogWriter.validatePlayerGameLogs(logs));
+        assertTrue(e.getMessage().contains("game 2"), e.getMessage());
     }
 
     @Test

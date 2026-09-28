@@ -89,12 +89,13 @@ public class GameLogWriter {
 
     /**
      * Filters a team's raw schedule down to completed regular-season games and sorts them
-     * chronologically. A game is "completed" once both sides have a recorded score; a game still
-     * on the schedule has null scores and is skipped.
+     * chronologically. A game counts only once its state is final: an in-progress game already
+     * carries (running) scores, so scores alone would record a live 0-0 as a loss for both teams.
      */
     static List<GameDto> chronologicalCompletedRegularSeasonGames(List<GameDto> games) {
         return games.stream()
                 .filter(g -> g.getGameType() != null && g.getGameType() == BackfillRequest.REGULAR_SEASON_GAME_TYPE)
+                .filter(g -> g.getGameState() != null && g.getGameState().isCompleted())
                 .filter(g -> g.getHomeTeam() != null && g.getHomeTeam().getScore() != null)
                 .filter(g -> g.getAwayTeam() != null && g.getAwayTeam().getScore() != null)
                 .sorted(Comparator.comparing(GameDto::getStartTimeUTC))
@@ -135,9 +136,33 @@ public class GameLogWriter {
             return 0;
         }
         String[] parts = toi.split(":");
-        int minutes = Integer.parseInt(parts[0]);
-        int seconds = parts.length > 1 ? Integer.parseInt(parts[1]) : 0;
-        return minutes * 60 + seconds;
+        try {
+            int minutes = Integer.parseInt(parts[0].trim());
+            int seconds = parts.length > 1 ? Integer.parseInt(parts[1].trim()) : 0;
+            return minutes * 60 + seconds;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("invalid time on ice '" + toi + "'", e);
+        }
+    }
+
+    /**
+     * Checks that every game log can be mapped, so a malformed record is rejected before anything
+     * for that player is written.
+     *
+     * @param gameLogs upstream game logs for one player
+     * @throws IllegalArgumentException naming the first unmappable game
+     */
+    static void validatePlayerGameLogs(List<PlayerGameLogDto> gameLogs) {
+        for (PlayerGameLogDto dto : gameLogs) {
+            if (dto.getGameId() == null || dto.getGameDate() == null) {
+                throw new IllegalArgumentException("game log missing game id or date");
+            }
+            try {
+                toiSeconds(dto.getToi());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException(e.getMessage() + " in game " + dto.getGameId(), e);
+            }
+        }
     }
 
     static TeamGame toTeamGame(TeamGame target, String teamCode, String seasonId, GameDto game, int gameNumber) {
@@ -151,7 +176,9 @@ public class GameLogWriter {
 
         target.setGameId(game.getId());
         target.setTeamCode(teamCode);
-        target.setGameDate(datePart(game.getStartTimeUTC()));
+        // Upstream's local game date, matching game_logs.game_date; the UTC start time of an
+        // evening game falls on the next calendar day.
+        target.setGameDate(game.getGameDate() != null ? game.getGameDate() : datePart(game.getStartTimeUTC()));
         target.setOpponentTeamCode(opponent);
         target.setHomeGame(homeGame);
         target.setGoalsFor(goalsFor);

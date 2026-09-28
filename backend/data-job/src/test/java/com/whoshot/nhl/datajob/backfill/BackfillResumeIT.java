@@ -5,6 +5,7 @@ import com.whoshot.nhl.datajob.service.NhlApiService;
 import com.whoshot.nhl.datajob.service.SeasonBackfillService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -26,7 +27,7 @@ import static org.mockito.Mockito.when;
  * Integration coverage for spec US3 AS-2: a backfill that dies partway through, then is re-run,
  * converges on exactly the same database state as a run that was never interrupted.
  * <p>
- * The crash is simulated by an unexpected exception in the player phase, after teams and team
+ * The crash is simulated by a lost database connection in the player phase, after teams and team
  * games have already been committed — the same partial state a killed process would leave behind.
  */
 class BackfillResumeIT extends PostgresIntegrationTestBase {
@@ -56,9 +57,10 @@ class BackfillResumeIT extends PostgresIntegrationTestBase {
         jdbcTemplate.execute("TRUNCATE TABLE players, teams, game_logs, team_games RESTART IDENTITY");
 
         // Interrupted: the process dies while loading players.
+        // Losing the database is the one failure a run does not skip past.
         when(nhlApiService.getPlayerGameLogs(PLAYER_ID, SEASON_ID, 2))
-                .thenThrow(new IllegalStateException("simulated crash mid-run"));
-        assertThrows(IllegalStateException.class, () -> seasonBackfillService.run(request(), false));
+                .thenThrow(new DataAccessResourceFailureException("simulated crash mid-run"));
+        assertThrows(DataAccessResourceFailureException.class, () -> seasonBackfillService.run(request(), false));
         Map<String, List<String>> partial = snapshot();
         assertFalse(partial.get("teams").isEmpty(), "the crash must happen after some data was committed");
         assertTrue(partial.get("players").isEmpty(), "the crash must happen before the player phase finished");

@@ -14,6 +14,8 @@ public class GameDto {
     private Long id;
     private Integer season;
     private String startTimeUTC;
+    /** Local calendar date of the game ({@code yyyy-MM-dd}); evening games fall a day earlier than {@link #startTimeUTC}. */
+    private String gameDate;
     private Integer gameType;
     private GameState gameState;
     private TeamInfo awayTeam;

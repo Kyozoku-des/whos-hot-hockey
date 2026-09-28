@@ -17,8 +17,11 @@ import com.whoshot.nhl.domain.repository.TeamGameRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.CannotCreateTransactionException;
 
 import java.util.List;
 import java.util.Objects;
@@ -33,8 +36,9 @@ import java.util.Objects;
  * reuses {@link DataSyncService#persistStandings} — the one piece of standings-persistence logic
  * worth not duplicating.
  * <p>
- * Per-record failures (a bad player, a missing team schedule) are caught, recorded in the
- * {@link BackfillSummary} skip list, and do not abort the run (FR-007). Failures fetching the
+ * Per-record failures (a bad player, a missing team schedule, malformed upstream data) are caught,
+ * recorded in the {@link BackfillSummary} skip list, and do not abort the run (FR-007). Losing the
+ * database does abort it. Failures fetching the
  * season-wide standings are fatal, since nothing useful can be attributed to the season without
  * them.
  */
@@ -150,7 +154,8 @@ public class SeasonBackfillService {
                 List<GameDto> schedule = nhlApiService.getTeamSchedule(teamCode, seasonId);
                 int written = gameLogWriter.writeTeamGames(teamCode, seasonId, schedule);
                 summary.addTeamGamesWritten(written);
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
+                rethrowIfDatabaseUnavailable(e);
                 log.warn("Skipping team games for {} in season {}: {}", teamCode, seasonId, e.getMessage());
                 summary.skip("team", teamCode, e.getMessage());
             }
@@ -185,6 +190,9 @@ public class SeasonBackfillService {
 
                 List<PlayerGameLogDto> gameLogs = nhlApiService.getPlayerGameLogs(
                         playerId, seasonId, request.gameType());
+                // Reject a malformed record before anything for this player is written, so a
+                // skip never leaves a player row without its game logs.
+                GameLogWriter.validatePlayerGameLogs(gameLogs);
                 Player player = playerFactory.createFromApiData(playerInfo, playerStanding, gameLogs, seasonId);
 
                 try {
@@ -199,7 +207,12 @@ public class SeasonBackfillService {
                 int gameLogsWritten = gameLogWriter.writePlayerGameLogs(
                         playerId, seasonId, gameLogs, teamGamesForSeason);
                 summary.addGameLogsWritten(gameLogsWritten);
-            } catch (PlayerStatisticsException | ApiClientException e) {
+            } catch (PlayerStatisticsException | RuntimeException e) {
+                // Any record-level fault (points mismatch, exhausted retries, malformed upstream
+                // data) skips only this player (FR-007); losing the database ends the run.
+                if (e instanceof RuntimeException runtime) {
+                    rethrowIfDatabaseUnavailable(runtime);
+                }
                 log.warn("Skipping player {} in season {}: {}", playerId, seasonId, e.getMessage());
                 summary.skip("player", String.valueOf(playerId), e.getMessage());
             }
@@ -219,6 +232,19 @@ public class SeasonBackfillService {
         }
         log.info("Backfill {}: phase={} {}/{} ({}%) elapsed={}", summary.seasonId(), phase, done, total,
                 done * 100 / total, BackfillSummary.formatDuration(summary.duration()));
+    }
+
+    /**
+     * Lets infrastructure failures escape the per-record catch: if the database itself is gone,
+     * every remaining record would fail the same way, so the run must stop rather than report
+     * each one as a skip.
+     */
+    private static void rethrowIfDatabaseUnavailable(RuntimeException e) {
+        if (e instanceof DataAccessResourceFailureException
+                || e instanceof TransientDataAccessResourceException
+                || e instanceof CannotCreateTransactionException) {
+            throw e;
+        }
     }
 
     private void pace() {

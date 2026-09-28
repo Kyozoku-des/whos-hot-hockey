@@ -1,5 +1,6 @@
 package com.whoshot.nhl.datajob.service;
 
+import com.whoshot.nhl.datajob.dto.nhlapi.PlayerGameLogDto;
 import com.whoshot.nhl.datajob.dto.nhlapi.PlayerInfoDto;
 import com.whoshot.nhl.datajob.dto.nhlapi.PlayerStandingDto;
 import com.whoshot.nhl.datajob.dto.nhlapi.TeamStandingsDto;
@@ -16,12 +17,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessResourceFailureException;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -30,6 +33,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -119,6 +123,44 @@ class BackfillFailureIsolationTest {
     }
 
     @Test
+    void malformedGameLog_skipsOnlyThatPlayer_beforeAnythingIsWritten() throws Exception {
+        stubTeamsAndTwoPlayers();
+        when(nhlApiService.getPlayerInfo(BROKEN_PLAYER)).thenReturn(info(BROKEN_PLAYER));
+        when(nhlApiService.getPlayerInfo(HEALTHY_PLAYER)).thenReturn(info(HEALTHY_PLAYER));
+        when(nhlApiService.getPlayerGameLogs(BROKEN_PLAYER, SEASON, 2))
+                .thenReturn(List.of(gameLog(2023020001L, "not-a-toi")));
+        when(nhlApiService.getPlayerGameLogs(HEALTHY_PLAYER, SEASON, 2))
+                .thenReturn(List.of(gameLog(2023020001L, "18:30")));
+        Player healthy = mock(Player.class);
+        when(playerFactory.createFromApiData(any(), any(), any(), eq(SEASON))).thenReturn(healthy);
+
+        BackfillSummary summary = service.run(request(), false);
+
+        assertTrue(summary.success());
+        assertEquals(1, summary.playersWritten());
+        assertEquals(1, summary.skipped().size());
+        BackfillSummary.Skip skip = summary.skipped().getFirst();
+        assertEquals(String.valueOf(BROKEN_PLAYER), skip.identifier());
+        assertTrue(skip.reason().contains("not-a-toi"), skip.reason());
+        verify(playerRepository, times(1)).save(any());
+        verify(playerRepository).save(healthy);
+        verify(gameLogWriter, never()).writePlayerGameLogs(eq(BROKEN_PLAYER), anyString(), anyList(), anyList());
+    }
+
+    @Test
+    void lostDatabase_abortsTheRun_insteadOfSkippingEveryPlayer() throws Exception {
+        stubTeamsAndTwoPlayers();
+        when(nhlApiService.getPlayerInfo(BROKEN_PLAYER)).thenReturn(info(BROKEN_PLAYER));
+        when(nhlApiService.getPlayerGameLogs(BROKEN_PLAYER, SEASON, 2)).thenReturn(List.of());
+        when(playerFactory.createFromApiData(any(), any(), any(), eq(SEASON))).thenReturn(mock(Player.class));
+        when(playerRepository.save(any())).thenThrow(new DataAccessResourceFailureException("connection refused"));
+
+        assertThrows(DataAccessResourceFailureException.class, () -> service.run(request(), false));
+        verify(nhlApiService, never()).getPlayerInfo(HEALTHY_PLAYER);
+        verify(backfillLockService).unlock(SEASON);
+    }
+
+    @Test
     void failedTeamSchedule_skipsOnlyThatTeam_withReason() throws Exception {
         List<TeamStandingsDto> standings = List.of(teamStanding("COL"), teamStanding("MTL"));
         when(nhlApiService.getTeamStandings("2024-04-17")).thenReturn(standings);
@@ -199,6 +241,15 @@ class BackfillFailureIsolationTest {
         PlayerStandingDto dto = new PlayerStandingDto();
         dto.setId(id);
         dto.setPoints(50);
+        return dto;
+    }
+
+    private static PlayerGameLogDto gameLog(long gameId, String toi) {
+        PlayerGameLogDto dto = new PlayerGameLogDto();
+        dto.setGameId(gameId);
+        dto.setGameDate("2023-10-12");
+        dto.setOpponentAbbrev("MTL");
+        dto.setToi(toi);
         return dto;
     }
 

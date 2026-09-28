@@ -100,6 +100,33 @@ class TeamGameMapperTest {
     }
 
     @Test
+    void inProgressGames_areExcluded_evenWithScores() {
+        GameDto finished = game(1L, "2025-01-01T00:00:00Z", 2, "COL", 3, "MTL", 2, "REG");
+        GameDto live = game(2L, "2025-01-03T00:00:00Z", 2, "COL", 0, "MTL", 0, null);
+        live.setGameState(GameState.LIVE);
+        GameDto critical = game(3L, "2025-01-05T00:00:00Z", 2, "COL", 1, "MTL", 1, null);
+        critical.setGameState(GameState.CRIT);
+        GameDto justEnded = game(4L, "2025-01-07T00:00:00Z", 2, "COL", 2, "MTL", 1, "REG");
+        justEnded.setGameState(GameState.OVER);
+
+        List<GameDto> result = GameLogWriter.chronologicalCompletedRegularSeasonGames(
+                List.of(finished, live, critical, justEnded));
+
+        assertEquals(List.of(finished, justEnded), result);
+    }
+
+    @Test
+    void gameDate_isUpstreamLocalDate_notUtcDay() {
+        // 7pm Eastern on Oct 9 is Oct 10 in UTC (NHL game 2024020010).
+        GameDto evening = game(2024020010L, "2024-10-10T00:00:00Z", 2, "COL", 5, "VGK", 8, "REG");
+        evening.setGameDate("2024-10-09");
+
+        TeamGame mapped = GameLogWriter.toTeamGame(new TeamGame(), "COL", "20242025", evening, 1);
+
+        assertEquals("2024-10-09", mapped.getGameDate());
+    }
+
+    @Test
     void chronologicalCompletedRegularSeasonGames_assignsDenseGameNumbers() {
         GameDto earlier = game(1L, "2025-01-01T00:00:00Z", 2, "COL", 4, "MTL", 1, "REG");
         GameDto later = game(2L, "2025-02-01T00:00:00Z", 2, "COL", 3, "MTL", 2, "REG");

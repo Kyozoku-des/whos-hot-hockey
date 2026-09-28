@@ -27,6 +27,16 @@ public enum GameState {
                 .orElse(UNKNOWN);
     }
 
+    /**
+     * Whether the game has ended and its score is final. {@code OVER} is set at the final horn,
+     * before the NHL marks the result {@code FINAL}/{@code OFF}; the score no longer changes.
+     *
+     * @return true for a finished game
+     */
+    public boolean isCompleted() {
+        return this == OVER || this == FINAL || this == OFF;
+    }
+
     @JsonValue
     public String toJson() {
         return name();

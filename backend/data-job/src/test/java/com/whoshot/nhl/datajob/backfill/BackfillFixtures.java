@@ -2,6 +2,7 @@ package com.whoshot.nhl.datajob.backfill;
 
 import com.whoshot.nhl.datajob.dto.SeasonDto;
 import com.whoshot.nhl.datajob.dto.nhlapi.GameDto;
+import com.whoshot.nhl.datajob.dto.nhlapi.GameState;
 import com.whoshot.nhl.datajob.dto.nhlapi.PlayerGameLogDto;
 import com.whoshot.nhl.datajob.dto.nhlapi.PlayerInfoDto;
 import com.whoshot.nhl.datajob.dto.nhlapi.PlayerStandingDto;
@@ -52,7 +53,9 @@ final class BackfillFixtures {
         GameDto dto = new GameDto();
         dto.setId(id);
         dto.setStartTimeUTC(startTimeUTC);
+        dto.setGameDate(startTimeUTC.substring(0, 10));
         dto.setGameType(2);
+        dto.setGameState(GameState.OFF);
 
         GameDto.TeamInfo home = new GameDto.TeamInfo();
         home.setAbbrev(homeAbbrev);
