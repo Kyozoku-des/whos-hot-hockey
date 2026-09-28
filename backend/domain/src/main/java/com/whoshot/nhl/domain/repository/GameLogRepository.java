@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository for GameLog entities.
@@ -51,4 +52,14 @@ public interface GameLogRepository extends JpaRepository<GameLog, Long> {
      */
     @Query(value = "SELECT * FROM game_logs WHERE player_id = :playerId AND season_id = :seasonId", nativeQuery = true)
     List<GameLog> findByPlayerIdAndSeasonId(@Param("playerId") Long playerId, @Param("seasonId") String seasonId);
+
+    /**
+     * Find the existing row for a player/game pair, used to upsert a game log without creating
+     * duplicates when a load (backfill or live sync) is re-run.
+     *
+     * @param playerId NHL player identifier
+     * @param gameId   NHL game identifier
+     * @return the existing game log row, if one was already written
+     */
+    Optional<GameLog> findByPlayerIdAndGameId(Long playerId, Long gameId);
 }

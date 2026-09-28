@@ -152,6 +152,16 @@ The "hot rating" for players is calculated as the points-per-game average over t
 mvn test
 ```
 
+`data-job`'s backfill tests (`*IT.java`) use Testcontainers to boot a disposable PostgreSQL
+container, so `mvn test` needs a running Docker-API-compatible engine. With Podman on Windows,
+point Testcontainers at the machine's named pipe first:
+
+```bash
+export DOCKER_HOST="npipe:////./pipe/podman-machine-default"
+export TESTCONTAINERS_RYUK_DISABLED=true   # Ryuk's reaper container doesn't play well with Podman
+mvn test
+```
+
 ### Build the project
 
 ```bash
@@ -163,6 +173,25 @@ mvn clean package
 ```bash
 mvn clean package -DskipTests
 ```
+
+## Backfilling a past season
+
+The regular data-job sync only ever tracks one season (the one it resolves as "current"), so a
+past season never loads on its own — which means player/team game-log graphs have no previous-
+season comparison line until you load one explicitly.
+
+```bash
+cd backend/data-job
+mvn spring-boot:run \
+  -Dspring-boot.run.profiles=backfill \
+  -Dspring-boot.run.arguments=--backfill.season=20242025
+```
+
+A full season takes roughly 10–25 minutes (paced to avoid upstream rate limits) and is safe to
+re-run: it upserts on each table's natural key, so re-running the same season converges without
+duplicates, and it never touches the `current_season` table or the site's default view. See
+[`specs/002-season-backfill/quickstart.md`](../specs/002-season-backfill/quickstart.md) for the
+full command reference, exit codes, and verification steps.
 
 ## Security Considerations
 

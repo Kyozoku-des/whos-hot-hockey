@@ -49,6 +49,26 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # One-off historical season load. Not started by `up`; run explicitly:
+  #   podman-compose run --rm -e BACKFILL_SEASON=20242025 backfill
+  backfill:
+    build:
+      context: ./backend
+      target: data-job
+    container_name: nhl-backfill
+    profiles:
+      - backfill
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nhl_stats
+      SPRING_DATASOURCE_USERNAME: whoshot
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-whoshot_local}
+      SPRING_PROFILES_ACTIVE: backfill
+      BACKFILL_SEASON: ${BACKFILL_SEASON:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
   frontend:
     build:
       context: ./frontend

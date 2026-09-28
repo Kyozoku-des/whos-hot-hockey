@@ -115,7 +115,20 @@ public class NhlApiService {
      * @return standings rows for all teams in the current context
      */
     public List<TeamStandingsDto> getTeamStandings() {
-        String url = baseUrl + "/v1/standings/now";
+        return getTeamStandings("now");
+    }
+
+    /**
+     * Retrieves team standings as of a specific date from the NHL public API.
+     * Used to backfill a completed season's <em>final</em> standings — the season's
+     * {@code regularSeasonEndDate} — as opposed to {@link #getTeamStandings()}, which always
+     * describes today.
+     *
+     * @param date standings date in {@code YYYY-MM-DD} format, or the literal {@code "now"}
+     * @return standings rows for all teams as of that date
+     */
+    public List<TeamStandingsDto> getTeamStandings(String date) {
+        String url = baseUrl + "/v1/standings/" + date;
         log.info("Fetching team standings from: {}", url);
 
         StandingsResponseDto response = apiClient.get(url, new ParameterizedTypeReference<>() {

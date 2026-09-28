@@ -25,6 +25,7 @@
           <PlayerGameLogGraph
             :current-season-data="gameLogs"
             :previous-season-data="previousSeasonGameLogs"
+            :previous-season="previousSeason"
           />
         </div>
 
@@ -71,6 +72,7 @@ const player = ref(null)
 const gameLogs = ref([])
 const gameLogsReversed = ref([]) // For table display (most recent first)
 const previousSeasonGameLogs = ref([])
+const previousSeason = ref('')
 const loadingGameLog = ref(false)
 
 const formatDate = (dateString) => {
@@ -98,6 +100,7 @@ const calculatePreviousSeason = () => {
 }
 
 onMounted(async () => {
+  previousSeason.value = calculatePreviousSeason()
   const playerId = route.params.id
 
   const playerData = await getPlayerDetails(playerId)
@@ -116,8 +119,7 @@ onMounted(async () => {
   }
 
   // Fetch previous season game log
-  const previousSeason = calculatePreviousSeason()
-  const previousSeasonData = await getPlayerGameLog(playerId, previousSeason)
+  const previousSeasonData = await getPlayerGameLog(playerId, previousSeason.value)
   if (previousSeasonData) {
     previousSeasonGameLogs.value = previousSeasonData
   }

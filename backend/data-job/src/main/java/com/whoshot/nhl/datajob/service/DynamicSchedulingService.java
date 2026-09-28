@@ -20,7 +20,7 @@ import java.util.concurrent.ScheduledFuture;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Profile("!test & !initial-load")
+@Profile("!test & !initial-load & !backfill")
 public class DynamicSchedulingService {
     private final TaskScheduler taskScheduler;
     private final DataSyncService dataSyncService;

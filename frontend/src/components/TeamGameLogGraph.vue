@@ -40,40 +40,24 @@ const props = defineProps({
   previousSeasonData: {
     type: Array,
     default: () => []
+  },
+  // Season id the previous-season data was fetched for, e.g. "20242025".
+  // Labels derive from it so they always match the data actually shown.
+  previousSeason: {
+    type: String,
+    default: ''
   }
 })
 
-// Calculate current season label
-const currentSeasonLabel = computed(() => {
-  const currentYear = new Date().getFullYear()
-  const currentMonth = new Date().getMonth() + 1
+const previousSeasonStart = computed(() => Number(props.previousSeason.slice(0, 4)))
 
-  let seasonStart
-  if (currentMonth >= 1 && currentMonth <= 6) {
-    seasonStart = currentYear - 1
-  } else {
-    seasonStart = currentYear
-  }
+const previousSeasonLabel = computed(() =>
+  `${previousSeasonStart.value}-${previousSeasonStart.value + 1}`
+)
 
-  const seasonEnd = seasonStart + 1
-  return `${seasonStart}-${seasonEnd}`
-})
-
-// Calculate previous season label
-const previousSeasonLabel = computed(() => {
-  const currentYear = new Date().getFullYear()
-  const currentMonth = new Date().getMonth() + 1
-
-  let seasonStart
-  if (currentMonth >= 1 && currentMonth <= 6) {
-    seasonStart = currentYear - 2
-  } else {
-    seasonStart = currentYear - 1
-  }
-
-  const seasonEnd = seasonStart + 1
-  return `${seasonStart}-${seasonEnd}`
-})
+const currentSeasonLabel = computed(() =>
+  `${previousSeasonStart.value + 1}-${previousSeasonStart.value + 2}`
+)
 
 // Check if we have any data
 const hasData = computed(() => {

@@ -119,13 +119,4 @@ public class SeasonValidator {
         String endYear = seasonId.substring(4, 8);
         return startYear + "-" + endYear;
     }
-
-    /**
-     * Returns the current season identifier.
-     *
-     * @return current season ID in {@code YYYYYYYY} format
-     */
-    public String getCurrentSeason() {
-        return null;
-    }
 }
