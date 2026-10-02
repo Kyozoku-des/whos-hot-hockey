@@ -218,7 +218,9 @@ const chartOptions = {
       grid: {
         color: 'rgba(255, 255, 255, 0.1)'
       },
-      beginAtZero: true
+      beginAtZero: true,
+      // Headroom so the highest points don't touch the top of the chart
+      grace: '10%'
     }
   }
 }

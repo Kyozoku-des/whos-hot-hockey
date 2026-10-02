@@ -224,6 +224,7 @@ const chartOptions = {
       ticks: {
         color: '#ffffff',
         stepSize: 1,
+        callback: (value) => (Number.isInteger(value) ? value : ''),
         font: {
           family: 'Minecraft, sans-serif'
         }
@@ -232,7 +233,8 @@ const chartOptions = {
         color: 'rgba(255, 255, 255, 0.1)'
       },
       beginAtZero: true,
-      max: 2
+      // Headroom above 2 so wins don't touch the top of the chart
+      max: 2.25
     }
   }
 }
