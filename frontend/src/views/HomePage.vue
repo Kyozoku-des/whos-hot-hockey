@@ -17,36 +17,27 @@
       </div>
     </div>
 
-    <!-- Desktop: grid of cards -->
+    <!-- Desktop: grid of cards, rearranged by dragging one onto another -->
     <div class="content-container desktop-content">
       <div class="cards-grid">
-        <ExpandableCard v-if="showFavorites" title="My Favorites" :defaultExpanded="true" class="favorites-card">
-          <FavoritesTable />
-        </ExpandableCard>
-
-        <ExpandableCard title="Player standings">
-          <TopPointsTable />
-        </ExpandableCard>
-
-        <ExpandableCard title="Point streaks">
-          <PointStreaksTable />
-        </ExpandableCard>
-
-        <ExpandableCard title="Last 10 games">
-          <HottestPlayersTable />
-        </ExpandableCard>
-
-        <ExpandableCard title="Team standings">
-          <TeamStandingsTable />
-        </ExpandableCard>
-
-        <ExpandableCard title="Win streaks">
-          <TeamWinStreaksTable />
-        </ExpandableCard>
-
-        <ExpandableCard title="Last 10 games">
-          <TeamHotTable />
-        </ExpandableCard>
+        <div
+          v-for="card in desktopCards"
+          :key="card.key"
+          class="card-slot"
+          :class="{
+            dragging: draggedKey === card.key,
+            'drop-target': dropKey === card.key && draggedKey !== card.key
+          }"
+          draggable="true"
+          @dragstart="onDragStart($event, card.key)"
+          @dragover.prevent="onDragOver(card.key)"
+          @drop.prevent="onDrop(card.key)"
+          @dragend="onDragEnd"
+        >
+          <ExpandableCard :title="card.title" :class="{ 'favorites-card': card.key === 'favorites' }">
+            <component :is="card.component" />
+          </ExpandableCard>
+        </div>
       </div>
     </div>
 
@@ -97,7 +88,7 @@ import FavoritesTable from '../components/FavoritesTable.vue'
 import CookieConsent from '../components/CookieConsent.vue'
 import { useFavorites } from '../composables/useFavorites'
 
-const { initializeFavorites, favoritesCount } = useFavorites()
+const { initializeFavorites, favoritesCount, consentGiven } = useFavorites()
 
 // Show favorites card only if user has favorites
 const showFavorites = computed(() => favoritesCount.value > 0)
@@ -110,21 +101,89 @@ const touchCurrentX = ref(0)
 const isSwiping = ref(false)
 const slideWidth = ref(0)
 
-const mobileCards = computed(() => {
-  const cards = []
-  if (showFavorites.value) {
-    cards.push({ key: 'favorites', title: 'My Favorites', component: FavoritesTable })
+const CARDS = [
+  { key: 'favorites', title: 'My Favorites', component: FavoritesTable },
+  { key: 'standings', title: 'Player standings', component: TopPointsTable },
+  { key: 'streaks', title: 'Point streaks', component: PointStreaksTable },
+  { key: 'hot-players', title: 'Last 10 games', component: HottestPlayersTable },
+  { key: 'team-standings', title: 'Team standings', component: TeamStandingsTable },
+  { key: 'win-streaks', title: 'Win streaks', component: TeamWinStreaksTable },
+  { key: 'team-hot', title: 'Last 10 games', component: TeamHotTable }
+]
+
+// The favorites card only shows once something has been favorited
+const visibleCards = (cards) =>
+  cards.filter(card => card.key !== 'favorites' || showFavorites.value)
+
+const mobileCards = computed(() => visibleCards(CARDS))
+
+// Desktop card order, changed by drag and drop. Saved alongside favorites,
+// so it is only remembered between visits when storage consent was given.
+const CARD_ORDER_KEY = 'nhl_card_order'
+const cardOrder = ref(CARDS.map(card => card.key))
+
+const desktopCards = computed(() =>
+  visibleCards(cardOrder.value.map(key => CARDS.find(card => card.key === key)))
+)
+
+const loadCardOrder = () => {
+  if (consentGiven.value !== true) return
+  try {
+    const saved = JSON.parse(localStorage.getItem(CARD_ORDER_KEY) || '[]')
+    const known = saved.filter(key => CARDS.some(card => card.key === key))
+    // Cards added since the order was saved go at the end
+    const missing = CARDS.map(card => card.key).filter(key => !known.includes(key))
+    cardOrder.value = [...known, ...missing]
+  } catch {
+    // Keep the default order
   }
-  cards.push(
-    { key: 'standings', title: 'Player standings', component: TopPointsTable },
-    { key: 'streaks', title: 'Point streaks', component: PointStreaksTable },
-    { key: 'hot-players', title: 'Last 10 games', component: HottestPlayersTable },
-    { key: 'team-standings', title: 'Team standings', component: TeamStandingsTable },
-    { key: 'win-streaks', title: 'Win streaks', component: TeamWinStreaksTable },
-    { key: 'team-hot', title: 'Last 10 games', component: TeamHotTable }
-  )
-  return cards
-})
+}
+
+const saveCardOrder = () => {
+  if (consentGiven.value !== true) return
+  try {
+    localStorage.setItem(CARD_ORDER_KEY, JSON.stringify(cardOrder.value))
+  } catch {
+    // Order still applies for this visit
+  }
+}
+
+const draggedKey = ref(null)
+const dropKey = ref(null)
+
+const onDragStart = (event, key) => {
+  // An expanded card is an overlay, not something to rearrange
+  if (event.currentTarget.querySelector('.expandable-card.expanded')) {
+    event.preventDefault()
+    return
+  }
+  draggedKey.value = key
+  event.dataTransfer.effectAllowed = 'move'
+  // Drag the whole card, even when the drag starts on a logo image
+  event.dataTransfer.setDragImage(event.currentTarget, event.offsetX, event.offsetY)
+}
+
+const onDragOver = (key) => {
+  if (draggedKey.value) dropKey.value = key
+}
+
+// Dropping a card on another swaps their places
+const onDrop = (key) => {
+  const from = cardOrder.value.indexOf(draggedKey.value)
+  const to = cardOrder.value.indexOf(key)
+  if (from !== -1 && to !== -1 && from !== to) {
+    const order = [...cardOrder.value]
+    ;[order[from], order[to]] = [order[to], order[from]]
+    cardOrder.value = order
+    saveCardOrder()
+  }
+  onDragEnd()
+}
+
+const onDragEnd = () => {
+  draggedKey.value = null
+  dropKey.value = null
+}
 
 const swipeOffset = computed(() => {
   const base = -(activeCardIndex.value * slideWidth.value)
@@ -192,6 +251,7 @@ const goToCard = (index) => {
 // Initialize favorites on mount
 onMounted(() => {
   initializeFavorites()
+  loadCardOrder()
   nextTick(updateSlideWidth)
   window.addEventListener('resize', updateSlideWidth)
 })
@@ -258,6 +318,22 @@ onUnmounted(() => {
 
 .content-container {
   padding: 5rem 2rem 2rem 2rem;
+}
+
+.card-slot {
+  min-width: 0;
+  height: 100%;
+  border-radius: 12px;
+  transition: opacity 0.15s ease;
+}
+
+.card-slot.dragging {
+  opacity: 0.4;
+}
+
+.card-slot.drop-target {
+  outline: 3px dashed var(--color-text-secondary);
+  outline-offset: 4px;
 }
 
 .favorites-card {
