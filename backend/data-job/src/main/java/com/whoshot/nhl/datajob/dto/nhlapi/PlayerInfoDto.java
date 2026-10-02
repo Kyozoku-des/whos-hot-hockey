@@ -27,6 +27,8 @@ public class PlayerInfoDto {
     @JsonProperty("lastName")
     private NameDto lastName;
     private String currentTeamAbbrev;
+    @JsonProperty("teamLogo")
+    private String teamLogoUrl;
     private String position;
 
     /**
