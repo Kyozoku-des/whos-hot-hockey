@@ -130,6 +130,9 @@ onMounted(async () => {
 
 .team-content {
   display: grid;
+  /* minmax(0, 1fr) lets the column shrink to the screen instead of growing
+     to fit the widest table or chart inside it. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 2rem;
 }
 
@@ -223,10 +226,23 @@ onMounted(async () => {
     padding: 0 1rem;
   }
 
+  .team-header {
+    justify-content: center;
+  }
+
   .team-info-card {
+    flex: 1;
     flex-direction: column;
     text-align: center;
     padding: 1.5rem 1rem;
+  }
+
+  .section {
+    padding: 1rem 0.75rem;
+  }
+
+  .section :deep(.game-log-graph) {
+    padding: 0.5rem 0;
   }
 
   .team-name {

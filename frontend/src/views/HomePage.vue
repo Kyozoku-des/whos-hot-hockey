@@ -59,7 +59,7 @@
         @touchmove="onTouchMove"
         @touchend="onTouchEnd"
       >
-        <div class="swipe-track" :style="{ transform: `translateX(${swipeOffset}px)` }">
+        <div class="swipe-track" :class="{ dragging: isSwiping }" :style="{ left: `${swipeOffset}px` }">
           <div v-for="(card, index) in mobileCards" :key="card.key" class="swipe-slide">
             <ExpandableCard :title="card.title" :class="{ 'favorites-card': card.key === 'favorites' }">
               <component :is="card.component" />
@@ -140,18 +140,39 @@ const updateSlideWidth = () => {
   }
 }
 
+// A touch only becomes a swipe once it has moved this far, and only if it moved
+// more sideways than up/down; otherwise it is left to scroll the table.
+const SWIPE_LOCK_DISTANCE = 10
+let touchStartY = 0
+let tracking = false
+
 const onTouchStart = (e) => {
+  // An expanded card is an overlay; scrolling inside it must not change slides.
+  if (e.target.closest('.expandable-card.expanded, .backdrop')) return
   touchStartX.value = e.touches[0].clientX
   touchCurrentX.value = e.touches[0].clientX
-  isSwiping.value = true
+  touchStartY = e.touches[0].clientY
+  tracking = true
 }
 
 const onTouchMove = (e) => {
-  if (!isSwiping.value) return
-  touchCurrentX.value = e.touches[0].clientX
+  if (!tracking) return
+  const x = e.touches[0].clientX
+  if (!isSwiping.value) {
+    const dx = Math.abs(x - touchStartX.value)
+    const dy = Math.abs(e.touches[0].clientY - touchStartY)
+    if (Math.max(dx, dy) < SWIPE_LOCK_DISTANCE) return
+    if (dy >= dx) {
+      tracking = false
+      return
+    }
+    isSwiping.value = true
+  }
+  touchCurrentX.value = x
 }
 
 const onTouchEnd = () => {
+  tracking = false
   if (!isSwiping.value) return
   isSwiping.value = false
   const diff = touchCurrentX.value - touchStartX.value
@@ -263,24 +284,40 @@ onUnmounted(() => {
   overflow: hidden;
   width: 100%;
   position: relative;
+  /* The browser handles vertical scrolling; horizontal moves are our swipes. */
+  touch-action: pan-y;
 }
 
+/* Moved with relative `left`, not transform: a transformed ancestor becomes
+   the containing block for position: fixed, which would trap an expanded card
+   inside the track. (A negative margin-left would widen the track and stretch
+   the slides instead of moving them.) */
 .swipe-track {
   display: flex;
-  transition: transform 0.3s ease;
-  will-change: transform;
+  position: relative;
+  left: 0;
+  transition: left 0.3s ease;
 }
 
+.swipe-track.dragging {
+  transition: none;
+}
+
+/* Fixed at exactly one container width: if a slide grew to fit its rows, the
+   swipe offset (index * container width) would no longer line up with it. */
 .swipe-slide {
-  min-width: 100%;
-  flex-shrink: 0;
+  flex: 0 0 100%;
+  min-width: 0;
   padding: 0 0.5rem;
   box-sizing: border-box;
 }
 
 .swipe-slide :deep(.expandable-card) {
   height: auto;
-  min-height: 400px;
+}
+
+.swipe-slide :deep(.expandable-card.expanded) {
+  height: 85vh;
 }
 
 .swipe-dots {
@@ -343,6 +380,63 @@ onUnmounted(() => {
   .mobile-content {
     display: block;
     padding: 1rem 0.5rem;
+  }
+
+  /* Table rows: name on the first line, stats wrapped onto a second line so a
+     row never needs more than the phone's width. The extra .mobile-content
+     class outranks the table components' own scoped rules. */
+  .mobile-content .swipe-slide :deep(.expandable-card) {
+    padding: 0.75rem;
+  }
+
+  /* No hover on touch screens, so the card's hover-to-scroll never kicks in:
+     make the list scrollable outright, without the page scrolling along. */
+  .mobile-content .swipe-slide :deep(.card-content) {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .mobile-content .swipe-slide :deep(.players-grid),
+  .mobile-content .swipe-slide :deep(.teams-grid),
+  .mobile-content .swipe-slide :deep(.favorites-grid) {
+    padding-right: 0;
+  }
+
+  .mobile-content .swipe-slide :deep(.player-item),
+  .mobile-content .swipe-slide :deep(.team-item) {
+    flex-wrap: wrap;
+    row-gap: 0.35rem;
+    padding: 0.6rem 0.75rem;
+  }
+
+  .mobile-content .swipe-slide :deep(.player-item:hover),
+  .mobile-content .swipe-slide :deep(.team-item:hover) {
+    transform: none;
+  }
+
+  .mobile-content .swipe-slide :deep(.player-main),
+  .mobile-content .swipe-slide :deep(.team-main) {
+    min-width: 0;
+    padding-left: 2rem;
+  }
+
+  .mobile-content .swipe-slide :deep(.player-name),
+  .mobile-content .swipe-slide :deep(.team-name) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-content .swipe-slide :deep(.player-stats),
+  .mobile-content .swipe-slide :deep(.team-stats) {
+    flex-basis: 100%;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.75rem;
+    padding-left: 2rem;
+  }
+
+  .mobile-content .swipe-slide :deep(.stat-item) {
+    font-size: 0.8rem;
   }
 }
 </style>
