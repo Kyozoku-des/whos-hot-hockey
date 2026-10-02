@@ -11,14 +11,7 @@
         :class="{ 'hot-player': player.hot, 'cold-player': player.cold }"
         @click="goToPlayer(player.playerId)"
       >
-        <button
-          class="favorite-btn"
-          @click.stop="toggleFavorite(player)"
-          :disabled="!canFavorite(player)"
-          :title="getFavoriteTooltip(player)"
-        >
-          <PixelIcon name="star" :filled="isFavorited(player.playerId)" />
-        </button>
+        <FavoriteToggle :item="playerFavorite(player)" />
         <div class="player-main">
           <TeamLogo :logoUrl="player.teamLogoUrl" :teamCode="player.teamCode" size="small" />
           <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
@@ -36,14 +29,13 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlayerStats } from '../composables/useApi'
 import { useSearchStore } from '../stores/searchStore'
-import { useFavorites } from '../composables/useFavorites'
+import { playerFavorite } from '../composables/useFavorites'
 import TeamLogo from './TeamLogo.vue'
-import PixelIcon from './PixelIcon.vue'
+import FavoriteToggle from './FavoriteToggle.vue'
 
 const router = useRouter()
 const { loading, error, getPlayerStreaks } = usePlayerStats()
 const searchStore = useSearchStore()
-const { isFavorited, toggleFavorite: toggleFav, canAddMore } = useFavorites()
 const allPlayers = ref([])
 
 // Filter players based on search query
@@ -81,29 +73,6 @@ onMounted(() => {
 
 const goToPlayer = (playerId) => {
   router.push(`/player/${playerId}`)
-}
-
-// Favorites functions
-const toggleFavorite = (player) => {
-  const favoriteData = {
-    id: player.playerId,
-    type: 'PLAYER',
-    name: `${player.firstName} ${player.lastName}`,
-    imageUrl: player.headshotUrl || '',
-    secondaryInfo: player.positionCode || ''
-  }
-  toggleFav(favoriteData)
-}
-
-const canFavorite = (player) => {
-  return isFavorited(player.playerId) || canAddMore()
-}
-
-const getFavoriteTooltip = (player) => {
-  if (isFavorited(player.playerId)) {
-    return 'Remove from favorites'
-  }
-  return canAddMore() ? 'Add to favorites' : 'Maximum 10 favorites reached'
 }
 </script>
 
@@ -143,7 +112,6 @@ const getFavoriteTooltip = (player) => {
   align-items: center;
   gap: 0.75rem;
   flex: 1;
-  padding-left: 2.5rem;
 }
 
 .player-name {
@@ -180,40 +148,6 @@ const getFavoriteTooltip = (player) => {
 
 .cold-player {
   background-color: rgba(135, 206, 250, 0.15) !important;
-}
-
-.favorite-btn {
-  position: absolute;
-  left: 0.5rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: transparent;
-  color: #FFD700;
-  font-size: 1.5rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 5;
-}
-
-.favorite-btn:hover:not(:disabled) {
-  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8));
-}
-
-/* Preview the filled star on hover for unfavorited items */
-.favorite-btn:hover:not(:disabled) {
-  --pixel-icon-fill: 0.7;
-}
-
-.favorite-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
 }
 
 .loading,

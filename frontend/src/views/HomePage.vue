@@ -418,7 +418,8 @@ onUnmounted(() => {
   .mobile-content .swipe-slide :deep(.player-main),
   .mobile-content .swipe-slide :deep(.team-main) {
     min-width: 0;
-    padding-left: 2rem;
+    /* Full first line, so the stats always wrap below the name */
+    flex-basis: 100%;
   }
 
   .mobile-content .swipe-slide :deep(.player-name),
@@ -433,6 +434,13 @@ onUnmounted(() => {
     flex-basis: 100%;
     flex-wrap: wrap;
     gap: 0.25rem 0.75rem;
+  }
+
+  /* Room for the remove button on the left of favorites rows */
+  .mobile-content .swipe-slide :deep(.favorites-grid .player-main),
+  .mobile-content .swipe-slide :deep(.favorites-grid .team-main),
+  .mobile-content .swipe-slide :deep(.favorites-grid .player-stats),
+  .mobile-content .swipe-slide :deep(.favorites-grid .team-stats) {
     padding-left: 2rem;
   }
 

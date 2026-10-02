@@ -233,3 +233,21 @@ export function useFavorites() {
     clearAll
   }
 }
+
+// Favorite entries built from the API's player / team objects, so every place
+// that adds a favorite stores the same shape.
+export const playerFavorite = (player) => ({
+  id: player.playerId,
+  type: 'PLAYER',
+  name: `${player.firstName} ${player.lastName}`,
+  imageUrl: player.headshotUrl || '',
+  secondaryInfo: player.positionCode || ''
+})
+
+export const teamFavorite = (team) => ({
+  id: team.teamCode,
+  type: 'TEAM',
+  name: team.teamName,
+  imageUrl: team.logoUrl || '',
+  secondaryInfo: team.teamCode
+})

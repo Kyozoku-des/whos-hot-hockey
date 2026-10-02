@@ -1,9 +1,9 @@
 <template>
   <div class="favorites-list">
     <div v-if="favorites.length === 0" class="empty-state">
-      <div class="empty-icon">⭐</div>
+      <div class="empty-icon"><PixelIcon name="star" filled /></div>
       <h3>No favorites yet</h3>
-      <p>Click the ★ icon on any player or team to add them here!</p>
+      <p>Hover over a player or team (press and hold on a phone) to add them here!</p>
     </div>
 
     <div v-else-if="loading" class="loading">Loading favorites...</div>
@@ -159,6 +159,9 @@ const goToTeam = (teamCode) => {
 }
 
 .empty-icon {
+  display: flex;
+  justify-content: center;
+  color: #FFD700;
   font-size: 4rem;
   margin-bottom: 1rem;
   opacity: 0.3;
