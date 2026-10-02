@@ -17,7 +17,7 @@
           :disabled="!canFavorite(team)"
           :title="getFavoriteTooltip(team)"
         >
-          {{ isFavorited(team.teamCode) ? '★' : '☆' }}
+          <PixelIcon name="star" :filled="isFavorited(team.teamCode)" />
         </button>
         <div class="team-main">
           <TeamLogo :logoUrl="team.logoUrl" :teamCode="team.teamCode" :alt="team.teamName" size="small" />
@@ -45,6 +45,7 @@ import { useTeamStats } from '../composables/useApi'
 import { useSearchStore } from '../stores/searchStore'
 import { useFavorites } from '../composables/useFavorites'
 import TeamLogo from './TeamLogo.vue'
+import PixelIcon from './PixelIcon.vue'
 
 const router = useRouter()
 const { loading, error, getStandings } = useTeamStats()
@@ -240,15 +241,11 @@ const getFavoriteTooltip = (team) => {
 
 .favorite-btn:hover:not(:disabled) {
   filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8));
-  text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
 }
 
-/* Show filled star on hover for unfavorited items */
-.favorite-btn:hover:not(:disabled)::after {
-  content: '★';
-  position: absolute;
-  color: #FFD700;
-  opacity: 0.7;
+/* Preview the filled star on hover for unfavorited items */
+.favorite-btn:hover:not(:disabled) {
+  --pixel-icon-fill: 0.7;
 }
 
 .favorite-btn:disabled {
