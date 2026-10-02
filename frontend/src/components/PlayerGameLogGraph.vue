@@ -1,6 +1,7 @@
 <template>
   <div class="game-log-graph">
-    <h3 class="graph-title">Points Per Game - Season Comparison</h3>
+    <h3 class="graph-title">{{ graphTitle }}</h3>
+    <GraphModeToggle />
     <div class="chart-wrapper">
       <Line v-if="hasData" :data="combinedChartData" :options="chartOptions" />
       <div v-else class="no-data">No game log data available</div>
@@ -10,6 +11,8 @@
 
 <script setup>
 import { computed } from 'vue'
+import GraphModeToggle from './GraphModeToggle.vue'
+import { useGraphMode, toCumulative } from '../composables/useGraphMode'
 import { Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -59,6 +62,15 @@ const currentSeasonLabel = computed(() =>
   `${previousSeasonStart.value + 1}-${previousSeasonStart.value + 2}`
 )
 
+const { graphMode } = useGraphMode()
+const isCumulative = computed(() => graphMode.value === 'cumulative')
+
+const graphTitle = computed(() =>
+  isCumulative.value
+    ? 'Season Points - Season Comparison'
+    : 'Points Per Game - Season Comparison'
+)
+
 // Check if we have any data
 const hasData = computed(() => {
   return (props.currentSeasonData && props.currentSeasonData.length > 0) ||
@@ -86,7 +98,9 @@ const combinedChartData = computed(() => {
     const previousAssists = props.previousSeasonData.map(game => game.assists || 0)
     datasets.push({
       label: `${previousSeasonLabel.value} (Previous)`,
-      data: previousPoints,
+      data: isCumulative.value ? toCumulative(previousPoints) : previousPoints,
+      points: previousPoints,
+      totals: toCumulative(previousPoints),
       goals: previousGoals,
       assists: previousAssists,
       borderColor: '#6B7280',
@@ -106,7 +120,9 @@ const combinedChartData = computed(() => {
     const currentAssists = props.currentSeasonData.map(game => game.assists || 0)
     datasets.push({
       label: `${currentSeasonLabel.value} (Current)`,
-      data: currentPoints,
+      data: isCumulative.value ? toCumulative(currentPoints) : currentPoints,
+      points: currentPoints,
+      totals: toCumulative(currentPoints),
       goals: currentGoals,
       assists: currentAssists,
       borderColor: '#FFAA00',
@@ -124,7 +140,7 @@ const combinedChartData = computed(() => {
   }
 })
 
-const chartOptions = {
+const chartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   interaction: {
@@ -163,13 +179,14 @@ const chartOptions = {
         label: (context) => {
           const gameIndex = context.dataIndex
           const dataset = context.dataset
-          const points = context.parsed.y
+          const points = dataset.points?.[gameIndex] ?? 0
+          const total = dataset.totals?.[gameIndex] ?? 0
 
           // Get goals and assists if available in the dataset
           const goals = dataset.goals?.[gameIndex] ?? 0
           const assists = dataset.assists?.[gameIndex] ?? 0
 
-          return `${dataset.label}: ${goals}G, ${assists}A, ${points}P`
+          return `${dataset.label}: ${goals}G, ${assists}A, ${points}P (Total: ${total}P)`
         }
       }
     }
@@ -200,7 +217,7 @@ const chartOptions = {
     y: {
       title: {
         display: true,
-        text: 'Points',
+        text: isCumulative.value ? 'Total Points' : 'Points',
         color: '#ffffff',
         font: {
           family: 'Minecraft, sans-serif',
@@ -210,7 +227,9 @@ const chartOptions = {
       },
       ticks: {
         color: '#ffffff',
-        stepSize: 1,
+        // Totals climb past 100, so only force single steps per game
+        stepSize: isCumulative.value ? undefined : 1,
+        precision: 0,
         font: {
           family: 'Minecraft, sans-serif'
         }
@@ -223,7 +242,7 @@ const chartOptions = {
       grace: '10%'
     }
   }
-}
+}))
 </script>
 
 <style scoped>

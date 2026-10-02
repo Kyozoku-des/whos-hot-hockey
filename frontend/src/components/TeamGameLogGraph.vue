@@ -1,6 +1,7 @@
 <template>
   <div class="game-log-graph">
-    <h3 class="graph-title">Points Per Game - Season Comparison</h3>
+    <h3 class="graph-title">{{ graphTitle }}</h3>
+    <GraphModeToggle />
     <div class="chart-wrapper">
       <Line v-if="hasData" :data="combinedChartData" :options="chartOptions" />
       <div v-else class="no-data">No game log data available</div>
@@ -10,6 +11,8 @@
 
 <script setup>
 import { computed } from 'vue'
+import GraphModeToggle from './GraphModeToggle.vue'
+import { useGraphMode, toCumulative } from '../composables/useGraphMode'
 import { Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -57,6 +60,15 @@ const previousSeasonLabel = computed(() =>
 
 const currentSeasonLabel = computed(() =>
   `${previousSeasonStart.value + 1}-${previousSeasonStart.value + 2}`
+)
+
+const { graphMode } = useGraphMode()
+const isCumulative = computed(() => graphMode.value === 'cumulative')
+
+const graphTitle = computed(() =>
+  isCumulative.value
+    ? 'Season Points - Season Comparison'
+    : 'Points Per Game - Season Comparison'
 )
 
 // Check if we have any data
@@ -108,7 +120,8 @@ const combinedChartData = computed(() => {
     const previousData = calculatePointsData(props.previousSeasonData)
     datasets.push({
       label: `${previousSeasonLabel.value} (Previous)`,
-      data: previousData.pointsPerGame,
+      data: isCumulative.value ? previousData.cumulativePoints : previousData.pointsPerGame,
+      pointsPerGame: previousData.pointsPerGame, // Store for tooltip
       borderColor: '#6B7280',
       backgroundColor: 'rgba(107, 114, 128, 0.1)',
       borderWidth: 2,
@@ -125,7 +138,8 @@ const combinedChartData = computed(() => {
     const currentData = calculatePointsData(props.currentSeasonData)
     datasets.push({
       label: `${currentSeasonLabel.value} (Current)`,
-      data: currentData.pointsPerGame,
+      data: isCumulative.value ? currentData.cumulativePoints : currentData.pointsPerGame,
+      pointsPerGame: currentData.pointsPerGame, // Store for tooltip
       borderColor: '#FFAA00',
       backgroundColor: 'rgba(255, 170, 0, 0.1)',
       borderWidth: 3,
@@ -142,7 +156,7 @@ const combinedChartData = computed(() => {
   }
 })
 
-const chartOptions = {
+const chartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   interaction: {
@@ -179,8 +193,8 @@ const chartOptions = {
           return `Game ${context[0].label}`
         },
         label: (context) => {
-          const points = context.parsed.y
           const gameIndex = context.dataIndex
+          const points = context.dataset.pointsPerGame?.[gameIndex] || 0
           const cumulative = context.dataset.cumulativePoints?.[gameIndex] || 0
           return `${context.dataset.label}: ${points} pts (Total: ${cumulative} pts)`
         }
@@ -213,7 +227,7 @@ const chartOptions = {
     y: {
       title: {
         display: true,
-        text: 'Points (0, 1, 2)',
+        text: isCumulative.value ? 'Total Points' : 'Points (0, 1, 2)',
         color: '#ffffff',
         font: {
           family: 'Minecraft, sans-serif',
@@ -223,7 +237,8 @@ const chartOptions = {
       },
       ticks: {
         color: '#ffffff',
-        stepSize: 1,
+        stepSize: isCumulative.value ? undefined : 1,
+        precision: 0,
         callback: (value) => (Number.isInteger(value) ? value : ''),
         font: {
           family: 'Minecraft, sans-serif'
@@ -233,11 +248,13 @@ const chartOptions = {
         color: 'rgba(255, 255, 255, 0.1)'
       },
       beginAtZero: true,
-      // Headroom above 2 so wins don't touch the top of the chart
-      max: 2.25
+      // Headroom so the lines don't touch the top of the chart: per game
+      // stops just above 2 (a win), the season total gets 5% extra
+      max: isCumulative.value ? undefined : 2.25,
+      grace: isCumulative.value ? '5%' : 0
     }
   }
-}
+}))
 </script>
 
 <style scoped>
