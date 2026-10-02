@@ -21,7 +21,7 @@
           @click.stop="handleRemove(player.playerId)"
           title="Remove from favorites"
         >
-          ✕
+          <PixelIcon name="close" />
         </button>
         <div class="player-main">
           <TeamLogo :logoUrl="player.teamLogoUrl" :teamCode="player.teamCode" size="small" />
@@ -47,7 +47,7 @@
           @click.stop="handleRemove(team.teamCode)"
           title="Remove from favorites"
         >
-          ✕
+          <PixelIcon name="close" />
         </button>
         <div class="team-main">
           <TeamLogo :logoUrl="team.logoUrl" :teamCode="team.teamCode" :alt="team.teamName" size="small" />
@@ -74,6 +74,7 @@ import { useRouter } from 'vue-router'
 import { useFavorites } from '../composables/useFavorites'
 import { usePlayerStats, useTeamStats } from '../composables/useApi'
 import TeamLogo from './TeamLogo.vue'
+import PixelIcon from './PixelIcon.vue'
 
 const router = useRouter()
 const { favorites, removeFavorite } = useFavorites()
@@ -295,8 +296,7 @@ const goToTeam = (teamCode) => {
   border: none;
   background: transparent;
   color: #ff6b6b;
-  font-size: 1.2rem;
-  font-weight: bold;
+  font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s ease;
   padding: 0;
@@ -309,7 +309,6 @@ const goToTeam = (teamCode) => {
 .remove-btn:hover {
   color: #ff5252;
   filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.8));
-  text-shadow: 0 0 10px rgba(255, 107, 107, 0.6);
 }
 
 .favorites-count {

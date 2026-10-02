@@ -9,9 +9,9 @@
       <CurrentSeasonDisplay />
     </div>
 
-    <!-- Mobile header: logo above search bar, both centered -->
+    <!-- Mobile header: title above search bar, both centered -->
     <div class="header mobile-header">
-      <img src="../assets/nhl_logo.png" alt="NHL Logo" class="mobile-logo" />
+      <h1 class="title mobile-title">WHOS HOT NHL</h1>
       <div class="search-container">
         <SearchBar />
       </div>
@@ -229,11 +229,6 @@ onUnmounted(() => {
   gap: 1rem;
 }
 
-.mobile-logo {
-  width: 80px;
-  height: auto;
-}
-
 .title {
   font-size: 2rem;
   font-weight: bold;
@@ -244,6 +239,12 @@ onUnmounted(() => {
   padding-right: 3rem;
   border-right: var(--color-border-thick) solid var(--color-border);
   flex-shrink: 0;
+}
+
+.mobile-title {
+  font-size: 1.75rem;
+  padding-right: 0;
+  border-right: none;
 }
 
 .search-container {

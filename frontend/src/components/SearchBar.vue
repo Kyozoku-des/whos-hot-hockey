@@ -15,7 +15,7 @@
         placeholder="Search players or teams..."
         class="search-input"
       />
-      <span class="search-icon">🔍</span>
+      <PixelIcon name="search" class="search-icon" />
     </div>
 
     <div v-if="showDropdown" class="search-dropdown">
@@ -61,6 +61,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSearchStore } from '../stores/searchStore'
 import { useApi } from '../composables/useApi'
+import PixelIcon from './PixelIcon.vue'
 
 const router = useRouter()
 const searchStore = useSearchStore()
@@ -216,7 +217,8 @@ onUnmounted(() => {
   top: 50%;
   transform: translateY(-50%);
   font-size: 1.2rem;
-  opacity: 0.5;
+  color: var(--color-text-primary);
+  pointer-events: none;
 }
 
 .search-dropdown {
