@@ -32,26 +32,28 @@
         <div class="section">
           <h2 class="section-title">Game Logs</h2>
           <div v-if="loadingGameLog" class="loading">Loading game logs...</div>
-          <table v-else class="game-log-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Goals</th>
-                <th>Assists</th>
-                <th>Points</th>
-                <th>Time On Ice</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="game in gameLogsReversed" :key="game.gameId">
-                <td>{{ formatDate(game.gameDate) }}</td>
-                <td>{{ game.goals }}</td>
-                <td>{{ game.assists }}</td>
-                <td>{{ game.points }}</td>
-                <td>{{ game.timeOnIce }}</td>
-              </tr>
-            </tbody>
-          </table>
+          <div v-else class="table-scroll">
+            <table class="game-log-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Goals</th>
+                  <th>Assists</th>
+                  <th>Points</th>
+                  <th>Time On Ice</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="game in gameLogsReversed" :key="game.gameId">
+                  <td>{{ formatDate(game.gameDate) }}</td>
+                  <td>{{ game.goals }}</td>
+                  <td>{{ game.assists }}</td>
+                  <td>{{ game.points }}</td>
+                  <td>{{ game.timeOnIce }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -141,6 +143,9 @@ onMounted(async () => {
 
 .player-content {
   display: grid;
+  /* minmax(0, 1fr) lets the column shrink to the screen instead of growing
+     to fit the widest table or chart inside it. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 2rem;
 }
 
@@ -198,6 +203,10 @@ onMounted(async () => {
   border-radius: 4px;
 }
 
+.table-scroll {
+  overflow-x: auto;
+}
+
 .game-log-table {
   width: 100%;
   border-collapse: collapse;
@@ -238,10 +247,23 @@ onMounted(async () => {
     padding: 0 1rem;
   }
 
+  .player-header {
+    justify-content: center;
+  }
+
   .player-info-card {
+    flex: 1;
     flex-direction: column;
     text-align: center;
     padding: 1.5rem 1rem;
+  }
+
+  .section {
+    padding: 1rem 0.75rem;
+  }
+
+  .section :deep(.game-log-graph) {
+    padding: 0.5rem 0;
   }
 
   .player-name {
@@ -253,7 +275,8 @@ onMounted(async () => {
   }
 
   .game-log-table {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
   }
 
   .game-log-table th,

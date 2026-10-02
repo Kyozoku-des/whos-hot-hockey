@@ -3,7 +3,12 @@
     <div class="search-input-wrapper">
       <input
         type="text"
-        v-model="searchQuery"
+        :value="searchQuery"
+        autocomplete="off"
+        autocapitalize="off"
+        autocorrect="off"
+        spellcheck="false"
+        enterkeyhint="search"
         @input="handleInput"
         @keydown="handleKeydown"
         @focus="isFocused = true"
@@ -77,7 +82,12 @@ const showDropdown = computed(() => {
 // The index is already in memory, so there is no request to debounce — filtering
 // ~800 rows is trivial. Run the dropdown search on the same tick as the table
 // filtering so the two never disagree about what the user typed.
-const handleInput = () => {
+// Read the value from the event rather than using v-model: v-model holds back
+// updates during IME composition, which mobile keyboards use for all typing,
+// so on phones neither the dropdown nor the table filter would react.
+const handleInput = (event) => {
+  searchQuery.value = event.target.value
+  isFocused.value = true
   searchStore.setQuery(searchQuery.value)
   performSearch()
 }
