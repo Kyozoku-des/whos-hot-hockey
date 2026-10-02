@@ -19,12 +19,12 @@
       @click.stop="closeExpanded"
       aria-label="Close"
     >
-      ✕
+      <PixelIcon name="close" />
     </button>
 
     <!-- Expand indicator (only visible when not expanded) -->
     <div v-if="!isExpanded" class="expand-indicator">
-      ↗
+      <PixelIcon name="expand" />
     </div>
 
     <h2 class="card-title">{{ title }}</h2>
@@ -36,6 +36,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, provide } from 'vue'
+import PixelIcon from './PixelIcon.vue'
 
 defineProps({
   title: {
@@ -248,7 +249,7 @@ onUnmounted(() => {
   background-color: transparent;
   border: 2px solid var(--color-border);
   color: var(--color-text-primary);
-  font-size: 1.1rem;
+  font-size: 0.875rem;
   line-height: 1;
   cursor: pointer;
   z-index: 10;
@@ -257,7 +258,6 @@ onUnmounted(() => {
   justify-content: center;
   transition: all 0.2s ease;
   padding: 0;
-  font-family: Arial, sans-serif;
 }
 
 .close-button:hover {
@@ -271,7 +271,7 @@ onUnmounted(() => {
   position: absolute;
   top: 0.75rem;
   right: 0.75rem;
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   color: var(--color-border);
   pointer-events: none;
   opacity: 0.7;
