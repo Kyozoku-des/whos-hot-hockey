@@ -74,13 +74,15 @@ public class Team {
     @Column
     private Integer currentLossStreak;
 
-    @Column
+    // Explicit names: Boot 4's snake-case strategy inserts "_" after digits (last10_games...),
+    // which no longer matches the existing V1 column names.
+    @Column(name = "last10games_win_percentage")
     private Double last10GamesWinPercentage; // Win percentage over last 10 games
 
-    @Column
+    @Column(name = "last10games_point_percentage")
     private Double last10GamesPointPercentage; // Point percentage over last 10 games (points / (games * 2))
 
-    @Column
+    @Column(name = "last10gamesppg")
     private Double last10GamesPPG; // Points per game over last 10 games
 
     @Column

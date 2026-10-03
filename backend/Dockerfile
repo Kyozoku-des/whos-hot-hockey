@@ -1,5 +1,5 @@
 # Shared base: copy all POMs and download dependencies
-FROM maven:3.9-eclipse-temurin-23 AS base
+FROM maven:3.9-eclipse-temurin-25 AS base
 
 WORKDIR /app
 
@@ -26,7 +26,7 @@ COPY data-job/src ./data-job/src
 RUN mvn clean package -pl data-job -am -DskipTests
 
 # ---- API runtime ----
-FROM eclipse-temurin:23-jre-alpine AS api
+FROM eclipse-temurin:25-jre-alpine AS api
 
 WORKDIR /app
 COPY --from=api-build /app/api/target/*.jar app.jar
@@ -34,7 +34,7 @@ EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
 
 # ---- Data-job runtime ----
-FROM eclipse-temurin:23-jre-alpine AS data-job
+FROM eclipse-temurin:25-jre-alpine AS data-job
 
 WORKDIR /app
 COPY --from=datajob-build /app/data-job/target/*.jar app.jar

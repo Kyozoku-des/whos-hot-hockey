@@ -13,10 +13,10 @@ A Spring Boot backend that provides REST APIs for NHL statistics with a focus on
 
 ## Technology Stack
 
-- **Framework**: Spring Boot 3.5.6
+- **Framework**: Spring Boot 4.1.1 (Spring Framework 7, Hibernate 7, Jackson 3)
 - **Database**: PostgreSQL 17 (via Podman/Docker Compose)
 - **Build Tool**: Maven
-- **Java Version**: 23
+- **Java Version**: 25 (Eclipse Temurin 25 in the container images)
 - **Documentation**: SpringDoc OpenAPI (Swagger UI)
 
 ## Module Structure
@@ -29,7 +29,7 @@ The backend is organized as a Maven multi-module project with two independent Sp
 
 ## Prerequisites
 
-- Java 21 or higher
+- JDK 25
 - Maven 3.9+
 - Podman & podman-compose (or Docker & Docker Compose)
 
@@ -153,7 +153,8 @@ mvn test
 ```
 
 `data-job`'s backfill tests (`*IT.java`) use Testcontainers to boot a disposable PostgreSQL
-container, so `mvn test` needs a running Docker-API-compatible engine. With Podman on Windows,
+container (Testcontainers 2.x, managed by Spring Boot), so `mvn test` needs a running
+Docker-API-compatible engine. With Podman on Windows,
 point Testcontainers at the machine's named pipe first:
 
 ```bash

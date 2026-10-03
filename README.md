@@ -5,7 +5,7 @@ A full-stack application for tracking NHL statistics with a focus on identifying
 ## Tech Stack
 
 - **Frontend**: Vue 3, Pinia, Vue Router, Chart.js, Vite
-- **Backend**: Spring Boot 3.5.6 (Java 23), PostgreSQL 17
+- **Backend**: Spring Boot 4.1.1 (Java 25), PostgreSQL 17
 - **Infrastructure**: Podman/Docker Compose
 
 ## Quick Start
@@ -13,7 +13,7 @@ A full-stack application for tracking NHL statistics with a focus on identifying
 ### Prerequisites
 
 - Podman & podman-compose (or Docker & Docker Compose)
-- Optionally: Java 23+, Maven 3.9+, Node.js 18+ (for manual development)
+- Optionally: JDK 25, Maven 3.9+, Node.js 18+ (for manual development)
 
 ### Running with Podman Compose (Recommended)
 
@@ -28,6 +28,9 @@ Or with Docker:
 ```bash
 docker compose up -d
 ```
+
+After pulling a backend upgrade (for example the Java 25 / Spring Boot 4.1.1 migration), rebuild the
+images so the containers run the new Temurin 25 runtime: `podman-compose build` (or `docker compose build`).
 
 The application will be available at:
 - Frontend: http://localhost:3000

@@ -16,7 +16,7 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleNotFound_returns404InsteadOf500() {
-        NoResourceFoundException ex = new NoResourceFoundException(HttpMethod.GET, "api/teams");
+        NoResourceFoundException ex = new NoResourceFoundException(HttpMethod.GET, "/api/teams", "api/teams");
 
         ResponseEntity<Map<String, String>> response = handler.handleNotFound(ex);
 

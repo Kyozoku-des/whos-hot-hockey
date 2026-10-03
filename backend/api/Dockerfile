@@ -1,5 +1,5 @@
 # Multi-stage build for NHL Stats API
-FROM maven:3.9-eclipse-temurin-23 AS build
+FROM maven:3.9-eclipse-temurin-25 AS build
 
 WORKDIR /app
 
@@ -20,7 +20,7 @@ COPY api/src ./api/src
 RUN mvn clean package -pl api -am -DskipTests
 
 # Runtime stage
-FROM eclipse-temurin:23-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 
 WORKDIR /app
 
