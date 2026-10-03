@@ -11,12 +11,31 @@ From the repository root, copy the template once and start the services:
 
 ```powershell
 Copy-Item .env.example .env
+New-Item -ItemType Directory -Force backend/logs
 docker compose up -d --build
 ```
 
 Do not overwrite an existing `.env`. Compose reads the root `.env`; it does not use
 `backend/.env`. `DB_PASSWORD` is passed to PostgreSQL and both backend containers.
 Changing it does not change the password in an already initialized database volume.
+`DATA_JOB_PROFILE` must include `local`: migrate old `default` values to `local`
+and old `initial-load` values to `local,initial-load`.
+
+Backend images run as non-root UID/GID `1000:1000`. On Linux Docker, create the
+log directory **before** starting Compose and set `LOCAL_UID` / `LOCAL_GID` in the
+root `.env` to your host IDs so bind-mounted logs belong to you:
+
+```sh
+mkdir -p backend/logs
+id -u # LOCAL_UID
+id -g # LOCAL_GID
+```
+
+If a previous root container created the directory or logs, repair ownership once
+from the repository root: `sudo chown -R "$(id -u):$(id -g)" backend/logs`.
+Windows Docker Desktop can keep the default IDs. Rootless Podman uses user namespace
+mapping; leave the default IDs unless your mapping requires an override, and grant
+the container user access with `podman unshare chown -R 1000:1000 backend/logs`.
 
 API and job logs persist in `backend/logs/` through container recreation. Read them with:
 
@@ -141,11 +160,14 @@ Keep `/api` on the frontend origin using the chosen platform's reverse proxy.
 
 ## Verification
 
-The configuration contract tests load both applications' real profile files without
+API Maven tests default to the `test` profile, avoiding local `.env` imports and
+file logging. IDE test runs should also select the `test` profile.
+
+The configuration contract tests load their own module's real profile files without
 connecting to PostgreSQL or the NHL API:
 
 ```powershell
-mvn -f backend/pom.xml -pl api -am test '-Dtest=EnvironmentProfilesTest' '-Dsurefire.failIfNoSpecifiedTests=false'
+mvn -f backend/pom.xml -pl api,data-job -am test '-Dtest=EnvironmentProfilesTest' '-Dsurefire.failIfNoSpecifiedTests=false'
 docker compose config --quiet
 ```
 

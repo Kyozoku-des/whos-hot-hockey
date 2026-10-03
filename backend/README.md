@@ -56,36 +56,8 @@ This starts PostgreSQL, the API server, data-job daemon, and frontend.
 
 ### Alternative: Manual Setup
 
-If you prefer to run services manually for development:
-
-**Start only PostgreSQL:**
-```bash
-podman-compose up -d postgres
-```
-
-### 2. Initial data load
-
-Build the JARs once with `mvn package -DskipTests` from `backend/`.
-Copy `backend/.env.example` to `backend/.env` once if you need local overrides.
-Run the following Java commands from `backend/`. Stop the daemon before a one-off load.
-
-```powershell
-java -jar data-job/target/data-job-1.0.0-SNAPSHOT.jar --spring.profiles.active=local,initial-load
-```
-
-### 3. Run the data-job (ongoing sync)
-
-```powershell
-java -jar data-job/target/data-job-1.0.0-SNAPSHOT.jar
-```
-
-### 4. Run the API
-
-```powershell
-java -jar api/target/api-1.0.0-SNAPSHOT.jar
-```
-
-The API will start on `http://localhost:8080`.
+Follow [local Java process setup](ENVIRONMENTS.md#local-java-processes) for
+building and running the API, ongoing sync, and initial data loads.
 
 ## API Endpoints
 
@@ -180,10 +152,8 @@ The regular data-job sync only ever tracks one season (the one it resolves as "c
 past season never loads on its own — which means player/team game-log graphs have no previous-
 season comparison line until you load one explicitly.
 
-```powershell
-# From backend/, with the daemon stopped:
-java -jar data-job/target/data-job-1.0.0-SNAPSHOT.jar --spring.profiles.active=local,backfill --backfill.season=20242025
-```
+See [one-off load commands](ENVIRONMENTS.md#local-java-processes) for Java and Compose.
+Stop the daemon before starting a backfill.
 
 A full season takes roughly 10–25 minutes (paced to avoid upstream rate limits) and is safe to
 re-run: it upserts on each table's natural key, so re-running the same season converges without

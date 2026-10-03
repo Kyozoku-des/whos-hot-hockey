@@ -84,24 +84,12 @@ If you prefer to run services individually:
 podman-compose up -d postgres
 ```
 
-#### 2. Build and run Backend API
+#### 2. Run the backend applications
 
-```powershell
-mvn -f backend/pom.xml package '-DskipTests'
-Set-Location backend
-Copy-Item .env.example .env # First run only; keep any existing .env.
-java -jar api/target/api-1.0.0-SNAPSHOT.jar
-```
+Follow [local Java process setup](backend/ENVIRONMENTS.md#local-java-processes)
+for building and running the API, data sync daemon, and one-off loads.
 
-#### 3. Run Data Sync Job
-
-From a second terminal in `backend/`:
-
-```powershell
-java -jar data-job/target/data-job-1.0.0-SNAPSHOT.jar
-```
-
-#### 4. Run Frontend
+#### 3. Run Frontend
 
 ```bash
 cd frontend

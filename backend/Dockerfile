@@ -29,6 +29,9 @@ RUN mvn clean package -pl data-job -am -DskipTests
 FROM eclipse-temurin:25-jre-alpine AS api
 
 WORKDIR /app
+RUN addgroup -g 1000 app && adduser -D -u 1000 -G app app \
+    && mkdir -p /app/logs && chown app:app /app/logs
+USER 1000:1000
 COPY --from=api-build /app/api/target/*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
@@ -37,5 +40,8 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 FROM eclipse-temurin:25-jre-alpine AS data-job
 
 WORKDIR /app
+RUN addgroup -g 1000 app && adduser -D -u 1000 -G app app \
+    && mkdir -p /app/logs && chown app:app /app/logs
+USER 1000:1000
 COPY --from=datajob-build /app/data-job/target/*.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
