@@ -6,10 +6,10 @@ import com.whoshot.nhl.domain.repository.CurrentSeasonRepository;
 import com.whoshot.nhl.domain.repository.PlayerRepository;
 import com.whoshot.nhl.domain.repository.TeamRepository;
 import com.whoshot.nhl.datajob.factory.PlayerFactory;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -47,8 +47,14 @@ class DataSyncServiceSeasonResolutionTest {
     @Mock
     private CurrentSeasonRepository currentSeasonRepository;
 
-    @InjectMocks
     private DataSyncService dataSyncService;
+
+    @BeforeEach
+    void setUp() {
+        // A real writer over mocked repositories: the deactivation logic lives in the writer.
+        var writer = new SeasonDataWriter(currentSeasonRepository, teamRepository, playerRepository, null);
+        dataSyncService = new DataSyncService(nhlApiService, playerRepository, playerFactory, writer, null, null);
+    }
 
     private SeasonDto season(String id, LocalDateTime start, LocalDateTime end) {
         SeasonDto dto = new SeasonDto();

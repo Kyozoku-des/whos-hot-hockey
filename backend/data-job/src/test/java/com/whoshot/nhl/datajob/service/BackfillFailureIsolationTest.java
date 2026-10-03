@@ -10,7 +10,6 @@ import com.whoshot.nhl.datajob.factory.PlayerFactory;
 import com.whoshot.nhl.datajob.model.BackfillRequest;
 import com.whoshot.nhl.datajob.model.BackfillSummary;
 import com.whoshot.nhl.domain.entity.Player;
-import com.whoshot.nhl.domain.repository.PlayerRepository;
 import com.whoshot.nhl.domain.repository.TeamGameRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,9 +53,7 @@ class BackfillFailureIsolationTest {
     @Mock
     private NhlApiService nhlApiService;
     @Mock
-    private DataSyncService dataSyncService;
-    @Mock
-    private PlayerRepository playerRepository;
+    private SeasonDataWriter seasonDataWriter;
     @Mock
     private PlayerFactory playerFactory;
     @Mock
@@ -70,7 +67,7 @@ class BackfillFailureIsolationTest {
 
     @BeforeEach
     void setUp() {
-        service = new SeasonBackfillService(nhlApiService, dataSyncService, playerRepository,
+        service = new SeasonBackfillService(nhlApiService, seasonDataWriter,
                 playerFactory, gameLogWriter, teamGameRepository, backfillLockService, 0);
         when(backfillLockService.tryLock(SEASON)).thenReturn(true);
     }
@@ -96,9 +93,8 @@ class BackfillFailureIsolationTest {
         assertEquals(1, summary.playersWritten());
         assertEquals(List.of(new BackfillSummary.Skip("player", String.valueOf(BROKEN_PLAYER),
                 "points mismatch: standings 50, game logs 49")), summary.skipped());
-        verify(playerRepository).save(healthy);
-        verify(gameLogWriter).writePlayerGameLogs(eq(HEALTHY_PLAYER), eq(SEASON), anyList(), anyList());
-        verify(gameLogWriter, never()).writePlayerGameLogs(eq(BROKEN_PLAYER), anyString(), anyList(), anyList());
+        verify(seasonDataWriter, times(1)).writePlayer(any(), anyList(), any());
+        verify(seasonDataWriter).writePlayer(eq(healthy), anyList(), any());
     }
 
     @Test
@@ -142,9 +138,8 @@ class BackfillFailureIsolationTest {
         BackfillSummary.Skip skip = summary.skipped().getFirst();
         assertEquals(String.valueOf(BROKEN_PLAYER), skip.identifier());
         assertTrue(skip.reason().contains("not-a-toi"), skip.reason());
-        verify(playerRepository, times(1)).save(any());
-        verify(playerRepository).save(healthy);
-        verify(gameLogWriter, never()).writePlayerGameLogs(eq(BROKEN_PLAYER), anyString(), anyList(), anyList());
+        verify(seasonDataWriter, times(1)).writePlayer(any(), anyList(), any());
+        verify(seasonDataWriter).writePlayer(eq(healthy), anyList(), any());
     }
 
     @Test
@@ -153,7 +148,8 @@ class BackfillFailureIsolationTest {
         when(nhlApiService.getPlayerInfo(BROKEN_PLAYER)).thenReturn(info(BROKEN_PLAYER));
         when(nhlApiService.getPlayerGameLogs(BROKEN_PLAYER, SEASON, 2)).thenReturn(List.of());
         when(playerFactory.createFromApiData(any(), any(), any(), eq(SEASON))).thenReturn(mock(Player.class));
-        when(playerRepository.save(any())).thenThrow(new DataAccessResourceFailureException("connection refused"));
+        when(seasonDataWriter.writePlayer(any(), anyList(), any()))
+                .thenThrow(new DataAccessResourceFailureException("connection refused"));
 
         assertThrows(DataAccessResourceFailureException.class, () -> service.run(request(), false));
         verify(nhlApiService, never()).getPlayerInfo(HEALTHY_PLAYER);
@@ -164,7 +160,7 @@ class BackfillFailureIsolationTest {
     void failedTeamSchedule_skipsOnlyThatTeam_withReason() throws Exception {
         List<TeamStandingsDto> standings = List.of(teamStanding("COL"), teamStanding("MTL"));
         when(nhlApiService.getTeamStandings("2024-04-17")).thenReturn(standings);
-        when(dataSyncService.persistStandings(SEASON, null, standings)).thenReturn(2);
+        when(seasonDataWriter.persistStandings(SEASON, null, standings)).thenReturn(2);
         when(nhlApiService.getTeamSchedule("COL", SEASON)).thenThrow(new ApiClientException("schedule 503"));
         when(nhlApiService.getTeamSchedule("MTL", SEASON)).thenReturn(List.of());
         when(gameLogWriter.writeTeamGames("MTL", SEASON, List.of())).thenReturn(0);
@@ -184,7 +180,7 @@ class BackfillFailureIsolationTest {
         BackfillSummary summary = service.run(request(), false);
 
         assertFalse(summary.success());
-        verifyNoInteractions(dataSyncService, playerRepository, gameLogWriter);
+        verifyNoInteractions(seasonDataWriter, gameLogWriter);
         verify(backfillLockService).unlock(SEASON);
     }
 
@@ -195,27 +191,27 @@ class BackfillFailureIsolationTest {
         BackfillSummary summary = service.run(request(), false);
 
         assertFalse(summary.success());
-        verifyNoInteractions(dataSyncService, playerRepository, gameLogWriter);
+        verifyNoInteractions(seasonDataWriter, gameLogWriter);
     }
 
     @Test
     void failedPlayerStandingsFetch_isFatal() {
         List<TeamStandingsDto> standings = List.of(teamStanding("COL"));
         when(nhlApiService.getTeamStandings("2024-04-17")).thenReturn(standings);
-        when(dataSyncService.persistStandings(SEASON, null, standings)).thenReturn(1);
+        when(seasonDataWriter.persistStandings(SEASON, null, standings)).thenReturn(1);
         when(nhlApiService.getTeamSchedule("COL", SEASON)).thenReturn(List.of());
         when(nhlApiService.getPlayerStandingsOrder(SEASON, 2)).thenThrow(new ApiClientException("skater summary 503"));
 
         BackfillSummary summary = service.run(request(), false);
 
         assertFalse(summary.success());
-        verifyNoInteractions(playerRepository);
+        verify(seasonDataWriter, never()).writePlayer(any(), anyList(), any());
     }
 
     private void stubTeamsAndTwoPlayers() {
         List<TeamStandingsDto> standings = List.of(teamStanding("COL"));
         when(nhlApiService.getTeamStandings("2024-04-17")).thenReturn(standings);
-        when(dataSyncService.persistStandings(SEASON, null, standings)).thenReturn(1);
+        when(seasonDataWriter.persistStandings(SEASON, null, standings)).thenReturn(1);
         when(nhlApiService.getTeamSchedule("COL", SEASON)).thenReturn(List.of());
         when(nhlApiService.getPlayerStandingsOrder(SEASON, 2))
                 .thenReturn(List.of(standing(BROKEN_PLAYER), standing(HEALTHY_PLAYER)));

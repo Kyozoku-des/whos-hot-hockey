@@ -3,6 +3,7 @@ package com.whoshot.nhl.datajob.service;
 import com.whoshot.nhl.datajob.dto.nhlapi.GameDto;
 import com.whoshot.nhl.datajob.dto.nhlapi.PlayerGameLogDto;
 import com.whoshot.nhl.datajob.model.BackfillRequest;
+import com.whoshot.nhl.datajob.model.TeamGameIndex;
 import com.whoshot.nhl.domain.entity.GameLog;
 import com.whoshot.nhl.domain.entity.TeamGame;
 import com.whoshot.nhl.domain.repository.GameLogRepository;
@@ -65,19 +66,19 @@ public class GameLogWriter {
      * @param playerId          NHL player identifier
      * @param seasonId          season the game logs belong to
      * @param gameLogs          upstream game log, most-recent-first
-     * @param teamGamesForSeason every team game already written for this season, used to resolve
-     *                          {@code gameWon} without an extra API call
+     * @param teamGames          outcomes of every team game already written for this season, used
+     *                          to resolve {@code gameWon} without an extra API call
      * @return number of game logs written
      */
     @Transactional
     public int writePlayerGameLogs(Long playerId, String seasonId, List<PlayerGameLogDto> gameLogs,
-                                    List<TeamGame> teamGamesForSeason) {
+                                    TeamGameIndex teamGames) {
         List<PlayerGameLogDto> ordered = chronological(gameLogs);
 
         int gameNumber = 0;
         for (PlayerGameLogDto dto : ordered) {
             gameNumber++;
-            Boolean gameWon = resolveGameWon(dto.getGameId(), dto.getOpponentAbbrev(), teamGamesForSeason);
+            Boolean gameWon = teamGames.wonAgainst(dto.getGameId(), dto.getOpponentAbbrev());
             GameLog gameLog = gameLogRepository.findByPlayerIdAndGameId(playerId, dto.getGameId())
                     .orElse(new GameLog());
             toGameLog(gameLog, playerId, seasonId, dto, gameNumber, gameWon);
@@ -110,22 +111,6 @@ public class GameLogWriter {
         List<PlayerGameLogDto> copy = new ArrayList<>(mostRecentFirst);
         java.util.Collections.reverse(copy);
         return copy;
-    }
-
-    /**
-     * Resolves whether the player's team won a given game by finding the {@code team_games} row
-     * belonging to the player's own team for that game: among the (up to) two rows recorded for a
-     * game, the row whose {@code opponentTeamCode} equals the player's recorded opponent is the
-     * player's own team's row.
-     *
-     * @return the result, or {@code null} if no matching team game has been loaded yet
-     */
-    static Boolean resolveGameWon(Long gameId, String opponentTeamCode, List<TeamGame> teamGamesForSeason) {
-        return teamGamesForSeason.stream()
-                .filter(tg -> tg.getGameId().equals(gameId) && opponentTeamCode.equals(tg.getOpponentTeamCode()))
-                .findFirst()
-                .map(TeamGame::getWon)
-                .orElse(null);
     }
 
     /**

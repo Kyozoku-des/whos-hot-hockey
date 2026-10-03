@@ -53,14 +53,18 @@ class DataSyncServiceScopedSyncTest {
     private DataSyncService service;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         var season = new SeasonDto();
         season.setId(SEASON);
         season.setStartDate(LocalDateTime.parse("2025-10-07T17:00:00"));
         when(nhlApiService.getSeasons()).thenReturn(List.of(season));
         when(nhlApiService.getLeagueSchedule()).thenReturn(List.of());
-        service = new DataSyncService(nhlApiService, playerRepository, playerFactory, teamRepository,
-                currentSeasonRepository, teamGameRepository, gameLogWriter);
+        when(playerFactory.createFromApiData(any(), any(), any(), any())).thenAnswer(invocation ->
+                player(invocation.<PlayerInfoDto>getArgument(0).getPlayerId()));
+        // A real writer over mocked repositories, so writes are observable on the mocks.
+        var writer = new SeasonDataWriter(currentSeasonRepository, teamRepository, playerRepository, gameLogWriter);
+        service = new DataSyncService(nhlApiService, playerRepository, playerFactory, writer,
+                teamGameRepository, gameLogWriter);
         service.initialize();
     }
 

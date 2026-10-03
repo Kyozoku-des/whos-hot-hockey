@@ -13,8 +13,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Guards against two concurrent backfills of the same season corrupting each other's writes
+ * Guards against two concurrent writers of the same season corrupting each other's writes
  * (FR-014, research R-011), using a Postgres session-level advisory lock keyed on the season id.
+ * Every writer of season data takes it: backfill, initial load, and the live daemon's full syncs
+ * and game-time polls (issue #29). Because the lock lives in Postgres it also excludes writers in
+ * other data-job processes; backfills of other seasons are unaffected.
  * <p>
  * An advisory lock is preferred over a status table because it releases automatically if the
  * holding connection dies, so a crashed run never leaves a permanent block on future runs.
@@ -38,6 +41,31 @@ public class BackfillLockService {
 
     private final DataSource dataSource;
     private final Map<String, Connection> heldLocks = new ConcurrentHashMap<>();
+
+    /** Season work that may throw a checked exception. */
+    @FunctionalInterface
+    public interface SeasonWork<E extends Exception> {
+        void run() throws E;
+    }
+
+    /**
+     * Runs {@code work} while holding the season's lock, releasing it however the work ends.
+     *
+     * @param seasonId season to lock
+     * @param work     writes to perform
+     * @return false, without running the work, if another writer holds the lock
+     */
+    public <E extends Exception> boolean runExclusively(String seasonId, SeasonWork<E> work) throws E {
+        if (!tryLock(seasonId)) {
+            return false;
+        }
+        try {
+            work.run();
+            return true;
+        } finally {
+            unlock(seasonId);
+        }
+    }
 
     /**
      * Attempts to acquire the advisory lock for a season on a dedicated database session.
@@ -63,7 +91,7 @@ public class BackfillLockService {
                 return true;
             }
             connection.close();
-            log.warn("Could not acquire backfill lock for season {}: another run is in progress", seasonId);
+            log.warn("Could not acquire write lock for season {}: another writer is in progress", seasonId);
             return false;
         } catch (SQLException e) {
             discard(connection);

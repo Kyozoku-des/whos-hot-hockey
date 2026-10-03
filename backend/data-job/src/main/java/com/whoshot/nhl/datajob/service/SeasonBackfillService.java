@@ -10,15 +10,13 @@ import com.whoshot.nhl.datajob.exception.PlayerStatisticsException;
 import com.whoshot.nhl.datajob.factory.PlayerFactory;
 import com.whoshot.nhl.datajob.model.BackfillRequest;
 import com.whoshot.nhl.datajob.model.BackfillSummary;
+import com.whoshot.nhl.datajob.model.TeamGameIndex;
 import com.whoshot.nhl.domain.entity.Player;
-import com.whoshot.nhl.domain.entity.TeamGame;
-import com.whoshot.nhl.domain.repository.PlayerRepository;
 import com.whoshot.nhl.domain.repository.TeamGameRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.CannotCreateTransactionException;
@@ -33,9 +31,8 @@ import java.util.concurrent.CancellationException;
  * player's {@code gameWon} depends on the team games already having been written (research R-005).
  * <p>
  * Never touches {@code current_season} (FR-005): it resolves and validates the requested season
- * itself, entirely independent of {@link DataSyncService}'s notion of the active season, and only
- * reuses {@link DataSyncService#persistStandings} — the one piece of standings-persistence logic
- * worth not duplicating.
+ * itself, entirely independent of {@link DataSyncService}'s notion of the active season, and
+ * persists through the same atomic units as live sync ({@link SeasonDataWriter}).
  * <p>
  * Per-record failures (a bad player, a missing team schedule, malformed upstream data) are caught,
  * recorded in the {@link BackfillSummary} skip list, and do not abort the run (FR-007). Losing the
@@ -50,8 +47,7 @@ public class SeasonBackfillService {
     private static final int PROGRESS_INTERVAL = 25;
 
     private final NhlApiService nhlApiService;
-    private final DataSyncService dataSyncService;
-    private final PlayerRepository playerRepository;
+    private final SeasonDataWriter seasonDataWriter;
     private final PlayerFactory playerFactory;
     private final GameLogWriter gameLogWriter;
     private final TeamGameRepository teamGameRepository;
@@ -60,16 +56,14 @@ public class SeasonBackfillService {
 
     @Autowired
     public SeasonBackfillService(NhlApiService nhlApiService,
-                                  DataSyncService dataSyncService,
-                                  PlayerRepository playerRepository,
+                                  SeasonDataWriter seasonDataWriter,
                                   PlayerFactory playerFactory,
                                   GameLogWriter gameLogWriter,
                                   TeamGameRepository teamGameRepository,
                                   BackfillLockService backfillLockService,
                                   @Value("${backfill.request-delay-ms:100}") long requestDelayMs) {
         this.nhlApiService = nhlApiService;
-        this.dataSyncService = dataSyncService;
-        this.playerRepository = playerRepository;
+        this.seasonDataWriter = seasonDataWriter;
         this.playerFactory = playerFactory;
         this.gameLogWriter = gameLogWriter;
         this.teamGameRepository = teamGameRepository;
@@ -140,7 +134,7 @@ public class SeasonBackfillService {
             return summary.finish();
         }
 
-        int teamsWritten = dataSyncService.persistStandings(seasonId, null, standings);
+        int teamsWritten = seasonDataWriter.persistStandings(seasonId, null, standings);
         summary.addTeamsWritten(teamsWritten);
 
         List<String> teamCodes = standings.stream()
@@ -171,7 +165,7 @@ public class SeasonBackfillService {
             return summary.finish();
         }
 
-        List<TeamGame> teamGamesForSeason = teamGameRepository.findBySeasonId(seasonId);
+        TeamGameIndex teamGames = TeamGameIndex.of(teamGameRepository.findBySeasonId(seasonId));
         int processed = 0;
 
         int playersDone = 0;
@@ -191,23 +185,16 @@ public class SeasonBackfillService {
 
                 List<PlayerGameLogDto> gameLogs = nhlApiService.getPlayerGameLogs(
                         playerId, seasonId, request.gameType());
-                // Reject a malformed record before anything for this player is written, so a
-                // skip never leaves a player row without its game logs.
+                // Reject a malformed record before building or writing anything for this player.
                 GameLogWriter.validatePlayerGameLogs(gameLogs);
                 Player player = playerFactory.createFromApiData(playerInfo, playerStanding, gameLogs, seasonId);
 
-                try {
-                    playerRepository.save(player);
-                    playerRepository.flush();
-                } catch (DataIntegrityViolationException e) {
-                    playerRepository.saveAndFlush(player);
-                }
+                // Player and game logs commit or roll back together, so a skip never leaves a
+                // player row without its game logs.
+                int gameLogsWritten = seasonDataWriter.writePlayer(player, gameLogs, teamGames);
                 summary.addPlayerWritten();
-                processed++;
-
-                int gameLogsWritten = gameLogWriter.writePlayerGameLogs(
-                        playerId, seasonId, gameLogs, teamGamesForSeason);
                 summary.addGameLogsWritten(gameLogsWritten);
+                processed++;
             } catch (PlayerStatisticsException | RuntimeException e) {
                 // Any record-level fault (points mismatch, exhausted retries, malformed upstream
                 // data) skips only this player (FR-007); losing the database ends the run.

@@ -84,7 +84,7 @@ class DataJobShutdownTest {
     @Test
     void interruptedPlayerSyncStopsBeforeAnyApiCall() {
         var api = mock(NhlApiService.class);
-        var sync = new DataSyncService(api, null, null, null, null, null, null);
+        var sync = new DataSyncService(api, null, null, null, null, null);
         try {
             Thread.currentThread().interrupt();
             assertThrows(CancellationException.class, sync::syncPlayers);
@@ -98,6 +98,7 @@ class DataJobShutdownTest {
         var context = new AnnotationConfigApplicationContext();
         context.register(SchedulingConfig.class);
         context.registerBean(DataSyncService.class, () -> sync);
+        context.registerBean(BackfillLockService.class, TestSeasonLocks::available);
         context.register(DynamicSchedulingService.class);
         context.refresh();
         return context;

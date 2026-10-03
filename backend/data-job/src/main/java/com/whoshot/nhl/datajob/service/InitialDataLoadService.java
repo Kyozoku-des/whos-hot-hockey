@@ -17,6 +17,7 @@ import java.time.Instant;
 public class InitialDataLoadService {
 
     private final DataSyncService dataSyncService;
+    private final BackfillLockService seasonLock;
 
     /**
      * Loads all player data for the current season.
@@ -29,11 +30,18 @@ public class InitialDataLoadService {
 
         try {
             dataSyncService.initialize();
-            log.info("Syncing team standings...");
-            dataSyncService.syncTeams();
+            String seasonId = dataSyncService.getSeasonId();
+            boolean ran = seasonLock.runExclusively(seasonId, () -> {
+                log.info("Syncing team standings...");
+                dataSyncService.syncTeams();
 
-            log.info("Syncing player data...");
-            dataSyncService.syncPlayers();
+                log.info("Syncing player data...");
+                dataSyncService.syncPlayers();
+            });
+            if (!ran) {
+                log.error("Initial data load skipped: season {} is being written by another job", seasonId);
+                return;
+            }
         } catch (PlayerStatisticsException e) {
             log.error("Initial data load failed due to player statistics error: {}", e.getMessage(), e);
             return;
