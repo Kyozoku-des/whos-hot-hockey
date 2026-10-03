@@ -115,5 +115,6 @@ And in the browser: open any player or team page. The game-log graph draws the p
 
 | Property | Default | When to change |
 |---|---|---|
-| `backfill.request-delay-ms` | `100` | Raise if you see repeated upstream failures; lower only on a connection you know tolerates it |
+| `nhle.api.requests.requests-per-second` | `10` | Lower if you see repeated `429`/`503` responses; split it with the daemon if both run ([details](../../backend/INGESTION.md#several-processes)). Replaces the deprecated `backfill.request-delay-ms` |
+| `ingestion.fetch.concurrency` | `4` | Set `1` to fetch sequentially |
 | `backfill.dry-run` | `false` | Set `true` to validate without writing |
