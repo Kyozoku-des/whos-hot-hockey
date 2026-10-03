@@ -180,6 +180,22 @@ class RequestThrottleTest {
     }
 
     @Test
+    void abandonedProbe_leavesTheCircuitOpenForTheNextProbe() {
+        RequestThrottle throttle = throttle(4, 10_000, 10_000, 1, Duration.ofMillis(100));
+        throttle.release(throttle.acquire(HOST, deadlineIn(Duration.ofSeconds(1))), false);
+        var probe = throttle.acquire(HOST, deadlineIn(Duration.ofSeconds(1)));
+
+        throttle.abandon(probe);
+
+        // Still half-open: the next caller becomes the probe instead of the circuit closing.
+        var nextProbe = throttle.acquire(HOST, deadlineIn(Duration.ofSeconds(1)));
+        throttle.release(nextProbe, false);
+        Duration elapsed = timed(() -> throttle.release(throttle.acquire(HOST,
+                deadlineIn(Duration.ofSeconds(1))), true));
+        assertThat(elapsed).isGreaterThanOrEqualTo(Duration.ofMillis(70));
+    }
+
+    @Test
     void interruptWhileWaiting_cancelsAndKeepsTheFlag() throws Exception {
         RequestThrottle throttle = unpaced(1);
         throttle.acquire(HOST, deadlineIn(Duration.ofSeconds(1)));

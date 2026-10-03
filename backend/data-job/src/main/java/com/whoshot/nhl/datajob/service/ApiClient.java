@@ -107,7 +107,7 @@ public class ApiClient {
                         Duration.ofNanos(System.nanoTime() - started));
                 failure = e;
             } catch (RuntimeException | Error e) {
-                throttle.release(permit, true);
+                throttle.abandon(permit);
                 metrics.recordRequest(url, "cancelled", null, Duration.ofNanos(System.nanoTime() - started));
                 throw e;
             }

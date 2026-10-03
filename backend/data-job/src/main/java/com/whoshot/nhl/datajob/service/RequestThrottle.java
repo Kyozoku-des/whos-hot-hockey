@@ -131,6 +131,21 @@ public class RequestThrottle {
     }
 
     /**
+     * Ends an attempt that produced no verdict on the host (cancelled or failed locally): frees its
+     * slot without touching the circuit, so an interrupted probe neither closes nor re-opens it.
+     */
+    public void abandon(Permit permit) {
+        if (permit.released) {
+            return;
+        }
+        permit.released = true;
+        inFlight.release();
+        if (permit.probe) {
+            hosts.get(permit.host).endProbe();
+        }
+    }
+
+    /**
      * Holds back every request to {@code host} for at least {@code delay}, as directed by a
      * {@code Retry-After} or a throttling response.
      */
