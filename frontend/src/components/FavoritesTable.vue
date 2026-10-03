@@ -28,6 +28,8 @@
           <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
         </div>
         <span class="player-stats">
+          <span class="stat-item stat-form" title="Consecutive games with at least one point">Point streak: {{ player.currentPointStreak ?? '—' }}</span>
+          <span class="stat-item stat-form" title="Points per game over the last 10 games (or all games played if fewer)">L10 PPG: {{ formatPPG(player.pointsPerLastNGames) }}</span>
           <span class="stat-item">G: {{ player.goals }}</span>
           <span class="stat-item">A: {{ player.assists }}</span>
           <span class="stat-item">P: {{ player.points }}</span>
@@ -54,6 +56,8 @@
           <span class="team-name">{{ team.teamName }}</span>
         </div>
         <span class="team-stats">
+          <span class="stat-item stat-form" title="Current consecutive wins or losses, including overtime losses">{{ formatTeamStreak(team) }}</span>
+          <span class="stat-item stat-form" title="Standings points per game over the last 10 games (or all games played if fewer)">L10 PPG: {{ formatPPG(team.last10GamesPPG) }}</span>
           <span class="stat-item">GP: {{ team.gamesPlayed }}</span>
           <span class="stat-item">W: {{ team.wins }}</span>
           <span class="stat-item">L: {{ team.losses }}</span>
@@ -82,6 +86,13 @@ const { loading: playersLoading, getTopScorers } = usePlayerStats()
 const { loading: teamsLoading, getStandings } = useTeamStats()
 
 const maxFavorites = 10
+const formatPPG = (value) => Number.isFinite(value) ? value.toFixed(2) : '—'
+const formatTeamStreak = (team) => {
+  if (team.currentWinStreak > 0) return `Win streak: ${team.currentWinStreak}`
+  if (team.currentLossStreak > 0) return `Loss streak: ${team.currentLossStreak}`
+  if (team.currentWinStreak === 0 && team.currentLossStreak === 0) return 'Streak: 0'
+  return 'Streak: —'
+}
 const allPlayers = ref([])
 const allTeams = ref([])
 
@@ -287,6 +298,33 @@ const goToTeam = (teamCode) => {
 
 .stat-points {
   font-weight: bold;
+}
+
+.stat-form {
+  font-weight: bold;
+}
+
+.player-item,
+.team-item {
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+}
+
+.player-main,
+.team-main {
+  min-width: 0;
+}
+
+.player-name,
+.team-name {
+  overflow-wrap: anywhere;
+}
+
+.player-stats,
+.team-stats {
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding-left: 2.5rem;
 }
 
 .remove-btn {
