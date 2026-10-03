@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Repository for Player entities.
@@ -59,6 +60,15 @@ public interface PlayerRepository extends JpaRepository<Player, Player.PlayerId>
      * @return players on the specified team during the specified season
      */
     List<Player> findByTeamCodeAndIdSeason(String teamCode, String season);
+
+    /**
+     * Get the IDs of every player stored for a season.
+     *
+     * @param season season identifier
+     * @return stored player IDs for the season
+     */
+    @Query("SELECT p.id.playerId FROM Player p WHERE p.id.season = :season")
+    Set<Long> findPlayerIdsBySeason(@Param("season") String season);
 
     /**
      * Get all players for search functionality (lightweight data).
