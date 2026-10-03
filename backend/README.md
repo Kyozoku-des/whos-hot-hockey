@@ -124,11 +124,12 @@ The data-job daemon alternates between two modes:
   2. updates standings rows for teams in those games, plus teams that were playing in the
      previous poll (so final stats are captured once);
   3. for teams whose game has just ended, re-reads their season schedule and writes the completed
-     game to `team_games`;
+     game to `team_games`. A team whose write fails stays pending and is retried every poll;
   4. updates those teams' players and their `game_logs`. Players are selected from the roster the
      last full sync stored in `players`, so players on teams that are not playing cost no API
-     calls. A player traded to a playing team since the last full sync is picked up by the full
-     sync that closes the game window.
+     calls. Players in the standings with no stored row yet (opening night, season debuts) are
+     checked too. A player traded to a playing team since the last full sync is picked up by the
+     full sync that closes the game window.
 
   When the last game has ended, a full sync runs and the daemon returns to hourly checks.
 
@@ -169,7 +170,8 @@ podman logs nhl-data-job 2>&1 | Select-String "\[game-sync\]"
 [game-sync] Game window closed after 87 polls (0 failed); final full sync done in 405s, next check in 1h
 ```
 
-Failed polls are logged as `[game-sync] Poll #N failed` with the stack trace.
+Failed polls are logged as `[game-sync] Poll #N failed` with the stack trace, and completed games
+waiting for a retry as `[game-sync] Poll #N: completed games not yet written for [...]`.
 
 ## Hot Rating Calculation
 

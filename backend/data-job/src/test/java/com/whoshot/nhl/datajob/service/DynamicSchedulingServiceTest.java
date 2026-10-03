@@ -73,6 +73,37 @@ class DynamicSchedulingServiceTest {
         daemon.stop();
     }
 
+    @Test
+    void failedCompletedGameWriteIsRetriedOnTheNextPoll() throws Exception {
+        var sync = mock(DataSyncService.class);
+        var scheduler = mock(TaskScheduler.class);
+        var tasks = new ArrayDeque<Runnable>();
+        when(scheduler.schedule(any(Runnable.class), any(Instant.class))).thenAnswer(invocation -> {
+            tasks.add(invocation.getArgument(0));
+            return mock(ScheduledFuture.class);
+        });
+        when(sync.getFirstGameTimeForToday()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).minusHours(3));
+        // A later game keeps the window open after this one ends.
+        when(sync.getLastGameTimeForToday()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).plusHours(1));
+        Set<String> teams = Set.of("EDM", "VAN");
+        when(sync.getActiveGames()).thenReturn(List.of(game("VAN", "EDM")), List.of());
+        when(sync.syncTeamGamesForCodes(teams)).thenReturn(Set.of("EDM"));
+        when(sync.syncTeamGamesForCodes(Set.of("VAN"))).thenReturn(Set.of("VAN"));
+        var daemon = new DynamicSchedulingService(scheduler, sync);
+        daemon.init();
+        tasks.remove().run(); // hourly check
+        tasks.remove().run(); // game live
+        tasks.remove().run(); // game ended: VAN write fails
+        tasks.remove().run(); // VAN retried, its players refreshed again
+        tasks.remove().run(); // nothing pending
+        var order = inOrder(sync);
+        order.verify(sync).syncTeamGamesForCodes(teams);
+        order.verify(sync).syncTeamGamesForCodes(Set.of("VAN"));
+        order.verify(sync).syncPlayersForTeams(Set.of("VAN"));
+        verify(sync, times(2)).syncTeamGamesForCodes(any());
+        daemon.stop();
+    }
+
     private static GameDto game(String away, String home) {
         var game = new GameDto();
         game.setGameState(GameState.LIVE);

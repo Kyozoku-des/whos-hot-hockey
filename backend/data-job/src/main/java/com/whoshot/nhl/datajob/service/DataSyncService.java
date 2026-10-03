@@ -24,6 +24,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.Objects;
@@ -245,22 +246,22 @@ public class DataSyncService {
      * just ended, so the game-log graphs and player {@code gameWon} pick up the result without
      * waiting for the post-game full sync.
      *
-     * @return number of teams whose games were written
+     * @return teams whose games were written; the rest failed and are logged
      */
     @Transactional
-    public int syncTeamGamesForCodes(Set<String> teamCodes) {
+    public Set<String> syncTeamGamesForCodes(Set<String> teamCodes) {
         checkInterrupted();
         return writeTeamGames(season.getId(), teamCodes);
     }
 
-    private int writeTeamGames(String seasonId, Collection<String> teamCodes) {
-        int written = 0;
+    private Set<String> writeTeamGames(String seasonId, Collection<String> teamCodes) {
+        Set<String> written = new HashSet<>();
         for (String teamCode : teamCodes) {
             checkInterrupted();
             try {
                 var schedule = nhlApiService.getTeamSchedule(teamCode, seasonId);
                 gameLogWriter.writeTeamGames(teamCode, seasonId, schedule);
-                written++;
+                written.add(teamCode);
             } catch (Exception e) {
                 log.warn("Could not write team games for {} in season {}: {}", teamCode, seasonId, e.getMessage());
             }
@@ -353,8 +354,10 @@ public class DataSyncService {
     /**
      * Synchronizes only players belonging to the specified teams, including their game logs.
      * Used during game-time sync: players are picked from the roster stored by the last full sync,
-     * so players on teams that are not playing cost no API calls. Players new to a team since then
-     * are picked up by the full sync that ends the game window.
+     * so players on teams that are not playing cost no API calls. Players in the standings with no
+     * stored row yet (season debuts, opening night) are also checked, since their team is unknown.
+     * Players traded to a playing team since the last full sync are picked up by the full sync that
+     * ends the game window.
      *
      * @return number of players written
      */
@@ -368,8 +371,9 @@ public class DataSyncService {
                 .flatMap(teamCode -> playerRepository.findByTeamCodeAndIdSeason(teamCode, seasonId).stream())
                 .map(player -> player.getId().playerId())
                 .collect(Collectors.toSet());
+        Set<Long> storedIds = playerRepository.findPlayerIdsBySeason(seasonId);
         var players = nhlApiService.getPlayerStandingsOrder(seasonId, gameType).stream()
-                .filter(standing -> rosterIds.contains(standing.getId()))
+                .filter(standing -> rosterIds.contains(standing.getId()) || !storedIds.contains(standing.getId()))
                 .toList();
         List<TeamGame> teamGamesForSeason = teamGameRepository.findBySeasonId(seasonId);
         int processedCount = 0;

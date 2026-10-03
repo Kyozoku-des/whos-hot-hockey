@@ -34,6 +34,7 @@ public class DynamicSchedulingService {
     private volatile boolean stopping;
     private LocalDateTime lastGameTime;
     private Set<String> previousActiveTeams = Set.of();
+    private final Set<String> pendingTeamGames = new HashSet<>();
     private int polls;
     private int failedPolls;
 
@@ -94,14 +95,19 @@ public class DynamicSchedulingService {
             // Teams active last poll but not now have just finished: record their completed game.
             Set<String> finishedTeams = new HashSet<>(previousActiveTeams);
             finishedTeams.removeAll(activeTeams);
+            // Teams whose completed game failed to write stay pending and are retried every poll.
+            pendingTeamGames.addAll(finishedTeams);
             Set<String> teamsToSync = new HashSet<>(previousActiveTeams);
             teamsToSync.addAll(activeTeams);
+            teamsToSync.addAll(pendingTeamGames);
             int teams = 0, teamGames = 0, players = 0;
             if (!teamsToSync.isEmpty()) {
                 teams = dataSyncService.syncTeamsForCodes(teamsToSync);
                 // Before players, so their game logs resolve gameWon for the finished game.
-                if (!finishedTeams.isEmpty()) {
-                    teamGames = dataSyncService.syncTeamGamesForCodes(finishedTeams);
+                if (!pendingTeamGames.isEmpty()) {
+                    Set<String> written = dataSyncService.syncTeamGamesForCodes(Set.copyOf(pendingTeamGames));
+                    teamGames = written.size();
+                    pendingTeamGames.removeAll(written);
                 }
                 players = dataSyncService.syncPlayersForTeams(teamsToSync);
             }
@@ -115,10 +121,16 @@ public class DynamicSchedulingService {
                 Instant finalStarted = Instant.now();
                 dataSyncService.syncTeams();
                 dataSyncService.syncPlayers();
+                // The full sync rewrites every team's completed games.
+                pendingTeamGames.clear();
                 log.info("[game-sync] Game window closed after {} polls ({} failed); final full sync done in {}s, next check in 1h",
                         polls, failedPolls, secondsSince(finalStarted));
                 schedule(this::hourlyCheck, Instant.now().plusSeconds(3600));
                 return;
+            }
+            if (!pendingTeamGames.isEmpty()) {
+                log.warn("[game-sync] Poll #{}: completed games not yet written for {}; retrying next poll",
+                        polls, pendingTeamGames);
             }
         } catch (Exception e) {
             failedPolls++;

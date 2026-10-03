@@ -68,6 +68,7 @@ class DataSyncServiceScopedSyncTest {
     void scopedPlayerSync_callsApiOnlyForStoredRosterOfPlayingTeams() throws Exception {
         when(playerRepository.findByTeamCodeAndIdSeason("EDM", SEASON)).thenReturn(List.of(player(1L)));
         when(playerRepository.findByTeamCodeAndIdSeason("VAN", SEASON)).thenReturn(List.of(player(2L)));
+        when(playerRepository.findPlayerIdsBySeason(SEASON)).thenReturn(Set.of(1L, 2L, 3L));
         when(nhlApiService.getPlayerStandingsOrder(SEASON, 2))
                 .thenReturn(List.of(standing(1L), standing(2L), standing(3L)));
         when(nhlApiService.getPlayerInfo(1L)).thenReturn(info(1L, "EDM"));
@@ -83,8 +84,22 @@ class DataSyncServiceScopedSyncTest {
     }
 
     @Test
+    void scopedPlayerSync_includesPlayersWithNoStoredRowYet() throws Exception {
+        // Opening night or a season debut: the player is in the standings but was never stored.
+        when(playerRepository.findPlayerIdsBySeason(SEASON)).thenReturn(Set.of(3L));
+        when(nhlApiService.getPlayerStandingsOrder(SEASON, 2)).thenReturn(List.of(standing(1L), standing(3L)));
+        when(nhlApiService.getPlayerInfo(1L)).thenReturn(info(1L, "EDM"));
+        when(nhlApiService.getPlayerGameLogs(anyLong(), eq(SEASON), eq(2))).thenReturn(List.of());
+
+        assertEquals(1, service.syncPlayersForTeams(Set.of("EDM")));
+        verify(nhlApiService, never()).getPlayerInfo(3L);
+        verify(gameLogWriter).writePlayerGameLogs(eq(1L), eq(SEASON), any(), any());
+    }
+
+    @Test
     void scopedPlayerSync_skipsPlayerTradedAwaySinceLastFullSync() throws Exception {
         when(playerRepository.findByTeamCodeAndIdSeason("EDM", SEASON)).thenReturn(List.of(player(1L)));
+        when(playerRepository.findPlayerIdsBySeason(SEASON)).thenReturn(Set.of(1L));
         when(nhlApiService.getPlayerStandingsOrder(SEASON, 2)).thenReturn(List.of(standing(1L)));
         when(nhlApiService.getPlayerInfo(1L)).thenReturn(info(1L, "TOR"));
 
@@ -97,10 +112,18 @@ class DataSyncServiceScopedSyncTest {
     void teamGameSync_writesOnlyRequestedTeams() {
         when(nhlApiService.getTeamSchedule("EDM", SEASON)).thenReturn(List.of());
 
-        assertEquals(1, service.syncTeamGamesForCodes(Set.of("EDM")));
+        assertEquals(Set.of("EDM"), service.syncTeamGamesForCodes(Set.of("EDM")));
         verify(nhlApiService).getTeamSchedule("EDM", SEASON);
         verify(gameLogWriter).writeTeamGames("EDM", SEASON, List.of());
         verifyNoMoreInteractions(gameLogWriter);
+    }
+
+    @Test
+    void teamGameSync_reportsOnlyTeamsThatWereWritten() {
+        when(nhlApiService.getTeamSchedule("EDM", SEASON)).thenReturn(List.of());
+        when(nhlApiService.getTeamSchedule("VAN", SEASON)).thenThrow(new RuntimeException("503"));
+
+        assertEquals(Set.of("EDM"), service.syncTeamGamesForCodes(Set.of("EDM", "VAN")));
     }
 
     private static Player player(long id) {
