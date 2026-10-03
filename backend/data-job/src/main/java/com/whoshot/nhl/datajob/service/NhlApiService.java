@@ -35,7 +35,7 @@ public class NhlApiService {
      */
     public List<SeasonDto> getSeasons() {
         String url = alternateBaseUrl + "/stats/rest/en/season";
-        log.info("Fetching seasons from: {}", url);
+        log.debug("Fetching seasons from: {}", url);
 
         SeasonsResponseDto response = apiClient.get(url, new ParameterizedTypeReference<>() {
         });
@@ -52,7 +52,7 @@ public class NhlApiService {
     public List<PlayerStandingDto> getPlayerStandingsOrder(String seasonId, int gameType) {
         String url = String.format("%s/v1/skater-stats-leaders/%s/%d?categories=points&limit=-1",
                 baseUrl, seasonId, gameType);
-        log.info("Fetching player standings order from: {}", url);
+        log.debug("Fetching player standings order from: {}", url);
 
         PlayerStandingsResponse response = apiClient.get(url, new ParameterizedTypeReference<>() {
         });
@@ -67,7 +67,7 @@ public class NhlApiService {
      */
     public PlayerInfoDto getPlayerInfo(Long playerId) {
         String url = String.format("%s/v1/player/%d/landing", baseUrl, playerId);
-        log.info("Fetching player info for player {} from: {}", playerId, url);
+        log.debug("Fetching player info for player {} from: {}", playerId, url);
 
         return apiClient.get(url, new ParameterizedTypeReference<>() {
         });
@@ -86,7 +86,7 @@ public class NhlApiService {
     public List<PlayerGameLogDto> getPlayerGameLogs(Long playerId, String seasonId, int gameType) {
         String url = String.format("%s/v1/player/%d/game-log/%s/%d",
                 baseUrl, playerId, seasonId, gameType);
-        log.info("Fetching game log for player {} season {} gameType {} from: {}", playerId, seasonId, gameType, url);
+        log.debug("Fetching game log for player {} season {} gameType {} from: {}", playerId, seasonId, gameType, url);
 
         PlayerGameLogsResponse response = apiClient.get(url, new ParameterizedTypeReference<>() {
         });
@@ -102,7 +102,7 @@ public class NhlApiService {
      */
     public List<GameDto> getTeamSchedule(String teamCode, String seasonId) {
         String url = String.format("%s/v1/club-schedule-season/%s/%s", baseUrl, teamCode, seasonId);
-        log.info("Fetching team schedule for {} season {} from: {}", teamCode, seasonId, url);
+        log.debug("Fetching team schedule for {} season {} from: {}", teamCode, seasonId, url);
 
         TeamScheduleResponseDto response = apiClient.get(url, new ParameterizedTypeReference<>() {
         });
@@ -129,7 +129,7 @@ public class NhlApiService {
      */
     public List<TeamStandingsDto> getTeamStandings(String date) {
         String url = baseUrl + "/v1/standings/" + date;
-        log.info("Fetching team standings from: {}", url);
+        log.debug("Fetching team standings from: {}", url);
 
         StandingsResponseDto response = apiClient.get(url, new ParameterizedTypeReference<>() {
         });
@@ -144,7 +144,7 @@ public class NhlApiService {
      */
     public BoxScoreDto getGameBoxScore(Long gameId) {
         String url = String.format("%s/v1/gamecenter/%d/boxscore", baseUrl, gameId);
-        log.info("Fetching game boxscore for game {} from: {}", gameId, url);
+        log.debug("Fetching game boxscore for game {} from: {}", gameId, url);
 
         return apiClient.get(url, new ParameterizedTypeReference<>() {
         });
@@ -157,7 +157,7 @@ public class NhlApiService {
      */
     public List<GameDto> getLeagueSchedule() {
         String url = baseUrl + "/v1/schedule/now";
-        log.info("Fetching league schedule from: {}", url);
+        log.debug("Fetching league schedule from: {}", url);
 
         LeagueScheduleResponseDto response =
                 apiClient.get(url, new ParameterizedTypeReference<>() {

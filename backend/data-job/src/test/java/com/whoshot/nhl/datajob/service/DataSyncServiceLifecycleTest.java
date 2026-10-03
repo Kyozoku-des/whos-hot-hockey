@@ -35,7 +35,8 @@ class DataSyncServiceLifecycleTest {
     @Test
     void constructingDataSyncService_performsNoApiCallsOrWrites() {
         new DataSyncService(nhlApiService, playerRepository, playerFactory, seasonDataWriter,
-                teamGameRepository, gameLogWriter, FetchPipeline.sequential());
+                teamGameRepository, gameLogWriter, FetchPipeline.sequential(),
+                new PlayerInfoCache(java.time.Duration.ofMinutes(30), 100));
 
         verifyNoInteractions(nhlApiService, playerRepository, playerFactory, seasonDataWriter,
                 teamGameRepository, gameLogWriter);

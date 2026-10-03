@@ -90,7 +90,8 @@ class DataSyncServiceParallelSyncTest {
                 player(invocation.<PlayerInfoDto>getArgument(0).getPlayerId()));
         when(teamGameRepository.findBySeasonId(SEASON)).thenReturn(List.of());
         service = new DataSyncService(nhlApiService, playerRepository, playerFactory, seasonDataWriter,
-                teamGameRepository, gameLogWriter, pipeline);
+                teamGameRepository, gameLogWriter, pipeline,
+                new PlayerInfoCache(java.time.Duration.ofMinutes(30), 100));
         service.initialize();
     }
 

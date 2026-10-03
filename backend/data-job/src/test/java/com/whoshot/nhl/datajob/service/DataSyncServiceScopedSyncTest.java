@@ -64,7 +64,8 @@ class DataSyncServiceScopedSyncTest {
         // A real writer over mocked repositories, so writes are observable on the mocks.
         var writer = new SeasonDataWriter(currentSeasonRepository, teamRepository, playerRepository, gameLogWriter);
         service = new DataSyncService(nhlApiService, playerRepository, playerFactory, writer,
-                teamGameRepository, gameLogWriter, FetchPipeline.sequential());
+                teamGameRepository, gameLogWriter, FetchPipeline.sequential(),
+                new PlayerInfoCache(java.time.Duration.ofMinutes(30), 100));
         service.initialize();
     }
 
@@ -110,6 +111,36 @@ class DataSyncServiceScopedSyncTest {
         assertEquals(0, service.syncPlayersForTeams(Set.of("EDM")));
         verify(nhlApiService, never()).getPlayerGameLogs(anyLong(), any(), anyInt());
         verify(playerRepository, never()).save(any());
+    }
+
+    @Test
+    void consecutivePolls_reuseRecentProfiles_butAlwaysRefetchGameLogs() throws Exception {
+        when(playerRepository.findByTeamCodeAndIdSeason("EDM", SEASON)).thenReturn(List.of(player(1L)));
+        when(playerRepository.findPlayerIdsBySeason(SEASON)).thenReturn(Set.of(1L));
+        when(nhlApiService.getPlayerStandingsOrder(SEASON, 2)).thenReturn(List.of(standing(1L)));
+        when(nhlApiService.getPlayerInfo(1L)).thenReturn(info(1L, "EDM"));
+        when(nhlApiService.getPlayerGameLogs(anyLong(), eq(SEASON), eq(2))).thenReturn(List.of());
+
+        service.syncPlayersForTeams(Set.of("EDM"));
+        service.syncPlayersForTeams(Set.of("EDM"));
+
+        verify(nhlApiService, times(1)).getPlayerInfo(1L);
+        verify(nhlApiService, times(2)).getPlayerGameLogs(1L, SEASON, 2);
+    }
+
+    @Test
+    void fullSync_refreshesProfilesThatPollsReuse() throws Exception {
+        when(playerRepository.findByTeamCodeAndIdSeason("EDM", SEASON)).thenReturn(List.of(player(1L)));
+        when(playerRepository.findPlayerIdsBySeason(SEASON)).thenReturn(Set.of(1L));
+        when(nhlApiService.getPlayerStandingsOrder(SEASON, 2)).thenReturn(List.of(standing(1L)));
+        when(nhlApiService.getPlayerInfo(1L)).thenReturn(info(1L, "EDM"), info(1L, "TOR"));
+        when(nhlApiService.getPlayerGameLogs(anyLong(), eq(SEASON), eq(2))).thenReturn(List.of());
+
+        service.syncPlayersForTeams(Set.of("EDM"));
+        service.syncPlayers(); // traded to TOR: the full sync sees it and updates the cache
+
+        assertEquals(0, service.syncPlayersForTeams(Set.of("EDM")));
+        verify(nhlApiService, times(2)).getPlayerInfo(1L);
     }
 
     @Test

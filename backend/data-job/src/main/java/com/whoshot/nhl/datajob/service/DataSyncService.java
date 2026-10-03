@@ -43,6 +43,7 @@ public class DataSyncService {
     private final TeamGameRepository teamGameRepository;
     private final GameLogWriter gameLogWriter;
     private final FetchPipeline fetchPipeline;
+    private final PlayerInfoCache playerInfoCache;
     private SeasonDto season;
     @Getter
     private LocalDateTime firstGameTimeForToday;
@@ -210,8 +211,11 @@ public class DataSyncService {
             throws PlayerStatisticsException {
         Long playerId = playerStanding.getId();
 
-        // Profile first: it filters out players whose game logs would be wasted requests.
-        PlayerInfoDto playerInfo = nhlApiService.getPlayerInfo(playerId);
+        // Profile first: it filters out players whose game logs would be wasted requests. A
+        // game-time poll may reuse a recent profile; a full sync always refreshes it.
+        PlayerInfoDto playerInfo = onlyTeamCodes == null
+                ? playerInfoCache.put(playerId, nhlApiService.getPlayerInfo(playerId))
+                : playerInfoCache.get(playerId, () -> nhlApiService.getPlayerInfo(playerId));
 
         if (!playerInfo.isActive()) {
             return FetchedPlayer.filtered("inactive");
@@ -223,6 +227,7 @@ public class DataSyncService {
         }
 
         if (!Objects.equals(playerInfo.getPlayerId(), playerId)) {
+            playerInfoCache.invalidate(playerId);
             throw new PlayerStatisticsException("Player ID mismatch between standings and player info API");
         }
 
