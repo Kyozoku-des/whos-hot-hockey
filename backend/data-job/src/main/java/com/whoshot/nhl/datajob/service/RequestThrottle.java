@@ -143,6 +143,11 @@ public class RequestThrottle {
         return Duration.ofNanos(waitedNanos.get());
     }
 
+    /** Requests currently holding a permit. */
+    public int inFlight() {
+        return properties.maxInFlight() - inFlight.availablePermits();
+    }
+
     /** Highest number of requests observed in flight at once since startup. */
     public int peakInFlight() {
         return (int) peakInFlight.get();

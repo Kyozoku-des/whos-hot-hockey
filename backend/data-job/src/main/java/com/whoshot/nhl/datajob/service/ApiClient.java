@@ -57,6 +57,7 @@ public class ApiClient {
     private final RestClient restClient;
     private final RequestThrottle throttle;
     private final ApiRequestProperties properties;
+    private final IngestionMetrics metrics;
 
     /**
      * Performs a GET request without custom headers.
@@ -90,17 +91,24 @@ public class ApiClient {
         for (int attempt = 1; ; attempt++) {
             checkInterrupted();
             RequestThrottle.Permit permit = throttle.acquire(host, deadline);
+            metrics.recordThrottleWait(permit.waited());
+            long started = System.nanoTime();
             ApiClientException failure;
             try {
                 T body = execute(url, typeRef, headers);
                 throttle.release(permit, true);
+                metrics.recordRequest(url, "success", null, Duration.ofNanos(System.nanoTime() - started));
                 return body;
             } catch (ApiClientException e) {
                 // Released before any backoff, so a waiting retry holds no request slot.
                 throttle.release(permit, !e.isRetryable());
+                metrics.recordRequest(url, e.isRetryable() ? "transient" : "permanent",
+                        e.status().isPresent() ? e.status().getAsInt() : null,
+                        Duration.ofNanos(System.nanoTime() - started));
                 failure = e;
             } catch (RuntimeException | Error e) {
                 throttle.release(permit, true);
+                metrics.recordRequest(url, "cancelled", null, Duration.ofNanos(System.nanoTime() - started));
                 throw e;
             }
 
@@ -110,6 +118,7 @@ public class ApiClient {
                         + delay.toMillis() + " ms would pass the " + properties.operationDeadline()
                         + " operation deadline (" + failure.getMessage() + ")", failure);
             }
+            metrics.recordRetry(url, failure.status().isPresent() ? failure.status().getAsInt() : null);
             log.warn("Attempt {}/{} for {} failed ({}); retrying in {} ms",
                     attempt, properties.maxAttempts(), url, failure.getMessage(), delay.toMillis());
             sleep(delay);

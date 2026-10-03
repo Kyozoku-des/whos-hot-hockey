@@ -50,7 +50,7 @@ class ApiClientRetryTest {
                 deadline, 100, Duration.ofSeconds(30));
         RestClient.Builder builder = RestClient.builder();
         server = MockRestServiceServer.bindTo(builder).build();
-        return new ApiClient(builder.build(), new RequestThrottle(properties), properties);
+        return new ApiClient(builder.build(), new RequestThrottle(properties), properties, IngestionMetrics.standalone());
     }
 
     private ApiClient client() {

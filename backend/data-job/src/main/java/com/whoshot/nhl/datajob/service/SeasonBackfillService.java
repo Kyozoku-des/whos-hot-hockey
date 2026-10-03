@@ -53,6 +53,13 @@ public class SeasonBackfillService {
     private final BackfillLockService backfillLockService;
     private final FetchPipeline fetchPipeline;
 
+    private IngestionMetrics metrics = IngestionMetrics.standalone();
+
+    @Autowired(required = false)
+    void setMetrics(IngestionMetrics metrics) {
+        this.metrics = metrics;
+    }
+
     @Autowired
     public SeasonBackfillService(NhlApiService nhlApiService,
                                   SeasonDataWriter seasonDataWriter,
@@ -132,6 +139,7 @@ public class SeasonBackfillService {
     private BackfillSummary load(BackfillRequest request) {
         String seasonId = request.seasonId();
         BackfillSummary summary = new BackfillSummary(seasonId);
+        IngestionMetrics.Run run = metrics.startRun("backfill");
 
         List<TeamStandingsDto> standings;
         try {
@@ -195,8 +203,10 @@ public class SeasonBackfillService {
                         }
                         // Player and game logs commit or roll back together, so a skip never
                         // leaves a player row without its game logs.
+                        long persistStarted = System.nanoTime();
                         int gameLogsWritten = seasonDataWriter.writePlayer(
                                 fetched.value().player(), fetched.value().gameLogs(), teamGames);
+                        run.recordPersist(persistStarted);
                         summary.addPlayerWritten();
                         summary.addGameLogsWritten(gameLogsWritten);
                     } catch (Exception e) {
@@ -210,6 +220,7 @@ public class SeasonBackfillService {
                 });
 
         log.info("Backfill for season {} processed {} players", seasonId, summary.playersWritten());
+        run.finish(summary.playersWritten(), 0, summary.skipped().size(), 0);
         return summary.finish();
     }
 

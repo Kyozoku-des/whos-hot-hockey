@@ -11,6 +11,7 @@ import com.whoshot.nhl.domain.repository.TeamGameRepository;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -44,6 +45,13 @@ public class DataSyncService {
     private final GameLogWriter gameLogWriter;
     private final FetchPipeline fetchPipeline;
     private final PlayerInfoCache playerInfoCache;
+
+    private IngestionMetrics metrics = IngestionMetrics.standalone();
+
+    @Autowired(required = false)
+    void setMetrics(IngestionMetrics metrics) {
+        this.metrics = metrics;
+    }
     private SeasonDto season;
     @Getter
     private LocalDateTime firstGameTimeForToday;
@@ -178,6 +186,7 @@ public class DataSyncService {
         // (research R-005). Loaded once, after the team-game barrier, and shared read-only.
         TeamGameIndex teamGames = TeamGameIndex.of(teamGameRepository.findBySeasonId(seasonId));
         int[] counts = new int[4]; // written, filtered, skipped, deferred
+        IngestionMetrics.Run run = metrics.startRun(onlyTeamCodes == null ? "players-full" : "players-scoped");
 
         fetchPipeline.<PlayerStandingDto, FetchedPlayer>run(players,
                 standing -> fetchPlayer(standing, seasonId, onlyTeamCodes),
@@ -188,16 +197,19 @@ public class DataSyncService {
                         log.debug("Not writing player {}: {}", standing.getId(), fetched.value().filteredReason());
                         counts[1]++;
                     } else {
+                        long persistStarted = System.nanoTime();
                         try {
                             // One transaction for the player and their game logs (research R-003:
                             // nothing else writes the current-season game_logs line of the graphs).
                             seasonDataWriter.writePlayer(fetched.value().player(), fetched.value().gameLogs(), teamGames);
+                            run.recordPersist(persistStarted);
                             counts[0]++;
                         } catch (RuntimeException e) {
                             skipPlayer(standing.getId(), seasonId, e, counts);
                         }
                     }
                 });
+        run.finish(counts[0], counts[1], counts[2], counts[3]);
         return new SyncResult(counts[0], counts[1], counts[2], counts[3]);
     }
 
@@ -293,6 +305,7 @@ public class DataSyncService {
      */
     private Set<String> writeTeamGames(String seasonId, List<String> teamCodes) {
         Set<String> written = new HashSet<>();
+        IngestionMetrics.Run run = metrics.startRun("team-schedules");
         fetchPipeline.<String, List<GameDto>>run(teamCodes,
                 teamCode -> nhlApiService.getTeamSchedule(teamCode, seasonId),
                 (teamCode, schedule) -> {
@@ -300,13 +313,16 @@ public class DataSyncService {
                         if (!schedule.succeeded()) {
                             throw schedule.failure();
                         }
+                        long persistStarted = System.nanoTime();
                         gameLogWriter.writeTeamGames(teamCode, seasonId, schedule.value());
+                        run.recordPersist(persistStarted);
                         written.add(teamCode);
                     } catch (Exception e) {
                         IngestionFailures.rethrowIfFatal(e);
                         log.warn("Could not write team games for {} in season {}: {}", teamCode, seasonId, e.getMessage());
                     }
                 });
+        run.finish(written.size(), 0, teamCodes.size() - written.size(), 0);
         return written;
     }
 

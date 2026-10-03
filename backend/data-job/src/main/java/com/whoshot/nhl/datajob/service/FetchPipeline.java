@@ -48,6 +48,7 @@ public class FetchPipeline implements DisposableBean {
     private final int window;
     private final ThreadPoolExecutor executor;
     private final AtomicInteger peakOutstanding = new AtomicInteger();
+    private final AtomicInteger outstandingNow = new AtomicInteger();
 
     public FetchPipeline(@Value("${ingestion.fetch.concurrency:4}") int concurrency) {
         if (concurrency < 1) {
@@ -122,22 +123,30 @@ public class FetchPipeline implements DisposableBean {
                     checkInterrupted();
                     I input = remaining.next();
                     outstanding.add(new Pending<>(input, submit(fetch, input)));
+                    outstandingNow.incrementAndGet();
                     peakOutstanding.accumulateAndGet(outstanding.size(), Math::max);
                 }
                 Pending<I, T> next = outstanding.poll();
                 if (next == null) {
                     return;
                 }
+                outstandingNow.decrementAndGet();
                 consumer.accept(next.input(), await(next.future()));
             }
         } finally {
             outstanding.forEach(pending -> pending.future().cancel(true));
+            outstandingNow.addAndGet(-outstanding.size());
         }
     }
 
     /** Configured number of fetch workers. */
     public int concurrency() {
         return concurrency;
+    }
+
+    /** Fetches currently submitted and not yet consumed, across all runs. */
+    public int outstanding() {
+        return outstandingNow.get();
     }
 
     /** Highest number of fetches outstanding at once since startup; never above twice the concurrency. */
