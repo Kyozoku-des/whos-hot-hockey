@@ -64,7 +64,7 @@ class DataSyncServiceScopedSyncTest {
         // A real writer over mocked repositories, so writes are observable on the mocks.
         var writer = new SeasonDataWriter(currentSeasonRepository, teamRepository, playerRepository, gameLogWriter);
         service = new DataSyncService(nhlApiService, playerRepository, playerFactory, writer,
-                teamGameRepository, gameLogWriter);
+                teamGameRepository, gameLogWriter, FetchPipeline.sequential());
         service.initialize();
     }
 

@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -43,6 +42,7 @@ public class DataSyncService {
     private final SeasonDataWriter seasonDataWriter;
     private final TeamGameRepository teamGameRepository;
     private final GameLogWriter gameLogWriter;
+    private final FetchPipeline fetchPipeline;
     private SeasonDto season;
     @Getter
     private LocalDateTime firstGameTimeForToday;
@@ -106,75 +106,147 @@ public class DataSyncService {
     }
 
     /**
-     * Synchronizes active-player statistics for the resolved season.
-     * Side effects: performs external API calls and writes player records to the
-     * database.
+     * Synchronizes active-player statistics for the resolved season, fetching players in parallel
+     * through the {@link FetchPipeline} and writing each one (with their game logs) as it arrives.
+     * A player that cannot be fetched or validated is skipped and keeps their previous row; only a
+     * stop request or a lost database ends the sync early.
      *
-     * @throws PlayerStatisticsException if player identity or point-total
-     *                                   validation fails
+     * @return what the sync wrote and skipped
      */
-    public void syncPlayers() throws PlayerStatisticsException {
+    public SyncResult syncPlayers() {
         checkInterrupted();
         String seasonId = season.getId();
         log.info("Starting player sync for season {}", seasonId);
 
         var players = nhlApiService.getPlayerStandingsOrder(seasonId, gameType);
-        int processedCount = 0;
-        // Game logs already written for the season, used to resolve gameWon for each player's
-        // game log (research R-005). Fetched once, up front, rather than per player.
-        TeamGameIndex teamGames = TeamGameIndex.of(teamGameRepository.findBySeasonId(seasonId));
-
-        // Get order from standings API, calculate new statistics and verify points
-        for (PlayerStandingDto playerStanding : players) {
-            if (syncPlayer(playerStanding, seasonId, null, teamGames)) {
-                processedCount++;
-            }
-        }
-
-        log.info("Player sync completed: {} players processed", processedCount);
+        SyncResult result = syncPlayers(seasonId, players, null);
+        log.info("Player sync completed: {}", result);
+        return result;
     }
 
     /**
-     * Fetches, recalculates and upserts one player, plus their per-game logs.
+     * Synchronizes only players belonging to the specified teams, including their game logs.
+     * Used during game-time sync: players are picked from the roster stored by the last full sync,
+     * so players on teams that are not playing cost no API calls. Players in the standings with no
+     * stored row yet (season debuts, opening night) are also checked, since their team is unknown.
+     * Players traded to a playing team since the last full sync are picked up by the full sync that
+     * ends the game window.
      *
-     * @param onlyTeamCodes when non-null, a player whose current team is not in this set is skipped
-     * @return whether the player was written
+     * @return number of players written
      */
-    private boolean syncPlayer(PlayerStandingDto playerStanding, String seasonId, Set<String> onlyTeamCodes,
-                               TeamGameIndex teamGames) throws PlayerStatisticsException {
+    public int syncPlayersForTeams(Set<String> teamCodes) {
         checkInterrupted();
+        String seasonId = season.getId();
+        log.info("Starting scoped player sync for teams {} in season {}", teamCodes, seasonId);
+
+        Set<Long> rosterIds = teamCodes.stream()
+                .flatMap(teamCode -> playerRepository.findByTeamCodeAndIdSeason(teamCode, seasonId).stream())
+                .map(player -> player.getId().playerId())
+                .collect(Collectors.toSet());
+        Set<Long> storedIds = playerRepository.findPlayerIdsBySeason(seasonId);
+        var players = nhlApiService.getPlayerStandingsOrder(seasonId, gameType).stream()
+                .filter(standing -> rosterIds.contains(standing.getId()) || !storedIds.contains(standing.getId()))
+                .toList();
+        SyncResult result = syncPlayers(seasonId, players, teamCodes);
+
+        log.info("Scoped player sync completed for teams {}: {}", teamCodes, result);
+        return result.written();
+    }
+
+    /**
+     * Counts from one player sync. {@code filtered} players were fetched but intentionally not
+     * written (inactive, or no longer on a playing team); {@code skipped} ones failed and kept
+     * their previous row, {@code deferred} of them because their upstream totals did not agree.
+     */
+    public record SyncResult(int written, int filtered, int skipped, int deferred) {
+        @Override
+        public String toString() {
+            return "%d written, %d filtered, %d skipped (%d deferred)".formatted(written, filtered, skipped, deferred);
+        }
+    }
+
+    /** A fetched player ready to write, or the reason it is filtered out. */
+    private record FetchedPlayer(Player player, List<PlayerGameLogDto> gameLogs, String filteredReason) {
+        static FetchedPlayer filtered(String reason) {
+            return new FetchedPlayer(null, null, reason);
+        }
+    }
+
+    private SyncResult syncPlayers(String seasonId, List<PlayerStandingDto> players, Set<String> onlyTeamCodes) {
+        // Team games already written for the season resolve gameWon for each player's game log
+        // (research R-005). Loaded once, after the team-game barrier, and shared read-only.
+        TeamGameIndex teamGames = TeamGameIndex.of(teamGameRepository.findBySeasonId(seasonId));
+        int[] counts = new int[4]; // written, filtered, skipped, deferred
+
+        fetchPipeline.<PlayerStandingDto, FetchedPlayer>run(players,
+                standing -> fetchPlayer(standing, seasonId, onlyTeamCodes),
+                (standing, fetched) -> {
+                    if (!fetched.succeeded()) {
+                        skipPlayer(standing.getId(), seasonId, fetched.failure(), counts);
+                    } else if (fetched.value().filteredReason() != null) {
+                        log.debug("Not writing player {}: {}", standing.getId(), fetched.value().filteredReason());
+                        counts[1]++;
+                    } else {
+                        try {
+                            // One transaction for the player and their game logs (research R-003:
+                            // nothing else writes the current-season game_logs line of the graphs).
+                            seasonDataWriter.writePlayer(fetched.value().player(), fetched.value().gameLogs(), teamGames);
+                            counts[0]++;
+                        } catch (RuntimeException e) {
+                            skipPlayer(standing.getId(), seasonId, e, counts);
+                        }
+                    }
+                });
+        return new SyncResult(counts[0], counts[1], counts[2], counts[3]);
+    }
+
+    /**
+     * Fetches and validates one player on a fetch worker. Builds plain values only: no database
+     * access and no shared mutable state.
+     *
+     * @param onlyTeamCodes when non-null, a player whose current team is not in this set is filtered
+     */
+    private FetchedPlayer fetchPlayer(PlayerStandingDto playerStanding, String seasonId, Set<String> onlyTeamCodes)
+            throws PlayerStatisticsException {
         Long playerId = playerStanding.getId();
 
+        // Profile first: it filters out players whose game logs would be wasted requests.
         PlayerInfoDto playerInfo = nhlApiService.getPlayerInfo(playerId);
-        checkInterrupted();
 
         if (!playerInfo.isActive()) {
-            log.warn("Skipping inactive player ID: {}. Name: {} {}", playerId, playerInfo.getFirstName(),
-                    playerInfo.getLastName());
-            return false;
+            return FetchedPlayer.filtered("inactive");
         }
 
         // Guards against a stored roster gone stale through a trade since the last full sync.
         if (onlyTeamCodes != null && !onlyTeamCodes.contains(playerInfo.getCurrentTeamAbbrev())) {
-            return false;
+            return FetchedPlayer.filtered("not on a playing team");
         }
 
         if (!Objects.equals(playerInfo.getPlayerId(), playerId)) {
             throw new PlayerStatisticsException("Player ID mismatch between standings and player info API");
         }
 
-        // Fetch game logs for the season
         var gameLogs = nhlApiService.getPlayerGameLogs(playerId, seasonId, gameType);
-        checkInterrupted();
-
-        // Create player using factory (handles all construction and statistics
-        // calculation)
+        GameLogWriter.validatePlayerGameLogs(gameLogs);
+        // Recalculates statistics and checks them against the standings totals.
         Player player = playerFactory.createFromApiData(playerInfo, playerStanding, gameLogs, seasonId);
+        return new FetchedPlayer(player, gameLogs, null);
+    }
 
-        // One transaction for the player and their game logs (research R-003: nothing else writes
-        // the current-season game_logs line of the graphs), so neither is ever committed alone.
-        seasonDataWriter.writePlayer(player, gameLogs, teamGames);
-        return true;
+    /**
+     * Records a player-level failure. Totals that disagree between the standings and the game log
+     * (upstream updating between the two requests during a live game) defer the player to the next
+     * sync: validation is never relaxed and the previous valid row stays in place.
+     */
+    private static void skipPlayer(Long playerId, String seasonId, Exception failure, int[] counts) {
+        IngestionFailures.rethrowIfFatal(failure);
+        if (failure instanceof PlayerStatisticsException) {
+            log.warn("Deferring player {} in season {} to the next sync: {}", playerId, seasonId, failure.getMessage());
+            counts[3]++;
+        } else {
+            log.warn("Skipping player {} in season {}: {}", playerId, seasonId, failure.getMessage());
+        }
+        counts[2]++;
     }
 
     /**
@@ -188,19 +260,12 @@ public class DataSyncService {
 
         var standings = nhlApiService.getTeamStandings();
         int processedCount = seasonDataWriter.persistStandings(seasonId, null, standings);
-        writeTeamGamesForStandings(seasonId, standings);
-
-        log.info("Team sync completed: {} teams processed", processedCount);
-    }
-
-    /**
-     * Populates the game-log graph's current-season line for each team (research R-003), the
-     * team-side counterpart of the write in {@link #syncPlayers()}.
-     */
-    private void writeTeamGamesForStandings(String seasonId, List<TeamStandingsDto> standings) {
-        writeTeamGames(seasonId, standings.stream()
+        Set<String> written = writeTeamGames(seasonId, standings.stream()
                 .map(standing -> standing.getTeamAbbrev().getDefaultValue())
                 .toList());
+
+        log.info("Team sync completed: {} teams processed, {} of {} team schedules written",
+                processedCount, written.size(), standings.size());
     }
 
     /**
@@ -212,60 +277,32 @@ public class DataSyncService {
      */
     public Set<String> syncTeamGamesForCodes(Set<String> teamCodes) {
         checkInterrupted();
-        return writeTeamGames(season.getId(), teamCodes);
-    }
-
-    private Set<String> writeTeamGames(String seasonId, Collection<String> teamCodes) {
-        Set<String> written = new HashSet<>();
-        for (String teamCode : teamCodes) {
-            checkInterrupted();
-            try {
-                var schedule = nhlApiService.getTeamSchedule(teamCode, seasonId);
-                gameLogWriter.writeTeamGames(teamCode, seasonId, schedule);
-                written.add(teamCode);
-            } catch (CancellationException e) {
-                throw e;
-            } catch (Exception e) {
-                log.warn("Could not write team games for {} in season {}: {}", teamCode, seasonId, e.getMessage());
-            }
-        }
-        return written;
+        return writeTeamGames(season.getId(), teamCodes.stream().sorted().toList());
     }
 
     /**
-     * Synchronizes only players belonging to the specified teams, including their game logs.
-     * Used during game-time sync: players are picked from the roster stored by the last full sync,
-     * so players on teams that are not playing cost no API calls. Players in the standings with no
-     * stored row yet (season debuts, opening night) are also checked, since their team is unknown.
-     * Players traded to a playing team since the last full sync are picked up by the full sync that
-     * ends the game window.
-     *
-     * @return number of players written
+     * Fetches team schedules in parallel and writes each team's completed games in its own short
+     * transaction. Returns only once every team has been written or skipped: this is the barrier
+     * that lets player game logs resolve {@code gameWon}. A missing team stays missing (its
+     * players' {@code gameWon} stays unknown), never filled with a fabricated result.
      */
-    public int syncPlayersForTeams(Set<String> teamCodes) throws PlayerStatisticsException {
-        checkInterrupted();
-        String seasonId = season.getId();
-        log.info("Starting scoped player sync for teams {} in season {}", teamCodes, seasonId);
-
-        Set<Long> rosterIds = teamCodes.stream()
-                .flatMap(teamCode -> playerRepository.findByTeamCodeAndIdSeason(teamCode, seasonId).stream())
-                .map(player -> player.getId().playerId())
-                .collect(Collectors.toSet());
-        Set<Long> storedIds = playerRepository.findPlayerIdsBySeason(seasonId);
-        var players = nhlApiService.getPlayerStandingsOrder(seasonId, gameType).stream()
-                .filter(standing -> rosterIds.contains(standing.getId()) || !storedIds.contains(standing.getId()))
-                .toList();
-        TeamGameIndex teamGames = TeamGameIndex.of(teamGameRepository.findBySeasonId(seasonId));
-        int processedCount = 0;
-
-        for (PlayerStandingDto playerStanding : players) {
-            if (syncPlayer(playerStanding, seasonId, teamCodes, teamGames)) {
-                processedCount++;
-            }
-        }
-
-        log.info("Scoped player sync completed: {} players processed for teams {}", processedCount, teamCodes);
-        return processedCount;
+    private Set<String> writeTeamGames(String seasonId, List<String> teamCodes) {
+        Set<String> written = new HashSet<>();
+        fetchPipeline.<String, List<GameDto>>run(teamCodes,
+                teamCode -> nhlApiService.getTeamSchedule(teamCode, seasonId),
+                (teamCode, schedule) -> {
+                    try {
+                        if (!schedule.succeeded()) {
+                            throw schedule.failure();
+                        }
+                        gameLogWriter.writeTeamGames(teamCode, seasonId, schedule.value());
+                        written.add(teamCode);
+                    } catch (Exception e) {
+                        IngestionFailures.rethrowIfFatal(e);
+                        log.warn("Could not write team games for {} in season {}: {}", teamCode, seasonId, e.getMessage());
+                    }
+                });
+        return written;
     }
 
     /**

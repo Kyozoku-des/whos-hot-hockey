@@ -68,7 +68,7 @@ class BackfillFailureIsolationTest {
     @BeforeEach
     void setUp() {
         service = new SeasonBackfillService(nhlApiService, seasonDataWriter,
-                playerFactory, gameLogWriter, teamGameRepository, backfillLockService, 0);
+                playerFactory, gameLogWriter, teamGameRepository, backfillLockService, FetchPipeline.sequential());
         when(backfillLockService.tryLock(SEASON)).thenReturn(true);
     }
 

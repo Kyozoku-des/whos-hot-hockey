@@ -1,6 +1,5 @@
 package com.whoshot.nhl.datajob.service;
 
-import com.whoshot.nhl.datajob.exception.PlayerStatisticsException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,8 +20,8 @@ public class InitialDataLoadService {
 
     /**
      * Loads all player data for the current season.
-     * Catches and logs any {@link PlayerStatisticsException} without rethrowing,
-     * so callers are not forced to handle API or validation failures.
+     * Record-level failures are skipped and reported by the sync itself; a run-level failure (for
+     * example the standings request) is logged without rethrowing. A stop request propagates.
      */
     public void loadFullSeason() {
         Instant start = Instant.now();
@@ -42,8 +41,9 @@ public class InitialDataLoadService {
                 log.error("Initial data load skipped: season {} is being written by another job", seasonId);
                 return;
             }
-        } catch (PlayerStatisticsException e) {
-            log.error("Initial data load failed due to player statistics error: {}", e.getMessage(), e);
+        } catch (RuntimeException e) {
+            IngestionFailures.rethrowIfFatal(e);
+            log.error("Initial data load failed: {}", e.getMessage(), e);
             return;
         }
 

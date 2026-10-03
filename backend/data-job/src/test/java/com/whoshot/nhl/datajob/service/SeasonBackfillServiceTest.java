@@ -69,7 +69,7 @@ class SeasonBackfillServiceTest {
     @Test
     void loadOrder_isTeams_thenTeamGames_thenPlayers_thenPlayerGameLogs() throws Exception {
         service = new SeasonBackfillService(nhlApiService, seasonDataWriter,
-                playerFactory, gameLogWriter, teamGameRepository, backfillLockService, 0);
+                playerFactory, gameLogWriter, teamGameRepository, backfillLockService, FetchPipeline.sequential());
 
         when(backfillLockService.tryLock(anyString())).thenReturn(true);
         List<TeamStandingsDto> standings = List.of(teamStanding("COL"));
@@ -111,7 +111,7 @@ class SeasonBackfillServiceTest {
     @Test
     void retiredPlayers_areNotSkipped() throws Exception {
         service = new SeasonBackfillService(nhlApiService, seasonDataWriter,
-                playerFactory, gameLogWriter, teamGameRepository, backfillLockService, 0);
+                playerFactory, gameLogWriter, teamGameRepository, backfillLockService, FetchPipeline.sequential());
 
         when(backfillLockService.tryLock(anyString())).thenReturn(true);
         List<TeamStandingsDto> standings = List.of(teamStanding("COL"));

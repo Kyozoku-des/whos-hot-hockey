@@ -42,7 +42,7 @@ class InitialDataLoadServiceTest {
 
     @Test
     void loadFullSeason_handlesApiFailureGracefully() throws PlayerStatisticsException {
-        doThrow(new PlayerStatisticsException("API failure"))
+        doThrow(new IllegalStateException("standings unavailable"))
                 .when(dataSyncService).syncPlayers();
 
         assertDoesNotThrow(() -> initialDataLoadService.loadFullSeason());

@@ -53,7 +53,8 @@ class DataSyncServiceSeasonResolutionTest {
     void setUp() {
         // A real writer over mocked repositories: the deactivation logic lives in the writer.
         var writer = new SeasonDataWriter(currentSeasonRepository, teamRepository, playerRepository, null);
-        dataSyncService = new DataSyncService(nhlApiService, playerRepository, playerFactory, writer, null, null);
+        dataSyncService = new DataSyncService(nhlApiService, playerRepository, playerFactory, writer, null, null,
+                FetchPipeline.sequential());
     }
 
     private SeasonDto season(String id, LocalDateTime start, LocalDateTime end) {
