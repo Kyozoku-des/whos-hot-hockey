@@ -7,8 +7,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpResponse;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
+import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
@@ -17,6 +16,9 @@ import java.util.Map;
 
 /**
  * Reusable HTTP client wrapper that standardizes API calls, error handling, and retries.
+ * <p>
+ * The {@link Retryable} annotations are inert: no {@code @EnableResilientMethods} is declared,
+ * matching the pre-Boot 4 behavior where {@code @EnableRetry} was never declared either.
  */
 @Slf4j
 @Service
@@ -67,8 +69,10 @@ public class ApiClient {
      * @throws ApiClientException if the request fails or returns a null body
      */
     @Retryable(
-            retryFor = {ApiClientException.class},
-            backoff = @Backoff(delay = 1000, multiplier = 2)
+            includes = {ApiClientException.class},
+            maxRetries = 2,
+            delay = 1000,
+            multiplier = 2
     )
     public <T> T get(String url, ParameterizedTypeReference<T> typeRef) {
         return get(url, typeRef, null);
@@ -86,8 +90,10 @@ public class ApiClient {
      * @throws ApiClientException if the request fails after all retries
      */
     @Retryable(
-            retryFor = {ApiClientException.class},
-            backoff = @Backoff(delay = 1000, multiplier = 2)
+            includes = {ApiClientException.class},
+            maxRetries = 2,
+            delay = 1000,
+            multiplier = 2
     )
     public <T> T get(String url, ParameterizedTypeReference<T> typeRef, Map<String, String> headers) {
         try {
@@ -134,8 +140,10 @@ public class ApiClient {
      * @throws ApiClientException if the request fails after all retries
      */
     @Retryable(
-            retryFor = {ApiClientException.class},
-            backoff = @Backoff(delay = 1000, multiplier = 2)
+            includes = {ApiClientException.class},
+            maxRetries = 2,
+            delay = 1000,
+            multiplier = 2
     )
     public <T> T postMultipart(String url, MultiValueMap<String, Object> formData, ParameterizedTypeReference<T> typeRef) {
         try {

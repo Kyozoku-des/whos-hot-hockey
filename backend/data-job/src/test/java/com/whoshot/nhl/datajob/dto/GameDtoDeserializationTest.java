@@ -1,6 +1,6 @@
 package com.whoshot.nhl.datajob.dto;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.whoshot.nhl.datajob.dto.nhlapi.GameDto;
 import org.junit.jupiter.api.Test;
 

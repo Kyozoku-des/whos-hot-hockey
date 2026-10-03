@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.6</version>
+        <version>4.1.1</version>
         <relativePath/>
     </parent>
 
@@ -26,15 +26,13 @@
     </modules>
 
     <properties>
-        <java.version>23</java.version>
-        <maven.compiler.source>23</maven.compiler.source>
-        <maven.compiler.target>23</maven.compiler.target>
+        <java.version>25</java.version>
+        <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <lombok.version>1.18.42</lombok.version>
-        <maven.compiler.plugin.version>3.14.0</maven.compiler.plugin.version>
         <maven.compiler.proc>full</maven.compiler.proc>
-        <!-- 1.21.3 (Boot 3.5.6 default) negotiates a Docker API version that Docker Engine 29+ rejects -->
-        <testcontainers.version>1.21.4</testcontainers.version>
+        <!-- Lombok, maven-compiler-plugin and Testcontainers versions are managed by the Boot parent.
+             Boot 4.1.1 manages Testcontainers 2.0.5, which already negotiates a Docker API version
+             accepted by Docker Engine 29+, so the former 1.21.4 override is no longer needed. -->
     </properties>
 
     <dependencyManagement>
@@ -58,9 +56,8 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>${maven.compiler.plugin.version}</version>
                     <configuration>
-                        <release>${java.version}</release>
+                        <release>${maven.compiler.release}</release>
                         <proc>${maven.compiler.proc}</proc>
                         <compilerArgs>
                             <arg>-parameters</arg>
