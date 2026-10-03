@@ -1,5 +1,5 @@
 # Multi-stage build for NHL Data Sync Job
-FROM maven:3.9-eclipse-temurin-23 AS build
+FROM maven:3.9-eclipse-temurin-25 AS build
 
 WORKDIR /app
 
@@ -20,7 +20,7 @@ COPY data-job/src ./data-job/src
 RUN mvn clean package -pl data-job -am -DskipTests
 
 # Runtime stage
-FROM eclipse-temurin:23-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 
 WORKDIR /app
 
