@@ -17,6 +17,9 @@ A full-stack application for tracking NHL statistics with a focus on identifying
 
 ### Running with Podman Compose (Recommended)
 
+See [environment setup](backend/ENVIRONMENTS.md) for `.env` templates, local log
+retention, isolated worktrees, and production configuration. Compose is local-only.
+
 Start all services (PostgreSQL, backend API, data sync, and frontend):
 
 ```bash
@@ -43,7 +46,7 @@ To populate the database with current NHL season data:
 
 ```bash
 podman-compose stop data-job
-podman-compose run --rm -e SPRING_PROFILES_ACTIVE=initial-load data-job
+podman-compose run --rm -e SPRING_PROFILES_ACTIVE=local,initial-load data-job
 podman-compose up -d data-job
 ```
 
@@ -81,18 +84,21 @@ If you prefer to run services individually:
 podman-compose up -d postgres
 ```
 
-#### 2. Run Backend API
+#### 2. Build and run Backend API
 
-```bash
-cd backend/api
-mvn spring-boot:run
+```powershell
+mvn -f backend/pom.xml package '-DskipTests'
+Set-Location backend
+Copy-Item .env.example .env # First run only; keep any existing .env.
+java -jar api/target/api-1.0.0-SNAPSHOT.jar
 ```
 
 #### 3. Run Data Sync Job
 
-```bash
-cd backend/data-job
-mvn spring-boot:run
+From a second terminal in `backend/`:
+
+```powershell
+java -jar data-job/target/data-job-1.0.0-SNAPSHOT.jar
 ```
 
 #### 4. Run Frontend
