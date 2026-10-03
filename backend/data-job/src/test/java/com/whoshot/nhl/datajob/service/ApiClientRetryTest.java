@@ -9,12 +9,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
+import java.time.Duration;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -81,5 +86,32 @@ class ApiClientRetryTest {
                 .isInstanceOf(NonRetryableApiClientException.class)
                 .hasMessageContaining("404");
         server.verify();
+    }
+
+    @Test
+    void tooManyRequests_isRetried() {
+        server.expect(once(), requestTo(URL)).andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, "0"));
+        server.expect(once(), requestTo(URL)).andRespond(withSuccess("{\"ok\":\"yes\"}", MediaType.APPLICATION_JSON));
+
+        Map<String, String> result = apiClient.get(URL, TYPE);
+
+        assertThat(result).containsEntry("ok", "yes");
+        server.verify();
+    }
+
+    @Test
+    void parseRetryAfter_handlesSecondsDatesAndBadValues() {
+        assertThat(ApiClient.parseRetryAfter("5")).isEqualTo(Duration.ofSeconds(5));
+        assertThat(ApiClient.parseRetryAfter("3600")).isEqualTo(ApiClient.MAX_RETRY_AFTER);
+        assertThat(ApiClient.parseRetryAfter("-1")).isZero();
+        assertThat(ApiClient.parseRetryAfter(null)).isZero();
+        assertThat(ApiClient.parseRetryAfter("soon")).isZero();
+
+        String future = DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneOffset.UTC).plusSeconds(10));
+        assertThat(ApiClient.parseRetryAfter(future)).isBetween(Duration.ofSeconds(8), Duration.ofSeconds(10));
+
+        String past = DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneOffset.UTC).minusSeconds(10));
+        assertThat(ApiClient.parseRetryAfter(past)).isZero();
     }
 }

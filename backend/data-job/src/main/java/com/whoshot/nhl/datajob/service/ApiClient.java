@@ -5,6 +5,8 @@ import com.whoshot.nhl.datajob.exception.NonRetryableApiClientException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpResponse;
@@ -14,6 +16,10 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Map;
 
 /**
@@ -21,7 +27,9 @@ import java.util.Map;
  * <p>
  * Public methods retry on {@link ApiClientException} (3 attempts, 1s then 2s backoff), enabled by
  * {@link com.whoshot.nhl.datajob.config.ResilienceConfig}. 4xx responses raise
- * {@link NonRetryableApiClientException} and fail fast. Retries apply only to calls through the
+ * {@link NonRetryableApiClientException} and fail fast, except 429 Too Many Requests, which waits
+ * for {@code Retry-After} (capped at {@link #MAX_RETRY_AFTER}) and is retried. Retries apply only
+ * to calls through the
  * Spring proxy, so {@link #get(String, ParameterizedTypeReference)} delegating to the three-argument
  * overload retries once at the outer call, not twice.
  */
@@ -30,15 +38,25 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ApiClient {
 
+    /** Upper bound on how long a single {@code Retry-After} wait may block the caller. */
+    static final Duration MAX_RETRY_AFTER = Duration.ofSeconds(30);
+
     private final RestClient restClient;
 
     /**
-     * Common error handler for 4xx client errors.
+     * Common error handler for 4xx client errors. 429 is transient: it waits for
+     * {@code Retry-After} and raises a retryable {@link ApiClientException}.
      *
      * @param url request URL that produced the error
      * @param httpResponse raw HTTP response used for status extraction
      */
     private void handleClientError(String url, ClientHttpResponse httpResponse) throws IOException {
+        if (httpResponse.getStatusCode().isSameCodeAs(HttpStatus.TOO_MANY_REQUESTS)) {
+            Duration wait = parseRetryAfter(httpResponse.getHeaders().getFirst(HttpHeaders.RETRY_AFTER));
+            log.warn("Rate limited during request to {}; waiting {} before retry", url, wait);
+            sleep(wait);
+            throw new ApiClientException("Rate limited: 429 for URL: " + url);
+        }
         log.error("Client error during request to {}: {}", url, httpResponse.getStatusCode());
         throw new NonRetryableApiClientException(
                 "Client error: " + httpResponse.getStatusCode() + " for URL: " + url);
@@ -54,6 +72,52 @@ public class ApiClient {
         log.error("Server error during request to {}: {}", url, httpResponse.getStatusCode());
         throw new ApiClientException(
                 "Server error: " + httpResponse.getStatusCode() + " for URL: " + url);
+    }
+
+    /**
+     * Parses a {@code Retry-After} value (delay-seconds or HTTP-date, RFC 9110 section 10.2.3),
+     * clamped to {@code [0, MAX_RETRY_AFTER]}. Missing or malformed values yield zero, leaving the
+     * regular retry backoff as the only delay.
+     *
+     * @param value raw header value, may be null
+     * @return wait duration before the next attempt
+     */
+    static Duration parseRetryAfter(String value) {
+        if (value == null || value.isBlank()) {
+            return Duration.ZERO;
+        }
+        Duration wait;
+        try {
+            wait = Duration.ofSeconds(Long.parseLong(value.trim()));
+        } catch (NumberFormatException e) {
+            try {
+                ZonedDateTime at = ZonedDateTime.parse(value.trim(), DateTimeFormatter.RFC_1123_DATE_TIME);
+                wait = Duration.between(ZonedDateTime.now(at.getZone()), at);
+            } catch (DateTimeParseException ex) {
+                return Duration.ZERO;
+            }
+        }
+        if (wait.isNegative()) {
+            return Duration.ZERO;
+        }
+        return wait.compareTo(MAX_RETRY_AFTER) > 0 ? MAX_RETRY_AFTER : wait;
+    }
+
+    /**
+     * Blocks for the given duration; an interrupt aborts the call without further retries.
+     *
+     * @param wait how long to sleep
+     */
+    private static void sleep(Duration wait) {
+        if (wait.isZero()) {
+            return;
+        }
+        try {
+            Thread.sleep(wait);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new NonRetryableApiClientException("Interrupted while waiting for Retry-After");
+        }
     }
 
     /**
