@@ -262,6 +262,8 @@ public class DataSyncService {
                 var schedule = nhlApiService.getTeamSchedule(teamCode, seasonId);
                 gameLogWriter.writeTeamGames(teamCode, seasonId, schedule);
                 written.add(teamCode);
+            } catch (CancellationException e) {
+                throw e;
             } catch (Exception e) {
                 log.warn("Could not write team games for {} in season {}: {}", teamCode, seasonId, e.getMessage());
             }

@@ -25,6 +25,7 @@ import org.springframework.transaction.CannotCreateTransactionException;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 
 /**
  * Orchestrates a single season's historical backfill (spec User Story 1 / 3): teams, then that
@@ -240,7 +241,9 @@ public class SeasonBackfillService {
      * each one as a skip.
      */
     private static void rethrowIfDatabaseUnavailable(RuntimeException e) {
-        if (e instanceof DataAccessResourceFailureException
+        // Cancellation is a stop request, never a skipped record.
+        if (e instanceof CancellationException
+                || e instanceof DataAccessResourceFailureException
                 || e instanceof TransientDataAccessResourceException
                 || e instanceof CannotCreateTransactionException) {
             throw e;
