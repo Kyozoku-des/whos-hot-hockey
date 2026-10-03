@@ -36,6 +36,8 @@ The backend is organized as a Maven multi-module project with two independent Sp
 ## Getting Started
 
 See [database setup and Flyway migrations](DATABASE.md) for schema and connection settings.
+See [environment setup](ENVIRONMENTS.md) for local/prod profiles, `.env` files,
+rotating local logs, and console-only production logging.
 Run Compose commands from the repository root.
 
 ### 1. Start All Services (Recommended)
@@ -54,37 +56,8 @@ This starts PostgreSQL, the API server, data-job daemon, and frontend.
 
 ### Alternative: Manual Setup
 
-If you prefer to run services manually for development:
-
-**Start only PostgreSQL:**
-```bash
-podman-compose up -d postgres
-```
-
-### 2. Initial data load
-
-Run the data-job with the `initial-load` profile to perform a full sync from the NHL API:
-
-```bash
-cd data-job
-mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=initial-load"
-```
-
-### 3. Run the data-job (ongoing sync)
-
-```bash
-cd data-job
-mvn spring-boot:run
-```
-
-### 4. Run the API
-
-```bash
-cd api
-mvn spring-boot:run
-```
-
-The API will start on `http://localhost:8080`.
+Follow [local Java process setup](ENVIRONMENTS.md#local-java-processes) for
+building and running the API, ongoing sync, and initial data loads.
 
 ## API Endpoints
 
@@ -119,12 +92,10 @@ Once the API application is running, access the interactive API documentation at
 
 ## Configuration
 
-Configuration can be modified in each module's `src/main/resources/application.yml`:
-
-- `server.port`: Change the server port (default: 8080 for api)
-- `nhl.api.current-season`: Set the NHL season (format: YYYYYYYY)
-- `nhl.api.connection-timeout`: API connection timeout in milliseconds
-- `nhl.api.read-timeout`: API read timeout in milliseconds
+Shared settings live in each application's `src/main/resources/application.properties`.
+Environment overrides live in `application-local.properties` and `application-prod.properties`.
+Use the [environment guide](ENVIRONMENTS.md) for connection settings and logging.
+The current season is resolved from NHL season dates; it is not a fixed property.
 
 ## Data Flow
 
@@ -181,12 +152,8 @@ The regular data-job sync only ever tracks one season (the one it resolves as "c
 past season never loads on its own — which means player/team game-log graphs have no previous-
 season comparison line until you load one explicitly.
 
-```bash
-cd backend/data-job
-mvn spring-boot:run \
-  -Dspring-boot.run.profiles=backfill \
-  -Dspring-boot.run.arguments=--backfill.season=20242025
-```
+See [one-off load commands](ENVIRONMENTS.md#local-java-processes) for Java and Compose.
+Stop the daemon before starting a backfill.
 
 A full season takes roughly 10–25 minutes (paced to avoid upstream rate limits) and is safe to
 re-run: it upserts on each table's natural key, so re-running the same season converges without

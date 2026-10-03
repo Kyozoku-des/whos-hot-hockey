@@ -23,6 +23,9 @@ RUN mvn clean package -pl api -am -DskipTests
 FROM eclipse-temurin:25-jre-alpine
 
 WORKDIR /app
+RUN addgroup -g 1000 app && adduser -D -u 1000 -G app app \
+    && mkdir -p /app/logs && chown app:app /app/logs
+USER 1000:1000
 
 # Copy the built JAR from build stage
 COPY --from=build /app/api/target/*.jar app.jar
