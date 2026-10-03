@@ -1,5 +1,7 @@
 package com.whoshot.nhl.datajob.service;
 
+import com.whoshot.nhl.datajob.dto.nhlapi.GameDto;
+import com.whoshot.nhl.datajob.dto.nhlapi.GameState;
 import org.junit.jupiter.api.Test;
 import org.springframework.scheduling.TaskScheduler;
 
@@ -7,6 +9,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayDeque;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 
@@ -52,7 +55,7 @@ class DynamicSchedulingServiceTest {
         when(sync.getFirstGameTimeForToday()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).minusHours(3));
         when(sync.getLastGameTimeForToday()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).minusHours(1));
         Set<String> teams = Set.of("EDM", "VAN");
-        when(sync.getActiveGameTeamCodes()).thenReturn(teams, Set.of());
+        when(sync.getActiveGames()).thenReturn(List.of(game("VAN", "EDM")), List.of());
         var daemon = new DynamicSchedulingService(scheduler, sync);
         daemon.init();
         tasks.remove().run();
@@ -60,8 +63,28 @@ class DynamicSchedulingServiceTest {
         tasks.remove().run();
         verify(sync, times(2)).syncTeamsForCodes(teams);
         verify(sync, times(2)).syncPlayersForTeams(teams);
+        // Only once the game has ended, and before its players so their gameWon resolves.
+        var order = inOrder(sync);
+        order.verify(sync).syncTeamGamesForCodes(teams);
+        order.verify(sync).syncPlayersForTeams(teams);
+        verify(sync, times(1)).syncTeamGamesForCodes(any());
         verify(sync, times(2)).syncPlayers();
         assertEquals(1, tasks.size());
         daemon.stop();
+    }
+
+    private static GameDto game(String away, String home) {
+        var game = new GameDto();
+        game.setGameState(GameState.LIVE);
+        game.setAwayTeam(team(away, 1));
+        game.setHomeTeam(team(home, 2));
+        return game;
+    }
+
+    private static GameDto.TeamInfo team(String abbrev, int score) {
+        var team = new GameDto.TeamInfo();
+        team.setAbbrev(abbrev);
+        team.setScore(score);
+        return team;
     }
 }

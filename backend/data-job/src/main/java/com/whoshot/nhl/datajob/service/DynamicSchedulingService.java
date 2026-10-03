@@ -9,12 +9,18 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
+import com.whoshot.nhl.datajob.dto.nhlapi.GameDto;
+
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /** A single cancellable task chain prevents overlapping ingestion and pending game timers. */
 @Slf4j
@@ -28,6 +34,8 @@ public class DynamicSchedulingService {
     private volatile boolean stopping;
     private LocalDateTime lastGameTime;
     private Set<String> previousActiveTeams = Set.of();
+    private int polls;
+    private int failedPolls;
 
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
@@ -42,6 +50,7 @@ public class DynamicSchedulingService {
 
     private void hourlyCheck() {
         if (stopping) return;
+        Instant started = Instant.now();
         try {
             // Refresh season as well as schedule so a daemon survives season rollover.
             dataSyncService.initialize();
@@ -52,43 +61,88 @@ public class DynamicSchedulingService {
             if (firstGameTime != null) {
                 Instant start = firstGameTime.minusMinutes(5).toInstant(ZoneOffset.UTC);
                 if (start.isAfter(Instant.now().plusSeconds(3600))) {
+                    log.info("[game-sync] Hourly full sync done in {}s; first game at {} UTC, next check in 1h",
+                            secondsSince(started), firstGameTime);
                     schedule(this::hourlyCheck, Instant.now().plusSeconds(3600));
                 } else {
-                    schedule(this::syncAndReschedule, start.isBefore(Instant.now()) ? Instant.now() : start);
+                    Instant windowStart = start.isBefore(Instant.now()) ? Instant.now() : start;
+                    log.info("[game-sync] Hourly full sync done in {}s; game window opens at {} (games {} - {} UTC)",
+                            secondsSince(started), windowStart, firstGameTime, lastGameTime);
+                    polls = 0;
+                    failedPolls = 0;
+                    schedule(this::syncAndReschedule, windowStart);
                 }
                 return;
             }
+            log.info("[game-sync] Hourly full sync done in {}s; no games today, next check in 1h",
+                    secondsSince(started));
         } catch (Exception e) {
-            if (!stopping) log.error("Hourly synchronization failed; retrying next hour", e);
+            if (!stopping) log.error("[game-sync] Hourly synchronization failed; retrying next hour", e);
         }
         schedule(this::hourlyCheck, Instant.now().plusSeconds(3600));
     }
 
     private void syncAndReschedule() {
         if (stopping) return;
+        Instant started = Instant.now();
+        polls++;
         try {
-            Set<String> activeTeams = dataSyncService.getActiveGameTeamCodes();
+            List<GameDto> activeGames = dataSyncService.getActiveGames();
+            Set<String> activeTeams = activeGames.stream()
+                    .flatMap(game -> Stream.of(game.getHomeTeam().getAbbrev(), game.getAwayTeam().getAbbrev()))
+                    .collect(Collectors.toSet());
+            // Teams active last poll but not now have just finished: record their completed game.
+            Set<String> finishedTeams = new HashSet<>(previousActiveTeams);
+            finishedTeams.removeAll(activeTeams);
             Set<String> teamsToSync = new HashSet<>(previousActiveTeams);
             teamsToSync.addAll(activeTeams);
+            int teams = 0, teamGames = 0, players = 0;
             if (!teamsToSync.isEmpty()) {
-                dataSyncService.syncTeamsForCodes(teamsToSync);
-                dataSyncService.syncPlayersForTeams(teamsToSync);
+                teams = dataSyncService.syncTeamsForCodes(teamsToSync);
+                // Before players, so their game logs resolve gameWon for the finished game.
+                if (!finishedTeams.isEmpty()) {
+                    teamGames = dataSyncService.syncTeamGamesForCodes(finishedTeams);
+                }
+                players = dataSyncService.syncPlayersForTeams(teamsToSync);
             }
             // Retain participants through their first completed poll for final statistics.
             previousActiveTeams = Set.copyOf(activeTeams);
+            log.info("[game-sync] Poll #{} in {}s: games [{}]; finished {}; updated {} teams, {} team schedules, {} players",
+                    polls, secondsSince(started), describe(activeGames), finishedTeams, teams, teamGames, players);
             if (lastGameTime != null && LocalDateTime.now(ZoneOffset.UTC).isAfter(lastGameTime)
                     && activeTeams.isEmpty()) {
                 // Also covers a game that completed entirely between two polls.
+                Instant finalStarted = Instant.now();
                 dataSyncService.syncTeams();
                 dataSyncService.syncPlayers();
+                log.info("[game-sync] Game window closed after {} polls ({} failed); final full sync done in {}s, next check in 1h",
+                        polls, failedPolls, secondsSince(finalStarted));
                 schedule(this::hourlyCheck, Instant.now().plusSeconds(3600));
                 return;
             }
         } catch (Exception e) {
-            if (!stopping) log.error("Game-time synchronization failed; retrying next minute", e);
+            failedPolls++;
+            if (!stopping) log.error("[game-sync] Poll #{} failed; retrying next minute", polls, e);
         }
         // Delay from completion, avoiding catch-up loops when ingestion takes over a minute.
         schedule(this::syncAndReschedule, Instant.now().plusSeconds(60));
+    }
+
+    /** Renders games as {@code "AWAY 1-2 HOME LIVE"} for the poll summary. */
+    private static String describe(List<GameDto> games) {
+        return games.stream()
+                .map(game -> "%s %s-%s %s %s".formatted(
+                        game.getAwayTeam().getAbbrev(), score(game.getAwayTeam()),
+                        score(game.getHomeTeam()), game.getHomeTeam().getAbbrev(), game.getGameState()))
+                .collect(Collectors.joining(", "));
+    }
+
+    private static Object score(GameDto.TeamInfo team) {
+        return team.getScore() != null ? team.getScore() : "-";
+    }
+
+    private static long secondsSince(Instant started) {
+        return Duration.between(started, Instant.now()).toSeconds();
     }
 
     @EventListener(ContextClosedEvent.class)
