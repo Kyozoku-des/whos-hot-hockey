@@ -31,7 +31,7 @@ public class PlayerService {
      */
     public List<PlayerStandingsDto> getPlayerStandings(String season) {
         String resolved = seasonResolver.resolve(season);
-        return playerRepository.findByIdSeasonOrderByPointsDesc(resolved).stream()
+        return playerRepository.findByIdSeasonIdOrderByPointsDesc(resolved).stream()
                 .map(this::toStandingsDto)
                 .toList();
     }

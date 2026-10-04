@@ -149,10 +149,10 @@ public class DataSyncService {
         log.info("Starting scoped player sync for teams {} in season {}", teamCodes, seasonId);
 
         Set<Long> rosterIds = teamCodes.stream()
-                .flatMap(teamCode -> playerRepository.findByTeamCodeAndIdSeason(teamCode, seasonId).stream())
+                .flatMap(teamCode -> playerRepository.findByTeamCodeAndIdSeasonId(teamCode, seasonId).stream())
                 .map(player -> player.getId().playerId())
                 .collect(Collectors.toSet());
-        Set<Long> storedIds = playerRepository.findPlayerIdsBySeason(seasonId);
+        Set<Long> storedIds = playerRepository.findPlayerIdsBySeasonId(seasonId);
         var players = nhlApiService.getPlayerStandingsOrder(seasonId, gameType).stream()
                 .filter(standing -> rosterIds.contains(standing.getId()) || !storedIds.contains(standing.getId()))
                 .toList();

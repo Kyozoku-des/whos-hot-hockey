@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 /**
  * Entity representing the current active NHL season.
  * There should only be one active season at a time.
@@ -30,5 +32,5 @@ public class CurrentSeason {
     private Boolean isActive;
 
     @Column
-    private String lastUpdated;
+    private LocalDateTime lastUpdated;
 }

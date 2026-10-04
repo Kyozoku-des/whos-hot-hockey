@@ -64,7 +64,7 @@ public class SeasonDataWriter {
         currentSeason.setSeasonDisplayName(
                 seasonId.substring(0, 4) + "-" + seasonId.substring(4));
         currentSeason.setIsActive(true);
-        currentSeason.setLastUpdated(LocalDateTime.now().toString());
+        currentSeason.setLastUpdated(LocalDateTime.now());
         currentSeasonRepository.save(currentSeason);
         log.info("Persisted active season to current_season table: {}", seasonId);
     }
@@ -91,7 +91,7 @@ public class SeasonDataWriter {
                 continue;
             }
 
-            Team team = teamRepository.findByTeamCodeAndSeason(teamCode, seasonId)
+            Team team = teamRepository.findByTeamCodeAndSeasonId(teamCode, seasonId)
                     .orElse(new Team());
 
             applyStandings(team, standing, seasonId);
@@ -120,7 +120,7 @@ public class SeasonDataWriter {
         GameLogWriter.validatePlayerGameLogs(gameLogs);
         playerRepository.save(player);
         playerRepository.flush();
-        return gameLogWriter.writePlayerGameLogs(player.getId().playerId(), player.getId().season(),
+        return gameLogWriter.writePlayerGameLogs(player.getId().playerId(), player.getId().seasonId(),
                 gameLogs, teamGames);
     }
 
@@ -129,7 +129,7 @@ public class SeasonDataWriter {
      */
     static void applyStandings(Team team, TeamStandingsDto standing, String seasonId) {
         team.setTeamCode(standing.getTeamAbbrev().getDefaultValue());
-        team.setSeason(seasonId);
+        team.setSeasonId(seasonId);
         team.setTeamName(standing.getTeamName().getDefaultValue());
         team.setLogoUrl(standing.getTeamLogo());
         team.setGamesPlayed(standing.getGamesPlayed());
@@ -163,6 +163,6 @@ public class SeasonDataWriter {
             }
         }
 
-        team.setLastUpdated(LocalDateTime.now().toString());
+        team.setLastUpdated(LocalDateTime.now());
     }
 }

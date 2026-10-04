@@ -32,9 +32,11 @@ Flyway runs automatically before Hibernate on backend startup. Shared migrations
 live in `domain/src/main/resources/db/migration`, available to both modules.
 `V1__create_nhl_schema.sql` creates the five entity tables;
 `V2__drop_unpopulated_columns.sql` drops columns that no ingestion path ever wrote.
+`V3__consistent_season_and_timestamp_columns.sql` names the season column `season_id` in every
+table and stores every `last_updated` as a timestamp.
 Hibernate uses `ddl-auto=validate` and never creates or alters tables itself.
 
-Add future changes as `V3__description.sql`, `V4__description.sql`, etc. Never edit
+Add future changes as `V4__description.sql`, `V5__description.sql`, etc. Never edit
 a migration after it has been applied; Flyway checks its checksum. The
 `flyway_schema_history` table records applied versions. Flyway coordinates
 concurrent startup against the same database.

@@ -49,7 +49,7 @@ class SearchIndexIT {
     void buildsTeamAndPlayerEntriesForTheSeason() {
         Team team = new Team();
         team.setTeamCode("EDM");
-        team.setSeason(SEASON);
+        team.setSeasonId(SEASON);
         team.setTeamName("Edmonton Oilers");
         team.setLogoUrl("https://logo.svg");
         teamRepository.save(team);

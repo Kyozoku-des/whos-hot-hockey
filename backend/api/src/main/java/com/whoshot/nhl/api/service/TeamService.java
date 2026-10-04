@@ -36,7 +36,7 @@ public class TeamService {
      */
     public List<TeamStandingsDto> getTeamStandings(String season) {
         String resolved = seasonResolver.resolve(season);
-        return teamRepository.findBySeasonOrderByPointsDesc(resolved).stream()
+        return teamRepository.findBySeasonIdOrderByPointsDesc(resolved).stream()
                 .map(this::toStandingsDto)
                 .toList();
     }
@@ -77,10 +77,10 @@ public class TeamService {
      */
     public TeamDetailDto getTeamDetail(String teamCode, String season) {
         String resolved = seasonResolver.resolve(season);
-        Team team = teamRepository.findByTeamCodeAndSeason(teamCode, resolved)
+        Team team = teamRepository.findByTeamCodeAndSeasonId(teamCode, resolved)
                 .orElseThrow(() -> new GlobalExceptionHandler.TeamNotFoundException(teamCode));
 
-        List<RosterPlayerDto> roster = playerRepository.findByTeamCodeAndIdSeason(teamCode, resolved).stream()
+        List<RosterPlayerDto> roster = playerRepository.findByTeamCodeAndIdSeasonId(teamCode, resolved).stream()
                 .map(this::toRosterPlayerDto)
                 .toList();
 

@@ -6,10 +6,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * Entity representing an NHL team.
- * Uses composite key (teamCode + season) to support multiple seasons.
+ * Uses composite key (teamCode + seasonId) to support multiple seasons.
  */
 @Entity
 @Table(name = "teams")
@@ -24,7 +25,7 @@ public class Team {
 
     @Id
     @Column(nullable = false)
-    private String season; // Season ID (e.g., "20252026")
+    private String seasonId; // Season ID (e.g., "20252026")
 
     @Column(nullable = false)
     private String teamName; // Full team name
@@ -80,7 +81,7 @@ public class Team {
     private Double last10GamesPPG; // Points per game over last 10 games
 
     @Column
-    private String lastUpdated;
+    private LocalDateTime lastUpdated;
 
     /**
      * Composite key class for Team entity.
@@ -90,6 +91,6 @@ public class Team {
     @AllArgsConstructor
     public static class TeamKey implements Serializable {
         private String teamCode;
-        private String season;
+        private String seasonId;
     }
 }

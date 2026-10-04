@@ -71,9 +71,9 @@ class DataSyncServiceScopedSyncTest {
 
     @Test
     void scopedPlayerSync_callsApiOnlyForStoredRosterOfPlayingTeams() throws Exception {
-        when(playerRepository.findByTeamCodeAndIdSeason("EDM", SEASON)).thenReturn(List.of(player(1L)));
-        when(playerRepository.findByTeamCodeAndIdSeason("VAN", SEASON)).thenReturn(List.of(player(2L)));
-        when(playerRepository.findPlayerIdsBySeason(SEASON)).thenReturn(Set.of(1L, 2L, 3L));
+        when(playerRepository.findByTeamCodeAndIdSeasonId("EDM", SEASON)).thenReturn(List.of(player(1L)));
+        when(playerRepository.findByTeamCodeAndIdSeasonId("VAN", SEASON)).thenReturn(List.of(player(2L)));
+        when(playerRepository.findPlayerIdsBySeasonId(SEASON)).thenReturn(Set.of(1L, 2L, 3L));
         when(nhlApiService.getPlayerStandingsOrder(SEASON, 2))
                 .thenReturn(List.of(standing(1L), standing(2L), standing(3L)));
         when(nhlApiService.getPlayerInfo(1L)).thenReturn(info(1L, "EDM"));
@@ -91,7 +91,7 @@ class DataSyncServiceScopedSyncTest {
     @Test
     void scopedPlayerSync_includesPlayersWithNoStoredRowYet() throws Exception {
         // Opening night or a season debut: the player is in the standings but was never stored.
-        when(playerRepository.findPlayerIdsBySeason(SEASON)).thenReturn(Set.of(3L));
+        when(playerRepository.findPlayerIdsBySeasonId(SEASON)).thenReturn(Set.of(3L));
         when(nhlApiService.getPlayerStandingsOrder(SEASON, 2)).thenReturn(List.of(standing(1L), standing(3L)));
         when(nhlApiService.getPlayerInfo(1L)).thenReturn(info(1L, "EDM"));
         when(nhlApiService.getPlayerGameLogs(anyLong(), eq(SEASON), eq(2))).thenReturn(List.of());
@@ -103,8 +103,8 @@ class DataSyncServiceScopedSyncTest {
 
     @Test
     void scopedPlayerSync_skipsPlayerTradedAwaySinceLastFullSync() throws Exception {
-        when(playerRepository.findByTeamCodeAndIdSeason("EDM", SEASON)).thenReturn(List.of(player(1L)));
-        when(playerRepository.findPlayerIdsBySeason(SEASON)).thenReturn(Set.of(1L));
+        when(playerRepository.findByTeamCodeAndIdSeasonId("EDM", SEASON)).thenReturn(List.of(player(1L)));
+        when(playerRepository.findPlayerIdsBySeasonId(SEASON)).thenReturn(Set.of(1L));
         when(nhlApiService.getPlayerStandingsOrder(SEASON, 2)).thenReturn(List.of(standing(1L)));
         when(nhlApiService.getPlayerInfo(1L)).thenReturn(info(1L, "TOR"));
 
@@ -115,8 +115,8 @@ class DataSyncServiceScopedSyncTest {
 
     @Test
     void consecutivePolls_reuseRecentProfiles_butAlwaysRefetchGameLogs() throws Exception {
-        when(playerRepository.findByTeamCodeAndIdSeason("EDM", SEASON)).thenReturn(List.of(player(1L)));
-        when(playerRepository.findPlayerIdsBySeason(SEASON)).thenReturn(Set.of(1L));
+        when(playerRepository.findByTeamCodeAndIdSeasonId("EDM", SEASON)).thenReturn(List.of(player(1L)));
+        when(playerRepository.findPlayerIdsBySeasonId(SEASON)).thenReturn(Set.of(1L));
         when(nhlApiService.getPlayerStandingsOrder(SEASON, 2)).thenReturn(List.of(standing(1L)));
         when(nhlApiService.getPlayerInfo(1L)).thenReturn(info(1L, "EDM"));
         when(nhlApiService.getPlayerGameLogs(anyLong(), eq(SEASON), eq(2))).thenReturn(List.of());
@@ -130,8 +130,8 @@ class DataSyncServiceScopedSyncTest {
 
     @Test
     void fullSync_refreshesProfilesThatPollsReuse() throws Exception {
-        when(playerRepository.findByTeamCodeAndIdSeason("EDM", SEASON)).thenReturn(List.of(player(1L)));
-        when(playerRepository.findPlayerIdsBySeason(SEASON)).thenReturn(Set.of(1L));
+        when(playerRepository.findByTeamCodeAndIdSeasonId("EDM", SEASON)).thenReturn(List.of(player(1L)));
+        when(playerRepository.findPlayerIdsBySeasonId(SEASON)).thenReturn(Set.of(1L));
         when(nhlApiService.getPlayerStandingsOrder(SEASON, 2)).thenReturn(List.of(standing(1L)));
         when(nhlApiService.getPlayerInfo(1L)).thenReturn(info(1L, "EDM"), info(1L, "TOR"));
         when(nhlApiService.getPlayerGameLogs(anyLong(), eq(SEASON), eq(2))).thenReturn(List.of());

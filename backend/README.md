@@ -148,8 +148,8 @@ poll overwrites what the previous poll or full sync wrote instead of adding rows
 
 | Table       | Key                     | Enforced by                        |
 |-------------|-------------------------|------------------------------------|
-| `players`   | `(player_id, season)`   | primary key                        |
-| `teams`     | `(season, team_code)`   | primary key                        |
+| `players`   | `(player_id, season_id)`| primary key                        |
+| `teams`     | `(season_id, team_code)`| primary key                        |
 | `game_logs` | `(player_id, game_id)`  | preload-then-save in `GameLogWriter`|
 | `team_games`| `(team_code, game_id)`  | preload-then-save in `GameLogWriter`|
 

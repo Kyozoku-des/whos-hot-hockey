@@ -56,7 +56,7 @@ class BackfillSeasonIsolationIT extends PostgresIntegrationTestBase {
         activeSeason.setSeasonId(CURRENT_SEASON_ID);
         activeSeason.setSeasonDisplayName("2024-2025");
         activeSeason.setIsActive(true);
-        activeSeason.setLastUpdated("2025-01-01T00:00:00");
+        activeSeason.setLastUpdated(LocalDateTime.parse("2025-01-01T00:00:00"));
         currentSeasonRepository.save(activeSeason);
 
         long playersBefore = playerRepository.count();

@@ -11,65 +11,65 @@ import java.util.Set;
 
 /**
  * Repository for Player entities.
- * Note: Uses composite key (playerId + season).
+ * Note: Uses composite key (playerId + seasonId).
  */
 public interface PlayerRepository extends JpaRepository<Player, Player.PlayerId> {
 
     /**
      * Get all players for a season ordered by points descending.
      *
-     * @param season season identifier
+     * @param seasonId season identifier
      * @return players sorted by total points descending
      */
-    List<Player> findByIdSeasonOrderByPointsDesc(String season);
+    List<Player> findByIdSeasonIdOrderByPointsDesc(String seasonId);
 
     /**
      * Get players with current point streaks for a season, ordered by streak length.
      *
-     * @param season season identifier
+     * @param seasonId season identifier
      * @return players currently on a point streak
      */
-    @Query("SELECT p FROM Player p WHERE p.id.season = ?1 AND p.currentPointStreak > 0 ORDER BY p.currentPointStreak DESC")
-    List<Player> findPlayersWithPointStreaks(String season);
+    @Query("SELECT p FROM Player p WHERE p.id.seasonId = ?1 AND p.currentPointStreak > 0 ORDER BY p.currentPointStreak DESC")
+    List<Player> findPlayersWithPointStreaks(String seasonId);
 
     /**
      * Get players ordered by last N games PPG descending.
      *
-     * @param season season identifier
+     * @param seasonId season identifier
      * @return players sorted by recent points-per-game average
      */
-    @Query("SELECT p FROM Player p WHERE p.id.season = ?1 AND p.pointsPerLastNGames IS NOT NULL ORDER BY p.pointsPerLastNGames DESC")
-    List<Player> findOrderedByPointsPerLastNGames(String season);
+    @Query("SELECT p FROM Player p WHERE p.id.seasonId = ?1 AND p.pointsPerLastNGames IS NOT NULL ORDER BY p.pointsPerLastNGames DESC")
+    List<Player> findOrderedByPointsPerLastNGames(String seasonId);
 
     /**
      * Find players by team code for a specific season.
      *
      * @param teamCode team abbreviation code
-     * @param season season identifier
+     * @param seasonId season identifier
      * @return players on the specified team during the specified season
      */
-    List<Player> findByTeamCodeAndIdSeason(String teamCode, String season);
+    List<Player> findByTeamCodeAndIdSeasonId(String teamCode, String seasonId);
 
     /**
      * Get the IDs of every player stored for a season.
      *
-     * @param season season identifier
+     * @param seasonId season identifier
      * @return stored player IDs for the season
      */
-    @Query("SELECT p.id.playerId FROM Player p WHERE p.id.season = :season")
-    Set<Long> findPlayerIdsBySeason(@Param("season") String season);
+    @Query("SELECT p.id.playerId FROM Player p WHERE p.id.seasonId = :seasonId")
+    Set<Long> findPlayerIdsBySeasonId(@Param("seasonId") String seasonId);
 
     /**
      * Get all players for search functionality (lightweight data).
      * Returns players ordered by last name, first name.
      *
-     * @param season season identifier used to scope search results
+     * @param seasonId season identifier used to scope search results
      * @return lightweight search records for players
      */
     @Query("SELECT new com.whoshot.nhl.domain.entity.SearchResult('PLAYER', " +
            "CAST(p.id.playerId AS string), CONCAT(p.firstName, ' ', p.lastName), " +
            "p.positionCode, p.teamCode, p.headshotUrl) " +
-           "FROM Player p WHERE p.id.season = :season " +
+           "FROM Player p WHERE p.id.seasonId = :seasonId " +
            "ORDER BY p.lastName, p.firstName")
-    List<SearchResult> findAllForSearch(@Param("season") String season);
+    List<SearchResult> findAllForSearch(@Param("seasonId") String seasonId);
 }

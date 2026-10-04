@@ -21,7 +21,7 @@ public class Player {
     @EmbeddedId
     @AttributeOverrides({
             @AttributeOverride(name = "playerId", column = @Column(name = "player_id", nullable = false)),
-            @AttributeOverride(name = "season",   column = @Column(name = "season",    nullable = false, length = 8))
+            @AttributeOverride(name = "seasonId", column = @Column(name = "season_id", nullable = false, length = 8))
     })
     private PlayerId id;
 
@@ -51,11 +51,11 @@ public class Player {
      * Composite primary key for a player row scoped by season.
      *
      * @param playerId NHL player identifier
-     * @param season season identifier in {@code YYYYYYYY} format
+     * @param seasonId season identifier in {@code YYYYYYYY} format
      */
     @Embeddable
     public record PlayerId(
             Long playerId,
-            String season
+            String seasonId
     ) implements Serializable {}
 }
