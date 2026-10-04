@@ -37,6 +37,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DataSyncService {
 
+    private static final int REGULAR_SEASON_GAME_TYPE = 2;
+
     private final NhlApiService nhlApiService;
     private final PlayerRepository playerRepository;
     private final PlayerFactory playerFactory;
@@ -57,7 +59,6 @@ public class DataSyncService {
     private LocalDateTime firstGameTimeForToday;
     @Getter
     private LocalDateTime lastGameTimeForToday;
-    private final int gameType = 2; // Regular season
 
     /**
      * Refreshes the active season and daily game window for live sync only.
@@ -127,7 +128,7 @@ public class DataSyncService {
         String seasonId = season.getId();
         log.info("Starting player sync for season {}", seasonId);
 
-        var players = nhlApiService.getPlayerStandingsOrder(seasonId, gameType);
+        var players = nhlApiService.getPlayerStandingsOrder(seasonId, REGULAR_SEASON_GAME_TYPE);
         SyncResult result = syncPlayers(seasonId, players, null);
         log.info("Player sync completed: {}", result);
         return result;
@@ -145,6 +146,9 @@ public class DataSyncService {
      */
     public int syncPlayersForTeams(Set<String> teamCodes) {
         checkInterrupted();
+        if (teamCodes.isEmpty()) {
+            return 0;
+        }
         String seasonId = season.getId();
         log.info("Starting scoped player sync for teams {} in season {}", teamCodes, seasonId);
 
@@ -153,7 +157,7 @@ public class DataSyncService {
                 .map(player -> player.getId().playerId())
                 .collect(Collectors.toSet());
         Set<Long> storedIds = playerRepository.findPlayerIdsBySeasonId(seasonId);
-        var players = nhlApiService.getPlayerStandingsOrder(seasonId, gameType).stream()
+        var players = nhlApiService.getPlayerStandingsOrder(seasonId, REGULAR_SEASON_GAME_TYPE).stream()
                 .filter(standing -> rosterIds.contains(standing.getId()) || !storedIds.contains(standing.getId()))
                 .toList();
         SyncResult result = syncPlayers(seasonId, players, teamCodes);
@@ -243,7 +247,7 @@ public class DataSyncService {
             throw new PlayerStatisticsException("Player ID mismatch between standings and player info API");
         }
 
-        var gameLogs = nhlApiService.getPlayerGameLogs(playerId, seasonId, gameType);
+        var gameLogs = nhlApiService.getPlayerGameLogs(playerId, seasonId, REGULAR_SEASON_GAME_TYPE);
         GameLogWriter.validatePlayerGameLogs(gameLogs);
         // Recalculates statistics and checks them against the standings totals.
         Player player = playerFactory.createFromApiData(playerInfo, playerStanding, gameLogs, seasonId);
@@ -294,6 +298,9 @@ public class DataSyncService {
      */
     public Set<String> syncTeamGamesForCodes(Set<String> teamCodes) {
         checkInterrupted();
+        if (teamCodes.isEmpty()) {
+            return Set.of();
+        }
         return writeTeamGames(season.getId(), teamCodes.stream().sorted().toList());
     }
 
@@ -334,6 +341,9 @@ public class DataSyncService {
      */
     public int syncTeamsForCodes(Set<String> teamCodes) {
         checkInterrupted();
+        if (teamCodes.isEmpty()) {
+            return 0;
+        }
         String seasonId = season.getId();
         log.info("Starting scoped team sync for teams {} in season {}", teamCodes, seasonId);
 

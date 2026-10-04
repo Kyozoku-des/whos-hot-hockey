@@ -49,7 +49,8 @@ public class NhlApiService {
     }
 
     /**
-     * Used only to sort our calculated player stats in the correct order when presenting player standings.
+     * Discovers season participants and supplies point totals for game-log validation.
+     * The API application sorts persisted standings independently.
      *
      * @param seasonId season identifier in {@code YYYYYYYY} format
      * @param gameType NHL game type (2 for regular season, 3 for playoffs)

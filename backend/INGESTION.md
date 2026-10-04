@@ -120,6 +120,10 @@ same upstream would need a shared limiter; an in-memory one is not enough.
 
 ## Reducing work
 
+- **Team scope.** Game-time polls fetch standings once for all selected teams and fetch
+  season schedules only for finished teams (including failed writes awaiting retry).
+  Empty team selections make no requests. Hourly and final full syncs intentionally
+  re-read every schedule to repair missed games and upstream result corrections.
 - **Profile reuse.** Game-time polls reuse a player's profile for up to the cache TTL. Without it,
   every poll re-requests the profile just to confirm the player is still active and on a playing
   team. Game logs and standings are always fetched fresh. Every full sync (at least hourly)

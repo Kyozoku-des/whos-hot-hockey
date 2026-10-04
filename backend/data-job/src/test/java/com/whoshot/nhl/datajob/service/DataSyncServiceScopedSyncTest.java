@@ -70,6 +70,19 @@ class DataSyncServiceScopedSyncTest {
     }
 
     @Test
+    void emptyTeamSelectionsDoNotFetchOrWriteAnything() {
+        clearInvocations(nhlApiService, playerRepository, teamRepository, currentSeasonRepository,
+                teamGameRepository, gameLogWriter, playerFactory);
+
+        assertEquals(0, service.syncPlayersForTeams(Set.of()));
+        assertEquals(0, service.syncTeamsForCodes(Set.of()));
+        assertEquals(Set.of(), service.syncTeamGamesForCodes(Set.of()));
+
+        verifyNoInteractions(nhlApiService, playerRepository, teamRepository, currentSeasonRepository,
+                teamGameRepository, gameLogWriter, playerFactory);
+    }
+
+    @Test
     void scopedPlayerSync_callsApiOnlyForStoredRosterOfPlayingTeams() throws Exception {
         when(playerRepository.findByTeamCodeAndIdSeasonId("EDM", SEASON)).thenReturn(List.of(player(1L)));
         when(playerRepository.findByTeamCodeAndIdSeasonId("VAN", SEASON)).thenReturn(List.of(player(2L)));

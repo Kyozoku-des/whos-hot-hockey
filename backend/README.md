@@ -59,36 +59,14 @@ This starts PostgreSQL, the API server, data-job daemon, and frontend.
 Follow [local Java process setup](ENVIRONMENTS.md#local-java-processes) for
 building and running the API, ongoing sync, and initial data loads.
 
-## API Endpoints
-
-### Team Endpoints
-
-- `GET /api/teams/standings?season=` - Get team standings ordered by points
-- `GET /api/teams/win-streaks?season=` - Get teams with active win streaks
-- `GET /api/teams/loss-streaks?season=` - Get teams with active loss streaks
-- `GET /api/teams/{teamCode}?season=` - Get specific team details with roster
-- `GET /api/teams/{teamCode}/game-log?season=` - Get team game results
-
-### Player Endpoints
-
-- `GET /api/players/standings?season=` - Get player standings ordered by points
-- `GET /api/players/point-streaks?season=` - Get players with active point streaks
-- `GET /api/players/hot?season=` - Get "hot" players based on recent performance
-- `GET /api/players/{playerId}?season=` - Get specific player details
-- `GET /api/players/{playerId}/game-log?season=` - Get player game-by-game log
-
-### Search Endpoints
-
-- `GET /api/search/all?season=` - Get all players and teams for search/autocomplete
-
-See [API_REFERENCE.md](API_REFERENCE.md) for full endpoint documentation with example responses.
-
 ## API Documentation
+
+See [API_REFERENCE.md](API_REFERENCE.md) for endpoints, season parameters, and example responses.
 
 Once the API application is running, access the interactive API documentation at:
 
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
-- OpenAPI JSON: `http://localhost:8080/api-docs`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
 ## Configuration
 
@@ -188,7 +166,7 @@ The "hot rating" for players (`pointsPerLastNGames`) is the points-per-game aver
 
 ### Run tests
 
-```bash
+```powershell
 mvn test
 ```
 
@@ -197,11 +175,14 @@ disposable PostgreSQL container (Testcontainers 2.x, managed by Spring Boot), so
 running Docker-API-compatible engine. No test calls the NHL API or touches your local database. With Podman on Windows,
 point Testcontainers at the machine's named pipe first:
 
-```bash
-export DOCKER_HOST="npipe:////./pipe/podman-machine-default"
-export TESTCONTAINERS_RYUK_DISABLED=true   # Ryuk's reaper container doesn't play well with Podman
+```powershell
+$env:DOCKER_HOST = 'npipe:////./pipe/podman-machine-default'
+$env:TESTCONTAINERS_RYUK_DISABLED = 'true' # Ryuk can conflict with Podman
 mvn test
 ```
+
+Endpoint tests use HTTP stubs, and schema tests use disposable PostgreSQL. The suite
+does not require a running application database or call the public NHL API.
 
 ### Build the project
 

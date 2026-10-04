@@ -27,15 +27,13 @@ public class StatisticsCalculationService {
             PlayerStandingDto playerStanding,
             List<PlayerGameLogDto> playerGameLogs
     ) throws PlayerStatisticsException {
-        int gamesPlayed = 0;
+        int gamesPlayed = playerGameLogs.size();
         int points = 0;
         int goals = 0;
         int assists = 0;
         int plusMinus = 0;
-        double pointsPerGame;
 
         for (PlayerGameLogDto gameLog : playerGameLogs) {
-            gamesPlayed++;
             points += gameLog.getPoints() != null ? gameLog.getPoints() : 0;
             goals += gameLog.getGoals() != null ? gameLog.getGoals() : 0;
             assists += gameLog.getAssists() != null ? gameLog.getAssists() : 0;
@@ -69,7 +67,7 @@ public class StatisticsCalculationService {
             throw new PlayerStatisticsException(errorMessage);
         }
 
-        pointsPerGame = gamesPlayed > 0 ? (double) points / gamesPlayed : 0.0;
+        double pointsPerGame = gamesPlayed > 0 ? (double) points / gamesPlayed : 0.0;
 
         // Calculate PPG for last N games (most recent games are first in the list)
         int lastN = Math.min(10, playerGameLogs.size());

@@ -50,7 +50,7 @@ public class PlayerService {
     }
 
     /**
-     * Get players flagged as hot for a season.
+     * Get players ranked by recent points per game for a season.
      *
      * @param season season identifier, or null to auto-detect active season
      * @return hot players sorted by recent performance
