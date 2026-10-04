@@ -9,7 +9,6 @@ import com.whoshot.nhl.domain.entity.TeamGame;
 import com.whoshot.nhl.domain.repository.GameLogRepository;
 import com.whoshot.nhl.domain.repository.TeamGameRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +31,6 @@ import java.util.function.Function;
  * them together, rather than looking up every game separately (issue #29). A game id encodes its
  * season, so the season-scoped preload sees every row the per-game lookup would have found.
  */
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GameLogWriter {

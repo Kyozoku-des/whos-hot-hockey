@@ -4,7 +4,6 @@ import com.whoshot.nhl.datajob.dto.nhlapi.PlayerGameLogDto;
 import com.whoshot.nhl.datajob.dto.nhlapi.PlayerStandingDto;
 import com.whoshot.nhl.datajob.exception.PlayerStatisticsException;
 import com.whoshot.nhl.datajob.model.PlayerStatistics;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -13,7 +12,6 @@ import java.util.List;
 /**
  * Service that computes derived player statistics from raw game-log data.
  */
-@Slf4j
 @Service
 public class StatisticsCalculationService {
 

@@ -13,5 +13,4 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SeasonsResponseDto {
     private List<SeasonDto> data;
-    private Integer total;
 }

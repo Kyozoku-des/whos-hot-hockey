@@ -12,6 +12,5 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PlayerGameLogsResponse {
 
-    private Integer seasonId;
     private List<PlayerGameLogDto> gameLog;
 }

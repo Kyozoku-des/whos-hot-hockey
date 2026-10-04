@@ -74,7 +74,6 @@ public class NhlApiService {
     }
 
     /**
-     * TODO: Check if this data is updated during games.
      * Get game-by-game logs for a specific player.
      * Returns detailed stats for each game the player has played.
      *
@@ -134,20 +133,6 @@ public class NhlApiService {
         StandingsResponseDto response = apiClient.get(url, new ParameterizedTypeReference<>() {
         });
         return response.getStandings();
-    }
-
-    /**
-     * Get player statistics for an ongoing game.
-     *
-     * @param gameId The game ID
-     * @return BoxScore data containing player statistics
-     */
-    public BoxScoreDto getGameBoxScore(Long gameId) {
-        String url = String.format("%s/v1/gamecenter/%d/boxscore", baseUrl, gameId);
-        log.debug("Fetching game boxscore for game {} from: {}", gameId, url);
-
-        return apiClient.get(url, new ParameterizedTypeReference<>() {
-        });
     }
 
     /**

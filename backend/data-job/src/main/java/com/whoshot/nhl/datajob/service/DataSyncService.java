@@ -357,12 +357,4 @@ public class DataSyncService {
             throw new CancellationException("Synchronization was stopped");
         }
     }
-
-    /** Checks for live, critical, or pre-game entries in the current schedule. */
-    public boolean isAnyGameActive() {
-        List<GameDto> games = nhlApiService.getLeagueSchedule();
-
-        return games.stream()
-                .anyMatch(game -> (game.getGameState() == GameState.LIVE || game.getGameState() == GameState.CRIT || game.getGameState() == GameState.PRE));
-    }
 }

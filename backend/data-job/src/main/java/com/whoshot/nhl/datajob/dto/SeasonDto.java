@@ -1,6 +1,6 @@
 package com.whoshot.nhl.datajob.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -9,13 +9,9 @@ import java.time.LocalDateTime;
  * DTO describing a single NHL season returned by the seasons endpoint.
  */
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SeasonDto {
-    @JsonProperty("id")
     private String id;
-    @JsonProperty("startDate")
     private LocalDateTime startDate;
-    @JsonProperty("regularSeasonEndDate")
     private LocalDateTime regularSeasonEndDate;
-    @JsonProperty("numberOfGames")
-    private int numberOfGames;
 }

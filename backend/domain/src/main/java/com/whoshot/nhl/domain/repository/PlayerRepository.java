@@ -35,15 +35,6 @@ public interface PlayerRepository extends JpaRepository<Player, Player.PlayerId>
     List<Player> findPlayersWithPointStreaks(String season);
 
     /**
-     * Get "hot" players for a season ordered by hot flag.
-     *
-     * @param season season identifier
-     * @return players flagged as hot for the season
-     */
-    @Query("SELECT p FROM Player p WHERE p.id.season = ?1 AND p.hot = true ORDER BY p.pointsPerLastNGames DESC")
-    List<Player> findHotPlayers(String season);
-
-    /**
      * Get players ordered by last N games PPG descending.
      *
      * @param season season identifier
