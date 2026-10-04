@@ -41,7 +41,7 @@ public interface PlayerRepository extends JpaRepository<Player, Player.PlayerId>
      * @return players sorted by recent points-per-game average
      */
     @Query("SELECT p FROM Player p WHERE p.id.season = ?1 AND p.pointsPerLastNGames IS NOT NULL ORDER BY p.pointsPerLastNGames DESC")
-    List<Player> findByLast10GamesPPG(String season);
+    List<Player> findOrderedByPointsPerLastNGames(String season);
 
     /**
      * Find players by team code for a specific season.
@@ -70,7 +70,7 @@ public interface PlayerRepository extends JpaRepository<Player, Player.PlayerId>
      */
     @Query("SELECT new com.whoshot.nhl.domain.entity.SearchResult('PLAYER', " +
            "CAST(p.id.playerId AS string), CONCAT(p.firstName, ' ', p.lastName), " +
-           "p.positionCode, p.teamCode, p.headshotUrl, p.id.season) " +
+           "p.positionCode, p.teamCode, p.headshotUrl) " +
            "FROM Player p WHERE p.id.season = :season " +
            "ORDER BY p.lastName, p.firstName")
     List<SearchResult> findAllForSearch(@Param("season") String season);

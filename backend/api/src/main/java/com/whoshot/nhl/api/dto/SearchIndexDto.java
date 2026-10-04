@@ -1,10 +1,5 @@
 package com.whoshot.nhl.api.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import java.util.List;
 
 /**
@@ -14,14 +9,13 @@ import java.util.List;
  * {@link SearchResultDto}: the index holds ~800 rows that all share the same
  * season, and clients cache the whole index, so they need the season as a
  * single value to know when their cached copy has gone stale.
+ *
+ * @param season  season ID the whole index belongs to
+ * @param count   number of entries in {@code results}
+ * @param results every team followed by every player
  */
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class SearchIndexDto {
-
-    private String season; // season ID the whole index belongs to
-    private int count; // number of entries in results
-    private List<SearchResultDto> results;
-}
+public record SearchIndexDto(
+        String season,
+        int count,
+        List<SearchResultDto> results
+) {}

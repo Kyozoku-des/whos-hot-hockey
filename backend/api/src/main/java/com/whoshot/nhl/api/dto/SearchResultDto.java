@@ -1,24 +1,20 @@
 package com.whoshot.nhl.api.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 /**
- * DTO for search results.
- * Used to return lightweight search data for autocomplete functionality.
+ * DTO for one autocomplete search entry.
+ *
+ * @param type          {@code "PLAYER"} or {@code "TEAM"}
+ * @param id            player ID (as a string) or team code
+ * @param name          player full name or team name
+ * @param secondaryInfo player position or team code
+ * @param teamCode      the player's team code, or the team's own code
+ * @param imageUrl      headshot or logo
  */
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class SearchResultDto {
-
-    private String type; // "PLAYER" or "TEAM"
-    private String id; // playerId (as string) or teamCode
-    private String name; // player full name or team name
-    private String secondaryInfo; // player position or team abbreviation
-    private String teamCode; // player's team code (null for teams)
-    private String imageUrl; // headshot or logo
-}
+public record SearchResultDto(
+        String type,
+        String id,
+        String name,
+        String secondaryInfo,
+        String teamCode,
+        String imageUrl
+) {}

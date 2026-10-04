@@ -61,7 +61,7 @@ public interface TeamRepository extends JpaRepository<Team, Team.TeamKey> {
      */
     @Query("SELECT new com.whoshot.nhl.domain.entity.SearchResult('TEAM', " +
            "t.teamCode, t.teamName, " +
-           "t.teamCode, t.teamCode, t.logoUrl, t.season) " +
+           "t.teamCode, t.teamCode, t.logoUrl) " +
            "FROM Team t WHERE t.season = :season " +
            "ORDER BY t.teamName")
     List<SearchResult> findAllForSearch(@Param("season") String season);

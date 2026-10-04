@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Testcontainers
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({PlayerService.class, TeamService.class})
+@Import({PlayerService.class, TeamService.class, SeasonResolver.class})
 class SeasonScopedGameLogIT {
 
     private static final String PAST_SEASON = "20242025";

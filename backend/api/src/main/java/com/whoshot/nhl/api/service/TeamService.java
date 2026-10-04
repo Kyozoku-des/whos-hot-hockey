@@ -5,11 +5,9 @@ import com.whoshot.nhl.api.dto.RosterPlayerDto;
 import com.whoshot.nhl.api.dto.TeamDetailDto;
 import com.whoshot.nhl.api.dto.TeamGameLogDto;
 import com.whoshot.nhl.api.dto.TeamStandingsDto;
-import com.whoshot.nhl.domain.entity.CurrentSeason;
 import com.whoshot.nhl.domain.entity.Player;
 import com.whoshot.nhl.domain.entity.Team;
 import com.whoshot.nhl.domain.entity.TeamGame;
-import com.whoshot.nhl.domain.repository.CurrentSeasonRepository;
 import com.whoshot.nhl.domain.repository.PlayerRepository;
 import com.whoshot.nhl.domain.repository.TeamGameRepository;
 import com.whoshot.nhl.domain.repository.TeamRepository;
@@ -26,7 +24,7 @@ import java.util.List;
 public class TeamService {
 
     private final TeamRepository teamRepository;
-    private final CurrentSeasonRepository currentSeasonRepository;
+    private final SeasonResolver seasonResolver;
     private final TeamGameRepository teamGameRepository;
     private final PlayerRepository playerRepository;
 
@@ -37,7 +35,7 @@ public class TeamService {
      * @return team standings sorted by points
      */
     public List<TeamStandingsDto> getTeamStandings(String season) {
-        String resolved = resolveSeason(season);
+        String resolved = seasonResolver.resolve(season);
         return teamRepository.findBySeasonOrderByPointsDesc(resolved).stream()
                 .map(this::toStandingsDto)
                 .toList();
@@ -50,7 +48,7 @@ public class TeamService {
      * @return teams with active win streaks
      */
     public List<TeamStandingsDto> getTeamWinStreaks(String season) {
-        String resolved = resolveSeason(season);
+        String resolved = seasonResolver.resolve(season);
         return teamRepository.findTeamsWithWinStreaks(resolved).stream()
                 .map(this::toStandingsDto)
                 .toList();
@@ -63,7 +61,7 @@ public class TeamService {
      * @return teams with active loss streaks
      */
     public List<TeamStandingsDto> getTeamLossStreaks(String season) {
-        String resolved = resolveSeason(season);
+        String resolved = seasonResolver.resolve(season);
         return teamRepository.findTeamsWithLossStreaks(resolved).stream()
                 .map(this::toStandingsDto)
                 .toList();
@@ -78,7 +76,7 @@ public class TeamService {
      * @throws GlobalExceptionHandler.TeamNotFoundException if team not found
      */
     public TeamDetailDto getTeamDetail(String teamCode, String season) {
-        String resolved = resolveSeason(season);
+        String resolved = seasonResolver.resolve(season);
         Team team = teamRepository.findByTeamCodeAndSeason(teamCode, resolved)
                 .orElseThrow(() -> new GlobalExceptionHandler.TeamNotFoundException(teamCode));
 
@@ -97,19 +95,10 @@ public class TeamService {
      * @return game log entries ordered by game date descending
      */
     public List<TeamGameLogDto> getTeamGameLog(String teamCode, String season) {
-        String resolved = resolveSeason(season);
+        String resolved = seasonResolver.resolve(season);
         return teamGameRepository.findByTeamCodeAndSeasonIdOrderByGameDateDesc(teamCode, resolved).stream()
                 .map(this::toGameLogDto)
                 .toList();
-    }
-
-    private String resolveSeason(String season) {
-        if (season != null && !season.isBlank()) {
-            return season;
-        }
-        return currentSeasonRepository.findByIsActiveTrue()
-                .map(CurrentSeason::getSeasonId)
-                .orElse(null);
     }
 
     private TeamStandingsDto toStandingsDto(Team team) {

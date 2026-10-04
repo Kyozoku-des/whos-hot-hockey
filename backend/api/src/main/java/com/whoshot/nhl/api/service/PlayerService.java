@@ -4,9 +4,7 @@ import com.whoshot.nhl.api.config.GlobalExceptionHandler;
 import com.whoshot.nhl.api.dto.PlayerDetailDto;
 import com.whoshot.nhl.api.dto.PlayerGameLogDto;
 import com.whoshot.nhl.api.dto.PlayerStandingsDto;
-import com.whoshot.nhl.domain.entity.CurrentSeason;
 import com.whoshot.nhl.domain.entity.Player;
-import com.whoshot.nhl.domain.repository.CurrentSeasonRepository;
 import com.whoshot.nhl.domain.repository.GameLogRepository;
 import com.whoshot.nhl.domain.repository.PlayerRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +21,7 @@ public class PlayerService {
 
     private final PlayerRepository playerRepository;
     private final GameLogRepository gameLogRepository;
-    private final CurrentSeasonRepository currentSeasonRepository;
+    private final SeasonResolver seasonResolver;
 
     /**
      * Get all players for a season ordered by points descending.
@@ -32,7 +30,7 @@ public class PlayerService {
      * @return player standings sorted by total points
      */
     public List<PlayerStandingsDto> getPlayerStandings(String season) {
-        String resolved = resolveSeason(season);
+        String resolved = seasonResolver.resolve(season);
         return playerRepository.findByIdSeasonOrderByPointsDesc(resolved).stream()
                 .map(this::toStandingsDto)
                 .toList();
@@ -45,7 +43,7 @@ public class PlayerService {
      * @return players with active point streaks
      */
     public List<PlayerStandingsDto> getPlayerStreaks(String season) {
-        String resolved = resolveSeason(season);
+        String resolved = seasonResolver.resolve(season);
         return playerRepository.findPlayersWithPointStreaks(resolved).stream()
                 .map(this::toStandingsDto)
                 .toList();
@@ -58,8 +56,8 @@ public class PlayerService {
      * @return hot players sorted by recent performance
      */
     public List<PlayerStandingsDto> getHotPlayers(String season) {
-        String resolved = resolveSeason(season);
-        return playerRepository.findByLast10GamesPPG(resolved).stream()
+        String resolved = seasonResolver.resolve(season);
+        return playerRepository.findOrderedByPointsPerLastNGames(resolved).stream()
                 .map(this::toStandingsDto)
                 .toList();
     }
@@ -73,7 +71,7 @@ public class PlayerService {
      * @throws GlobalExceptionHandler.PlayerNotFoundException if the player is not found
      */
     public PlayerDetailDto getPlayerDetail(long playerId, String season) {
-        String resolved = resolveSeason(season);
+        String resolved = seasonResolver.resolve(season);
         Player player = playerRepository.findById(new Player.PlayerId(playerId, resolved))
                 .orElseThrow(() -> new GlobalExceptionHandler.PlayerNotFoundException(playerId));
         return toDetailDto(player);
@@ -87,7 +85,7 @@ public class PlayerService {
      * @return game logs in chronological order by game number
      */
     public List<PlayerGameLogDto> getPlayerGameLog(long playerId, String season) {
-        String resolved = resolveSeason(season);
+        String resolved = seasonResolver.resolve(season);
         return gameLogRepository.findByPlayerIdAndSeasonIdOrderByGameNumberAsc(playerId, resolved).stream()
                 .map(gl -> new PlayerGameLogDto(
                         gl.getGameId(),
@@ -126,15 +124,6 @@ public class PlayerService {
                 player.getCurrentPointlessStreak(),
                 player.getPointsPerLastNGames()
         );
-    }
-
-    private String resolveSeason(String season) {
-        if (season != null && !season.isBlank()) {
-            return season;
-        }
-        return currentSeasonRepository.findByIsActiveTrue()
-                .map(CurrentSeason::getSeasonId)
-                .orElse(null);
     }
 
     private PlayerStandingsDto toStandingsDto(Player player) {
