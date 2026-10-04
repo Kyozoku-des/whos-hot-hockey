@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 public class DynamicSchedulingService {
     private final TaskScheduler taskScheduler;
     private final DataSyncService dataSyncService;
+    private final BackfillLockService seasonLock;
     private ScheduledFuture<?> syncTask;
     private volatile boolean stopping;
     private LocalDateTime lastGameTime;
@@ -55,8 +56,13 @@ public class DynamicSchedulingService {
         try {
             // Refresh season as well as schedule so a daemon survives season rollover.
             dataSyncService.initialize();
-            dataSyncService.syncTeams();
-            dataSyncService.syncPlayers();
+            String seasonId = dataSyncService.getSeasonId();
+            if (!seasonLock.runExclusively(seasonId, () -> {
+                dataSyncService.syncTeams();
+                dataSyncService.syncPlayers();
+            })) {
+                log.warn("[game-sync] Season {} is being written by another job; skipping this full sync", seasonId);
+            }
             LocalDateTime firstGameTime = dataSyncService.getFirstGameTimeForToday();
             lastGameTime = dataSyncService.getLastGameTimeForToday();
             if (firstGameTime != null) {
@@ -100,29 +106,38 @@ public class DynamicSchedulingService {
             Set<String> teamsToSync = new HashSet<>(previousActiveTeams);
             teamsToSync.addAll(activeTeams);
             teamsToSync.addAll(pendingTeamGames);
-            int teams = 0, teamGames = 0, players = 0;
-            if (!teamsToSync.isEmpty()) {
-                teams = dataSyncService.syncTeamsForCodes(teamsToSync);
+            int[] counts = new int[3]; // teams, team schedules, players
+            if (!teamsToSync.isEmpty() && !seasonLock.runExclusively(dataSyncService.getSeasonId(), () -> {
+                counts[0] = dataSyncService.syncTeamsForCodes(teamsToSync);
                 // Before players, so their game logs resolve gameWon for the finished game.
                 if (!pendingTeamGames.isEmpty()) {
                     Set<String> written = dataSyncService.syncTeamGamesForCodes(Set.copyOf(pendingTeamGames));
-                    teamGames = written.size();
+                    counts[1] = written.size();
                     pendingTeamGames.removeAll(written);
                 }
-                players = dataSyncService.syncPlayersForTeams(teamsToSync);
+                counts[2] = dataSyncService.syncPlayersForTeams(teamsToSync);
+            })) {
+                log.warn("[game-sync] Poll #{}: season is being written by another job; retrying next minute", polls);
+                schedule(this::syncAndReschedule, Instant.now().plusSeconds(60));
+                return;
             }
             // Retain participants through their first completed poll for final statistics.
             previousActiveTeams = Set.copyOf(activeTeams);
             log.info("[game-sync] Poll #{} in {}s: games [{}]; finished {}; updated {} teams, {} team schedules, {} players",
-                    polls, secondsSince(started), describe(activeGames), finishedTeams, teams, teamGames, players);
+                    polls, secondsSince(started), describe(activeGames), finishedTeams, counts[0], counts[1], counts[2]);
             if (lastGameTime != null && LocalDateTime.now(ZoneOffset.UTC).isAfter(lastGameTime)
                     && activeTeams.isEmpty()) {
                 // Also covers a game that completed entirely between two polls.
                 Instant finalStarted = Instant.now();
-                dataSyncService.syncTeams();
-                dataSyncService.syncPlayers();
-                // The full sync rewrites every team's completed games.
-                pendingTeamGames.clear();
+                if (seasonLock.runExclusively(dataSyncService.getSeasonId(), () -> {
+                    dataSyncService.syncTeams();
+                    dataSyncService.syncPlayers();
+                })) {
+                    // The full sync rewrites every team's completed games.
+                    pendingTeamGames.clear();
+                } else {
+                    log.warn("[game-sync] Season is being written by another job; the next hourly sync catches up");
+                }
                 log.info("[game-sync] Game window closed after {} polls ({} failed); final full sync done in {}s, next check in 1h",
                         polls, failedPolls, secondsSince(finalStarted));
                 schedule(this::hourlyCheck, Instant.now().plusSeconds(3600));

@@ -8,7 +8,6 @@ import com.whoshot.nhl.datajob.factory.PlayerFactory;
 import com.whoshot.nhl.datajob.model.BackfillRequest;
 import com.whoshot.nhl.datajob.model.BackfillSummary;
 import com.whoshot.nhl.domain.entity.Player;
-import com.whoshot.nhl.domain.repository.PlayerRepository;
 import com.whoshot.nhl.domain.repository.TeamGameRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,9 +39,7 @@ class SeasonBackfillServiceTest {
     @Mock
     private NhlApiService nhlApiService;
     @Mock
-    private DataSyncService dataSyncService;
-    @Mock
-    private PlayerRepository playerRepository;
+    private SeasonDataWriter seasonDataWriter;
     @Mock
     private PlayerFactory playerFactory;
     @Mock
@@ -71,13 +68,13 @@ class SeasonBackfillServiceTest {
 
     @Test
     void loadOrder_isTeams_thenTeamGames_thenPlayers_thenPlayerGameLogs() throws Exception {
-        service = new SeasonBackfillService(nhlApiService, dataSyncService, playerRepository,
-                playerFactory, gameLogWriter, teamGameRepository, backfillLockService, 0);
+        service = new SeasonBackfillService(nhlApiService, seasonDataWriter,
+                playerFactory, gameLogWriter, teamGameRepository, backfillLockService, FetchPipeline.sequential());
 
         when(backfillLockService.tryLock(anyString())).thenReturn(true);
         List<TeamStandingsDto> standings = List.of(teamStanding("COL"));
         when(nhlApiService.getTeamStandings("2024-04-17")).thenReturn(standings);
-        when(dataSyncService.persistStandings(eq("20232024"), any(), eq(standings))).thenReturn(1);
+        when(seasonDataWriter.persistStandings(eq("20232024"), any(), eq(standings))).thenReturn(1);
         when(nhlApiService.getTeamSchedule(eq("COL"), eq("20232024"))).thenReturn(List.of());
         when(gameLogWriter.writeTeamGames(anyString(), anyString(), anyList())).thenReturn(0);
 
@@ -95,16 +92,17 @@ class SeasonBackfillServiceTest {
         when(nhlApiService.getPlayerGameLogs(eq(8478402L), eq("20232024"), eq(2))).thenReturn(List.of());
         when(playerFactory.createFromApiData(any(), any(), any(), any())).thenReturn(mock(Player.class));
         when(teamGameRepository.findBySeasonId("20232024")).thenReturn(List.of());
-        when(gameLogWriter.writePlayerGameLogs(anyLong(), anyString(), anyList(), anyList())).thenReturn(0);
+        when(seasonDataWriter.writePlayer(any(), anyList(), any())).thenReturn(0);
 
-        InOrder inOrder = inOrder(dataSyncService, nhlApiService, gameLogWriter, playerRepository);
+        InOrder inOrder = inOrder(seasonDataWriter, nhlApiService, gameLogWriter);
 
         BackfillSummary summary = service.run(request(), false);
 
-        inOrder.verify(dataSyncService).persistStandings(eq("20232024"), any(), eq(standings));
+        inOrder.verify(seasonDataWriter).persistStandings(eq("20232024"), any(), eq(standings));
         inOrder.verify(nhlApiService).getTeamSchedule("COL", "20232024");
         inOrder.verify(nhlApiService).getPlayerStandingsOrder("20232024", 2);
         inOrder.verify(nhlApiService).getPlayerGameLogs(8478402L, "20232024", 2);
+        inOrder.verify(seasonDataWriter).writePlayer(any(), anyList(), any());
 
         assertEquals(1, summary.playersWritten());
         assertEquals(true, summary.success());
@@ -112,13 +110,13 @@ class SeasonBackfillServiceTest {
 
     @Test
     void retiredPlayers_areNotSkipped() throws Exception {
-        service = new SeasonBackfillService(nhlApiService, dataSyncService, playerRepository,
-                playerFactory, gameLogWriter, teamGameRepository, backfillLockService, 0);
+        service = new SeasonBackfillService(nhlApiService, seasonDataWriter,
+                playerFactory, gameLogWriter, teamGameRepository, backfillLockService, FetchPipeline.sequential());
 
         when(backfillLockService.tryLock(anyString())).thenReturn(true);
         List<TeamStandingsDto> standings = List.of(teamStanding("COL"));
         when(nhlApiService.getTeamStandings("2024-04-17")).thenReturn(standings);
-        when(dataSyncService.persistStandings(anyString(), any(), anyList())).thenReturn(1);
+        when(seasonDataWriter.persistStandings(anyString(), any(), anyList())).thenReturn(1);
         when(nhlApiService.getTeamSchedule(anyString(), anyString())).thenReturn(List.of());
         when(gameLogWriter.writeTeamGames(anyString(), anyString(), anyList())).thenReturn(0);
 
@@ -136,7 +134,7 @@ class SeasonBackfillServiceTest {
         when(nhlApiService.getPlayerGameLogs(eq(8478402L), eq("20232024"), eq(2))).thenReturn(List.of());
         when(playerFactory.createFromApiData(any(), any(), any(), any())).thenReturn(mock(Player.class));
         when(teamGameRepository.findBySeasonId("20232024")).thenReturn(List.of());
-        when(gameLogWriter.writePlayerGameLogs(anyLong(), anyString(), anyList(), anyList())).thenReturn(0);
+        when(seasonDataWriter.writePlayer(any(), anyList(), any())).thenReturn(0);
 
         BackfillSummary summary = service.run(request(), false);
 

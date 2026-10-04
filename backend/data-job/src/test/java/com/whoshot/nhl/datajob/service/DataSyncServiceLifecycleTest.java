@@ -1,10 +1,8 @@
 package com.whoshot.nhl.datajob.service;
 
 import com.whoshot.nhl.datajob.factory.PlayerFactory;
-import com.whoshot.nhl.domain.repository.CurrentSeasonRepository;
 import com.whoshot.nhl.domain.repository.PlayerRepository;
 import com.whoshot.nhl.domain.repository.TeamGameRepository;
-import com.whoshot.nhl.domain.repository.TeamRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -28,9 +26,7 @@ class DataSyncServiceLifecycleTest {
     @Mock
     private PlayerFactory playerFactory;
     @Mock
-    private TeamRepository teamRepository;
-    @Mock
-    private CurrentSeasonRepository currentSeasonRepository;
+    private SeasonDataWriter seasonDataWriter;
     @Mock
     private TeamGameRepository teamGameRepository;
     @Mock
@@ -38,10 +34,11 @@ class DataSyncServiceLifecycleTest {
 
     @Test
     void constructingDataSyncService_performsNoApiCallsOrWrites() {
-        new DataSyncService(nhlApiService, playerRepository, playerFactory, teamRepository,
-                currentSeasonRepository, teamGameRepository, gameLogWriter);
+        new DataSyncService(nhlApiService, playerRepository, playerFactory, seasonDataWriter,
+                teamGameRepository, gameLogWriter, FetchPipeline.sequential(),
+                new PlayerInfoCache(java.time.Duration.ofMinutes(30), 100));
 
-        verifyNoInteractions(nhlApiService, playerRepository, playerFactory, teamRepository,
-                currentSeasonRepository, teamGameRepository, gameLogWriter);
+        verifyNoInteractions(nhlApiService, playerRepository, playerFactory, seasonDataWriter,
+                teamGameRepository, gameLogWriter);
     }
 }

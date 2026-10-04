@@ -95,6 +95,8 @@ Once the API application is running, access the interactive API documentation at
 Shared settings live in each application's `src/main/resources/application.properties`.
 Environment overrides live in `application-local.properties` and `application-prod.properties`.
 Use the [environment guide](ENVIRONMENTS.md) for connection settings and logging.
+Fetch concurrency, the outbound request budget, retries and the related metrics are described in
+the [ingestion guide](INGESTION.md).
 The current season is resolved from NHL season dates; it is not a fixed property.
 
 ## Data Flow
@@ -133,6 +135,9 @@ The data-job daemon alternates between two modes:
 
   When the last game has ended, a full sync runs and the daemon returns to hourly checks.
 
+Both modes fetch teams and players in parallel and write them one at a time, committing each
+player with their game logs; see the [ingestion guide](INGESTION.md).
+
 Live data comes from the same endpoints as the full sync (standings, skater leaders, player
 landing and game log, club schedule); no boxscore or play-by-play is read.
 
@@ -145,12 +150,12 @@ poll overwrites what the previous poll or full sync wrote instead of adding rows
 |-------------|-------------------------|------------------------------------|
 | `players`   | `(player_id, season)`   | primary key                        |
 | `teams`     | `(season, team_code)`   | primary key                        |
-| `game_logs` | `(player_id, game_id)`  | lookup-then-save in `GameLogWriter`|
-| `team_games`| `(team_code, game_id)`  | lookup-then-save in `GameLogWriter`|
+| `game_logs` | `(player_id, game_id)`  | preload-then-save in `GameLogWriter`|
+| `team_games`| `(team_code, game_id)`  | preload-then-save in `GameLogWriter`|
 
-The two `GameLogWriter` keys have no database constraint. They are safe because the daemon runs
-one sync at a time (a single task chain); don't backfill the current season while the daemon is
-running.
+The two `GameLogWriter` keys have no database constraint. They are safe because every writer of a
+season (daemon full syncs and polls, initial load, backfill) holds that season's PostgreSQL
+advisory lock while it writes, and each run has a single writer thread.
 
 `team_games` only holds completed games (`OVER`, `FINAL`, `OFF`); an in-progress game is
 never written there, so a running score can't be recorded as a result.
@@ -172,6 +177,8 @@ podman logs nhl-data-job 2>&1 | Select-String "\[game-sync\]"
 
 Failed polls are logged as `[game-sync] Poll #N failed` with the stack trace, and completed games
 waiting for a retry as `[game-sync] Poll #N: completed games not yet written for [...]`.
+Every sync also logs an `[ingestion]` line with its request rate, retries, throttle wait, database
+time and written/skipped counts ([details](INGESTION.md#observing-a-run)).
 
 ## Hot Rating Calculation
 
@@ -215,10 +222,13 @@ past season never loads on its own — which means player/team game-log graphs h
 season comparison line until you load one explicitly.
 
 See [one-off load commands](ENVIRONMENTS.md#local-java-processes) for Java and Compose.
-Stop the daemon before starting a backfill.
+A backfill of a past season can run beside the daemon, but each process has its own request
+budget, so split the rate between them ([several processes](INGESTION.md#several-processes)). A
+backfill of the current season fails fast while the daemon is writing it, and the daemon skips
+its syncs while a backfill holds the season.
 
-A full season takes roughly 10–25 minutes (paced to avoid upstream rate limits) and is safe to
-re-run: it upserts on each table's natural key, so re-running the same season converges without
+How long a full season takes depends mostly on the configured request rate
+(`nhle.api.requests.requests-per-second`). It is safe to re-run: it upserts on each table's natural key, so re-running the same season converges without
 duplicates, and it never touches the `current_season` table or the site's default view. See
 [`specs/002-season-backfill/quickstart.md`](../specs/002-season-backfill/quickstart.md) for the
 full command reference, exit codes, and verification steps.

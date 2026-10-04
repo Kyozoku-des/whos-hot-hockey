@@ -29,7 +29,7 @@ class DynamicSchedulingServiceTest {
             return pending;
         });
         when(sync.getFirstGameTimeForToday()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).plusHours(5));
-        var daemon = new DynamicSchedulingService(scheduler, sync);
+        var daemon = new DynamicSchedulingService(scheduler, sync, TestSeasonLocks.available());
         daemon.init();
         for (int i = 0; i < 3; i++) {
             assertEquals(1, tasks.size());
@@ -56,7 +56,7 @@ class DynamicSchedulingServiceTest {
         when(sync.getLastGameTimeForToday()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).minusHours(1));
         Set<String> teams = Set.of("EDM", "VAN");
         when(sync.getActiveGames()).thenReturn(List.of(game("VAN", "EDM")), List.of());
-        var daemon = new DynamicSchedulingService(scheduler, sync);
+        var daemon = new DynamicSchedulingService(scheduler, sync, TestSeasonLocks.available());
         daemon.init();
         tasks.remove().run();
         tasks.remove().run();
@@ -89,7 +89,7 @@ class DynamicSchedulingServiceTest {
         when(sync.getActiveGames()).thenReturn(List.of(game("VAN", "EDM")), List.of());
         when(sync.syncTeamGamesForCodes(teams)).thenReturn(Set.of("EDM"));
         when(sync.syncTeamGamesForCodes(Set.of("VAN"))).thenReturn(Set.of("VAN"));
-        var daemon = new DynamicSchedulingService(scheduler, sync);
+        var daemon = new DynamicSchedulingService(scheduler, sync, TestSeasonLocks.available());
         daemon.init();
         tasks.remove().run(); // hourly check
         tasks.remove().run(); // game live
@@ -101,6 +101,31 @@ class DynamicSchedulingServiceTest {
         order.verify(sync).syncTeamGamesForCodes(Set.of("VAN"));
         order.verify(sync).syncPlayersForTeams(Set.of("VAN"));
         verify(sync, times(2)).syncTeamGamesForCodes(any());
+        daemon.stop();
+    }
+
+    @Test
+    void anotherWriterOfTheSeason_blocksLiveWritesWithoutStoppingTheDaemon() throws Exception {
+        var sync = mock(DataSyncService.class);
+        var scheduler = mock(TaskScheduler.class);
+        var tasks = new ArrayDeque<Runnable>();
+        when(scheduler.schedule(any(Runnable.class), any(Instant.class))).thenAnswer(invocation -> {
+            tasks.add(invocation.getArgument(0));
+            return mock(ScheduledFuture.class);
+        });
+        when(sync.getFirstGameTimeForToday()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).minusHours(1));
+        when(sync.getLastGameTimeForToday()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).plusHours(2));
+        when(sync.getActiveGames()).thenReturn(List.of(game("VAN", "EDM")));
+        var daemon = new DynamicSchedulingService(scheduler, sync, TestSeasonLocks.heldElsewhere());
+        daemon.init();
+        tasks.remove().run(); // hourly check
+        tasks.remove().run(); // game-time poll
+
+        verify(sync, never()).syncTeams();
+        verify(sync, never()).syncPlayers();
+        verify(sync, never()).syncTeamsForCodes(any());
+        verify(sync, never()).syncPlayersForTeams(any());
+        assertEquals(1, tasks.size(), "the daemon keeps polling");
         daemon.stop();
     }
 

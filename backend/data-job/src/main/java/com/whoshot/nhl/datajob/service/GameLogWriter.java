@@ -3,6 +3,7 @@ package com.whoshot.nhl.datajob.service;
 import com.whoshot.nhl.datajob.dto.nhlapi.GameDto;
 import com.whoshot.nhl.datajob.dto.nhlapi.PlayerGameLogDto;
 import com.whoshot.nhl.datajob.model.BackfillRequest;
+import com.whoshot.nhl.datajob.model.TeamGameIndex;
 import com.whoshot.nhl.domain.entity.GameLog;
 import com.whoshot.nhl.domain.entity.TeamGame;
 import com.whoshot.nhl.domain.repository.GameLogRepository;
@@ -14,7 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 /**
  * Maps and upserts per-game records for players and teams into {@code game_logs} and
@@ -23,6 +27,10 @@ import java.util.List;
  * <p>
  * All writes are upserts on each table's natural key — {@code (playerId, gameId)} and
  * {@code (teamCode, gameId)} — so re-running a load converges without duplicates (FR-006).
+ * <p>
+ * Each write loads the existing rows for that player or team and season in one query and saves
+ * them together, rather than looking up every game separately (issue #29). A game id encodes its
+ * season, so the season-scoped preload sees every row the per-game lookup would have found.
  */
 @Slf4j
 @Service
@@ -44,15 +52,18 @@ public class GameLogWriter {
     @Transactional
     public int writeTeamGames(String teamCode, String seasonId, List<GameDto> games) {
         List<GameDto> ordered = chronologicalCompletedRegularSeasonGames(games);
+        Map<Long, TeamGame> existing = byGameId(
+                teamGameRepository.findByTeamCodeAndSeasonIdOrderByGameDateDesc(teamCode, seasonId),
+                TeamGame::getGameId);
 
+        List<TeamGame> rows = new ArrayList<>(ordered.size());
         int gameNumber = 0;
         for (GameDto game : ordered) {
             gameNumber++;
-            TeamGame teamGame = teamGameRepository.findByTeamCodeAndGameId(teamCode, game.getId())
-                    .orElse(new TeamGame());
-            toTeamGame(teamGame, teamCode, seasonId, game, gameNumber);
-            teamGameRepository.save(teamGame);
+            TeamGame teamGame = existing.getOrDefault(game.getId(), new TeamGame());
+            rows.add(toTeamGame(teamGame, teamCode, seasonId, game, gameNumber));
         }
+        teamGameRepository.saveAll(rows);
         teamGameRepository.flush();
         return ordered.size();
     }
@@ -65,26 +76,37 @@ public class GameLogWriter {
      * @param playerId          NHL player identifier
      * @param seasonId          season the game logs belong to
      * @param gameLogs          upstream game log, most-recent-first
-     * @param teamGamesForSeason every team game already written for this season, used to resolve
-     *                          {@code gameWon} without an extra API call
+     * @param teamGames          outcomes of every team game already written for this season, used
+     *                          to resolve {@code gameWon} without an extra API call
      * @return number of game logs written
      */
     @Transactional
     public int writePlayerGameLogs(Long playerId, String seasonId, List<PlayerGameLogDto> gameLogs,
-                                    List<TeamGame> teamGamesForSeason) {
+                                    TeamGameIndex teamGames) {
         List<PlayerGameLogDto> ordered = chronological(gameLogs);
+        Map<Long, GameLog> existing = byGameId(
+                gameLogRepository.findByPlayerIdAndSeasonId(playerId, seasonId), GameLog::getGameId);
 
+        List<GameLog> rows = new ArrayList<>(ordered.size());
         int gameNumber = 0;
         for (PlayerGameLogDto dto : ordered) {
             gameNumber++;
-            Boolean gameWon = resolveGameWon(dto.getGameId(), dto.getOpponentAbbrev(), teamGamesForSeason);
-            GameLog gameLog = gameLogRepository.findByPlayerIdAndGameId(playerId, dto.getGameId())
-                    .orElse(new GameLog());
-            toGameLog(gameLog, playerId, seasonId, dto, gameNumber, gameWon);
-            gameLogRepository.save(gameLog);
+            Boolean gameWon = teamGames.wonAgainst(dto.getGameId(), dto.getOpponentAbbrev());
+            GameLog gameLog = existing.getOrDefault(dto.getGameId(), new GameLog());
+            rows.add(toGameLog(gameLog, playerId, seasonId, dto, gameNumber, gameWon));
         }
+        gameLogRepository.saveAll(rows);
         gameLogRepository.flush();
         return ordered.size();
+    }
+
+    /** Indexes existing rows by game id; a duplicate row for the same game keeps the first one. */
+    private static <T> Map<Long, T> byGameId(List<T> rows, Function<T, Long> gameId) {
+        Map<Long, T> index = new HashMap<>();
+        for (T row : rows) {
+            index.putIfAbsent(gameId.apply(row), row);
+        }
+        return index;
     }
 
     /**
@@ -110,22 +132,6 @@ public class GameLogWriter {
         List<PlayerGameLogDto> copy = new ArrayList<>(mostRecentFirst);
         java.util.Collections.reverse(copy);
         return copy;
-    }
-
-    /**
-     * Resolves whether the player's team won a given game by finding the {@code team_games} row
-     * belonging to the player's own team for that game: among the (up to) two rows recorded for a
-     * game, the row whose {@code opponentTeamCode} equals the player's recorded opponent is the
-     * player's own team's row.
-     *
-     * @return the result, or {@code null} if no matching team game has been loaded yet
-     */
-    static Boolean resolveGameWon(Long gameId, String opponentTeamCode, List<TeamGame> teamGamesForSeason) {
-        return teamGamesForSeason.stream()
-                .filter(tg -> tg.getGameId().equals(gameId) && opponentTeamCode.equals(tg.getOpponentTeamCode()))
-                .findFirst()
-                .map(TeamGame::getWon)
-                .orElse(null);
     }
 
     /**

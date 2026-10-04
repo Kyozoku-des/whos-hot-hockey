@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
- * Unit tests for the derived team values computed in {@link DataSyncService#applyStandings}:
+ * Unit tests for the derived team values computed in {@link SeasonDataWriter#applyStandings}:
  * win/loss streaks and last-10-games point percentage and points per game.
  */
 class TeamStandingsCalculationTest {
@@ -35,7 +35,7 @@ class TeamStandingsCalculationTest {
 
     private Team apply(TeamStandingsDto standing) {
         Team team = new Team();
-        DataSyncService.applyStandings(team, standing, "20252026");
+        SeasonDataWriter.applyStandings(team, standing, "20252026");
         return team;
     }
 
@@ -44,7 +44,7 @@ class TeamStandingsCalculationTest {
         Team team = new Team();
         team.setCurrentLossStreak(4);
 
-        DataSyncService.applyStandings(team, standing("W", 3, 5, 5, 0), "20252026");
+        SeasonDataWriter.applyStandings(team, standing("W", 3, 5, 5, 0), "20252026");
 
         assertEquals(3, team.getCurrentWinStreak());
         assertEquals(0, team.getCurrentLossStreak());
@@ -55,7 +55,7 @@ class TeamStandingsCalculationTest {
         Team team = new Team();
         team.setCurrentWinStreak(6);
 
-        DataSyncService.applyStandings(team, standing("L", 2, 5, 5, 0), "20252026");
+        SeasonDataWriter.applyStandings(team, standing("L", 2, 5, 5, 0), "20252026");
 
         assertEquals(0, team.getCurrentWinStreak());
         assertEquals(2, team.getCurrentLossStreak());

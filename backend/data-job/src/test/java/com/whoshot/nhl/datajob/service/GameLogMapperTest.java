@@ -1,5 +1,7 @@
 package com.whoshot.nhl.datajob.service;
 
+import com.whoshot.nhl.datajob.model.TeamGameIndex;
+
 import com.whoshot.nhl.datajob.dto.nhlapi.PlayerGameLogDto;
 import com.whoshot.nhl.domain.entity.GameLog;
 import com.whoshot.nhl.domain.entity.TeamGame;
@@ -106,16 +108,16 @@ class GameLogMapperTest {
         otherTeamRow.setOpponentTeamCode("COL");
         otherTeamRow.setWon(false);
 
-        Boolean won = GameLogWriter.resolveGameWon(1L, "MTL", List.of(ownTeamRow, otherTeamRow));
+        TeamGameIndex index = TeamGameIndex.of(List.of(ownTeamRow, otherTeamRow));
 
-        assertTrue(won);
+        assertTrue(index.wonAgainst(1L, "MTL"));
+        assertFalse(index.wonAgainst(1L, "COL"));
     }
 
     @Test
     void gameWonIsNullWhenUnresolvable() {
-        Boolean won = GameLogWriter.resolveGameWon(999L, "MTL", List.of());
-
-        assertNull(won);
+        assertNull(TeamGameIndex.of(List.of()).wonAgainst(999L, "MTL"));
+        assertNull(TeamGameIndex.empty().wonAgainst(1L, null));
     }
 
     @Test

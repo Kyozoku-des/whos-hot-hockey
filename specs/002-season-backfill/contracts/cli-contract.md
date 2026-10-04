@@ -27,7 +27,7 @@ podman-compose run --rm \
 |---|---|---|---|---|
 | `spring.profiles.active` | `SPRING_PROFILES_ACTIVE` | yes | — | must include `backfill` to activate the runner |
 | `backfill.season` | `BACKFILL_SEASON` | yes | — | target season, `YYYYYYYY` (e.g. `20242025`) |
-| `backfill.request-delay-ms` | `BACKFILL_REQUEST_DELAY_MS` | no | `100` | pause between upstream requests (FR-013) |
+| `backfill.request-delay-ms` | `BACKFILL_REQUEST_DELAY_MS` | no | — | **deprecated, ignored** (logs a warning); pacing is per request via `nhle.api.requests.*`, see [`backend/INGESTION.md`](../../../backend/INGESTION.md) |
 | `backfill.dry-run` | `BACKFILL_DRY_RUN` | no | `false` | validate and report counts without writing |
 
 Database connection uses the existing `spring.datasource.*` properties; no backfill-specific configuration.
