@@ -182,7 +182,7 @@ time and written/skipped counts ([details](INGESTION.md#observing-a-run)).
 
 ## Hot Rating Calculation
 
-The "hot rating" for players is calculated as the points-per-game average over their last 10 games. This provides a more recent view of player performance compared to season averages.
+The "hot rating" for players (`pointsPerLastNGames`) is the points-per-game average over their last 10 games. `GET /api/players/hot` ranks players by it.
 
 ## Development
 
@@ -192,9 +192,9 @@ The "hot rating" for players is calculated as the points-per-game average over t
 mvn test
 ```
 
-`data-job`'s backfill tests (`*IT.java`) use Testcontainers to boot a disposable PostgreSQL
-container (Testcontainers 2.x, managed by Spring Boot), so `mvn test` needs a running
-Docker-API-compatible engine. With Podman on Windows,
+The integration tests (`*IT.java` and `PostgresMigrationTest`) use Testcontainers to boot a
+disposable PostgreSQL container (Testcontainers 2.x, managed by Spring Boot), so `mvn test` needs a
+running Docker-API-compatible engine. No test calls the NHL API or touches your local database. With Podman on Windows,
 point Testcontainers at the machine's named pipe first:
 
 ```bash

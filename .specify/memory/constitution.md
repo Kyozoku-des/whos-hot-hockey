@@ -51,7 +51,7 @@ Every feature implementation MUST follow the Test-Driven Development cycle:
 
 All modules, features, and APIs MUST be fully documented before and during development:
 
-- **API contracts**: All REST endpoints documented in `API_CONTRACT.md` with request/response schemas
+- **API contracts**: All REST endpoints documented in `backend/API_REFERENCE.md` with request/response schemas
 - **README files**: Each major module (backend/, frontend/) maintains a README with setup, architecture, and development instructions
 - **Architecture decisions**: Significant design choices documented in plan.md or ADR format
 - **Inline documentation**: Public methods, complex algorithms, and non-obvious code include explanatory comments
@@ -60,7 +60,7 @@ All modules, features, and APIs MUST be fully documented before and during devel
 **Rationale**: Full documentation enables team collaboration, onboarding, maintenance, and provides a single source of truth. With frontend and backend teams working independently, API contracts are critical for coordination.
 
 **Required artifacts**:
-- `API_CONTRACT.md` - REST API specifications (maintained)
+- `backend/API_REFERENCE.md` - REST API specifications (maintained)
 - `backend/README.md` - Backend architecture, setup, data flow
 - `frontend/README.md` - Frontend structure, component design, routing
 - `.specify/` design documents - Specifications, plans, tasks for each feature

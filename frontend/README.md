@@ -96,20 +96,8 @@ npm run preview
 
 ## API Integration
 
-The frontend expects the backend API to provide the following endpoints:
-
-### Player Endpoints
-- `GET /api/players/top-scorers?limit=10` - Top point leaders
-- `GET /api/players/point-streaks` - Active point streaks
-- `GET /api/players/hottest?threshold=1.5&games=5` - Hottest players by PPG
-- `GET /api/players/:id` - Player details
-- `GET /api/players/:id/game-log` - Player game logs
-
-### Team Endpoints
-- `GET /api/teams/standings` - Team standings
-- `GET /api/teams/win-streaks` - Team win streaks
-- `GET /api/teams/lose-streaks` - Team lose streaks
-- `GET /api/teams/:id` - Team details
+The frontend calls the backend REST API under a relative `/api` base. See
+[backend/API_REFERENCE.md](../backend/API_REFERENCE.md) for the endpoints and response shapes.
 
 ## Design
 
@@ -122,8 +110,7 @@ The application follows the reference designs provided:
 ## Key Features
 
 ### Interactive Controls
-- Search functionality for player streaks
-- Adjustable PPG threshold and games lookback for hottest players
+- Search for players and teams
 - Click-through navigation from tables to detail pages
 
 ### Responsive Design
