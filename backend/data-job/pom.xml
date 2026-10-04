@@ -28,28 +28,6 @@
             <artifactId>domain</artifactId>
         </dependency>
 
-        <!-- Spring Boot Web MVC Starter -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webmvc</artifactId>
-        </dependency>
-
-        <!-- Spring Boot DevTools for development -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-            <optional>true</optional>
-        </dependency>
-
-        <!-- SpringDoc OpenAPI for API documentation -->
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <!-- Not managed by Boot; the 3.1.x line targets Spring Boot 4.1 -->
-            <version>3.1.1</version>
-        </dependency>
-
         <!-- RestClient.Builder auto-configuration (a separate module since Boot 4) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
