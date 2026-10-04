@@ -107,14 +107,6 @@ public class PlayerService {
     }
 
     private PlayerDetailDto toDetailDto(Player player) {
-        PlayerDetailDto.NextGameDto nextGameDto = null;
-        if (player.getNextGame() != null) {
-            nextGameDto = new PlayerDetailDto.NextGameDto(
-                    player.getNextGame().date(),
-                    player.getNextGame().opponentAbbrev(),
-                    player.getNextGame().homeRoadFlag()
-            );
-        }
         return new PlayerDetailDto(
                 player.getId().playerId(),
                 player.getFirstName(),
@@ -132,10 +124,7 @@ public class PlayerService {
                 player.getPlusMinus(),
                 player.getCurrentPointStreak(),
                 player.getCurrentPointlessStreak(),
-                player.getPointsPerLastNGames(),
-                player.getHot(),
-                player.getCold(),
-                nextGameDto
+                player.getPointsPerLastNGames()
         );
     }
 
@@ -165,8 +154,6 @@ public class PlayerService {
                 player.getPointsPerGame(),
                 player.getPlusMinus(),
                 player.getPointsPerLastNGames(),
-                player.getHot(),
-                player.getCold(),
                 player.getCurrentPointStreak(),
                 player.getCurrentPointlessStreak()
         );

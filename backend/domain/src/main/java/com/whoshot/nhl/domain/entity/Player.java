@@ -41,30 +41,11 @@ public class Player {
     @Column private Integer points;
     @Column private Double pointsPerGame;
     @Column private Integer plusMinus;
-    // Unused
-    @Column private Integer penaltyMinutes;
-    // Unused
-    @Column private Integer powerPlayGoals;
-    // Unused
-    @Column private Integer shorthandedGoals;
-    // Unused
-    @Column private Integer gameWinningGoals;
-    // Unused
-    @Column private Integer overtimeGoals;
-    // Unused
-    @Column private Integer shots;
-    // Unused
-    @Column private Double shootingPercentage;
     @Column private Integer currentPointStreak;
     @Column private Integer currentPointlessStreak;
     @Column private Double pointsPerLastNGames;
-    @Column private Boolean hot;
-    @Column private Boolean cold;
     @Column private LocalDateTime lastUpdated;
     @Column private String headshotUrl;
-
-    @Embedded
-    @Column private NextGame nextGame;
 
     /**
      * Composite primary key for a player row scoped by season.
@@ -76,19 +57,5 @@ public class Player {
     public record PlayerId(
             Long playerId,
             String season
-    ) implements Serializable {}
-
-    /**
-     * Embedded next-game information for player-facing schedule context.
-     *
-     * @param date scheduled game date
-     * @param opponentAbbrev opponent team abbreviation
-     * @param homeRoadFlag home/road marker provided by upstream API
-     */
-    @Embeddable
-    public record NextGame(
-            String date,
-            String opponentAbbrev,
-            String homeRoadFlag
     ) implements Serializable {}
 }

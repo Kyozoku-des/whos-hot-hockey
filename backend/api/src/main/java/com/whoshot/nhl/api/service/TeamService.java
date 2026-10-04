@@ -116,7 +116,6 @@ public class TeamService {
         return new TeamStandingsDto(
                 team.getTeamCode(),
                 team.getTeamName(),
-                team.getFranchiseName(),
                 team.getLogoUrl(),
                 team.getGamesPlayed(),
                 team.getWins(),
@@ -131,15 +130,8 @@ public class TeamService {
                 team.getDivisionName(),
                 team.getCurrentWinStreak(),
                 team.getCurrentLossStreak(),
-                team.getLast10GamesWinPercentage(),
                 team.getLast10GamesPointPercentage(),
-                team.getLast10GamesPPG(),
-                team.getHot(),
-                team.getCold(),
-                team.getPointStreak(),
-                team.getNextOpponentCode(),
-                team.getNextGameDate(),
-                team.getNextGameIsHome()
+                team.getLast10GamesPPG()
         );
     }
 
@@ -147,7 +139,6 @@ public class TeamService {
         return new TeamDetailDto(
                 team.getTeamCode(),
                 team.getTeamName(),
-                team.getFranchiseName(),
                 team.getLogoUrl(),
                 team.getGamesPlayed(),
                 team.getWins(),
@@ -162,15 +153,8 @@ public class TeamService {
                 team.getDivisionName(),
                 team.getCurrentWinStreak(),
                 team.getCurrentLossStreak(),
-                team.getLast10GamesWinPercentage(),
                 team.getLast10GamesPointPercentage(),
                 team.getLast10GamesPPG(),
-                team.getHot(),
-                team.getCold(),
-                team.getPointStreak(),
-                team.getNextOpponentCode(),
-                team.getNextGameDate(),
-                team.getNextGameIsHome(),
                 roster
         );
     }

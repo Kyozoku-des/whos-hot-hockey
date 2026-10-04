@@ -9,7 +9,6 @@ import java.util.List;
 public record TeamDetailDto(
         String teamCode,
         String teamName,
-        String franchiseName,
         String logoUrl,
         Integer gamesPlayed,
         Integer wins,
@@ -24,14 +23,7 @@ public record TeamDetailDto(
         String divisionName,
         Integer currentWinStreak,
         Integer currentLossStreak,
-        Double last10GamesWinPercentage,
         Double last10GamesPointPercentage,
         Double last10GamesPPG,
-        Boolean hot,
-        Boolean cold,
-        Boolean pointStreak,
-        String nextOpponentCode,
-        String nextGameDate,
-        Boolean nextGameIsHome,
         List<RosterPlayerDto> roster
 ) {}

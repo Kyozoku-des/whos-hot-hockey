@@ -20,17 +20,5 @@ public record PlayerDetailDto(
         Integer plusMinus,
         Integer currentPointStreak,
         Integer currentPointlessStreak,
-        Double pointsPerLastNGames,
-        Boolean hot,
-        Boolean cold,
-        NextGameDto nextGame
-) {
-    /**
-     * Nested DTO for the player's next scheduled game.
-     */
-    public record NextGameDto(
-            String date,
-            String opponentAbbrev,
-            String homeRoadFlag
-    ) {}
-}
+        Double pointsPerLastNGames
+) {}

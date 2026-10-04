@@ -7,7 +7,6 @@ package com.whoshot.nhl.api.dto;
 public record TeamStandingsDto(
         String teamCode,
         String teamName,
-        String franchiseName,
         String logoUrl,
         Integer gamesPlayed,
         Integer wins,
@@ -22,13 +21,6 @@ public record TeamStandingsDto(
         String divisionName,
         Integer currentWinStreak,
         Integer currentLossStreak,
-        Double last10GamesWinPercentage,
         Double last10GamesPointPercentage,
-        Double last10GamesPPG,
-        Boolean hot,
-        Boolean cold,
-        Boolean pointStreak,
-        String nextOpponentCode,
-        String nextGameDate,
-        Boolean nextGameIsHome
+        Double last10GamesPPG
 ) {}

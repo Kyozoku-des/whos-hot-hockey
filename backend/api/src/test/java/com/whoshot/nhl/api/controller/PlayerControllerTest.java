@@ -36,8 +36,7 @@ class PlayerControllerTest {
         PlayerStandingsDto player = new PlayerStandingsDto(
                 8478402L, "Connor", "McDavid", "Connor McDavid",
                 "C", "EDM", "https://logo.png", "https://headshot.jpg",
-                50, 30, 45, 75, 1.5, 15, 2.0,
-                true, false, 5, 0
+                50, 30, 45, 75, 1.5, 15, 2.0, 5, 0
         );
 
         when(playerService.getPlayerStandings(season)).thenReturn(List.of(player));
@@ -52,7 +51,6 @@ class PlayerControllerTest {
                 .andExpect(jsonPath("$[0].positionCode").value("C"))
                 .andExpect(jsonPath("$[0].teamCode").value("EDM"))
                 .andExpect(jsonPath("$[0].points").value(75))
-                .andExpect(jsonPath("$[0].hot").value(true))
                 .andExpect(jsonPath("$[0].currentPointStreak").value(5));
     }
 
@@ -65,8 +63,7 @@ class PlayerControllerTest {
                 playerId, "Connor", "McDavid", "Connor McDavid",
                 "C", "EDM", "https://logo.png", "https://headshot.jpg",
                 50, 30, 45, 75, 1.5, 15,
-                5, 0, 2.0, true, false,
-                new PlayerDetailDto.NextGameDto("2026-03-28", "CGY", "H")
+                5, 0, 2.0
         );
 
         when(playerService.getPlayerDetail(playerId, season)).thenReturn(detail);
@@ -77,11 +74,8 @@ class PlayerControllerTest {
                 .andExpect(jsonPath("$.firstName").value("Connor"))
                 .andExpect(jsonPath("$.fullName").value("Connor McDavid"))
                 .andExpect(jsonPath("$.points").value(75))
-                .andExpect(jsonPath("$.hot").value(true))
                 .andExpect(jsonPath("$.currentPointStreak").value(5))
-                .andExpect(jsonPath("$.nextGame.date").value("2026-03-28"))
-                .andExpect(jsonPath("$.nextGame.opponentAbbrev").value("CGY"))
-                .andExpect(jsonPath("$.nextGame.homeRoadFlag").value("H"));
+                .andExpect(jsonPath("$.pointsPerLastNGames").value(2.0));
     }
 
     @Test

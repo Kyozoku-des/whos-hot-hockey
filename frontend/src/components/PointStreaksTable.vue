@@ -8,7 +8,6 @@
         v-for="player in players"
         :key="player.playerId"
         class="player-item"
-        :class="{ 'hot-player': player.hot, 'cold-player': player.cold }"
         @click="goToPlayer(player.playerId)"
       >
         <FavoriteToggle :item="playerFavorite(player)" />
@@ -142,13 +141,6 @@ const goToPlayer = (playerId) => {
   text-align: center;
 }
 
-.hot-player {
-  background-color: rgba(255, 140, 0, 0.15) !important;
-}
-
-.cold-player {
-  background-color: rgba(135, 206, 250, 0.15) !important;
-}
 
 .loading,
 .error,

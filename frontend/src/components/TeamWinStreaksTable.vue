@@ -8,7 +8,6 @@
         v-for="(team, index) in teams"
         :key="team.teamCode"
         class="team-item"
-        :class="{ 'hot-team': team.hot, 'cold-team': team.cold }"
         @click="goToTeam(team.teamCode)"
       >
         <FavoriteToggle :item="teamFavorite(team)" />
@@ -23,9 +22,6 @@
           <span v-if="isExpanded" class="stat-item">GP: {{ team.gamesPlayed }}</span>
           <span v-if="isExpanded" class="stat-item">PTS: {{ team.points }}</span>
         </span>
-        <div class="tooltip" v-if="team.nextOpponentCode">
-          Next: {{ formatNextGame(team) }}
-        </div>
       </div>
     </div>
   </div>
@@ -74,12 +70,6 @@ onMounted(() => {
 
 const goToTeam = (teamCode) => {
   router.push(`/team/${teamCode}`)
-}
-
-const formatNextGame = (team) => {
-  if (!team.nextOpponentCode) return 'N/A'
-  const location = team.nextGameIsHome ? 'vs' : '@'
-  return `${location} ${team.nextOpponentCode}`
 }
 </script>
 
@@ -136,13 +126,6 @@ const formatNextGame = (team) => {
   flex: 1;
 }
 
-.hot-team {
-  background-color: rgba(255, 140, 0, 0.15) !important;
-}
-
-.cold-team {
-  background-color: rgba(135, 206, 250, 0.15) !important;
-}
 
 .team-stats {
   display: flex;
@@ -161,30 +144,6 @@ const formatNextGame = (team) => {
 .stat-streak {
   font-weight: bold;
   font-size: 1rem;
-}
-
-.tooltip {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: white;
-  color: black;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
-  margin-bottom: 0.5rem;
-  z-index: 9999;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-}
-
-.team-item:hover .tooltip {
-  opacity: 1;
 }
 
 .loading,

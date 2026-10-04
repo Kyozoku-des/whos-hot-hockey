@@ -19,8 +19,6 @@ public record PlayerStandingsDto(
         Double pointsPerGame,
         Integer plusMinus,
         Double pointsPerLastNGames,
-        Boolean hot,
-        Boolean cold,
         Integer currentPointStreak,
         Integer currentPointlessStreak
 ) {}
