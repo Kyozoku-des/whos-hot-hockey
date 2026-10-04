@@ -1,200 +1,150 @@
 package com.whoshot.nhl.datajob.service;
 
-import com.whoshot.nhl.datajob.dto.SeasonDto;
-import com.whoshot.nhl.datajob.dto.nhlapi.*;
-import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
-
-import org.junit.jupiter.api.Assertions;
+import com.whoshot.nhl.datajob.config.ApiRequestProperties;
+import com.whoshot.nhl.datajob.dto.nhlapi.GameState;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestClient;
 
-import static org.springframework.test.util.AssertionErrors.assertNotNull;
+import java.time.Duration;
+import java.time.LocalDateTime;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 /**
- * Integration test for NhlApiService.getPlayerGameLog()
- * This test makes real API calls to the NHL API (no mocking).
+ * Checks the endpoint each {@link NhlApiService} method calls and how its response is mapped,
+ * against a mocked server: no NHL requests and no database.
  */
-@Slf4j
-@SpringBootTest
-@ActiveProfiles("test")
 class NhlApiServiceTest {
 
-    @Autowired
-    private NhlApiService nhlApiService;
+    private static final String WEB_URL = "https://api-web.nhle.com";
+    private static final String STATS_URL = "https://api.nhle.com";
 
-    /**
-     * Test getPlayerGameLog with Connor McDavid (8478402)
-     * Season: 20242025 (current season)
-     * GameType: 2 (regular season)
-     */
-    @Test
-    void testGetPlayerGameLogs_ConnorMcDavid() {
-        // Arrange
-        Long playerId = 8478402L; // Connor McDavid
-        String seasonId = "20252026";
-        int gameType = 2; // Regular season
+    private MockRestServiceServer server;
+    private NhlApiService service;
 
-        // Act
-        List<PlayerGameLogDto> result = nhlApiService.getPlayerGameLogs(playerId, seasonId, gameType);
-
-        // Assert
-        Assertions.assertNotNull(result, "Game logs should not be null");
-        log.info("Number of games: {}", result.size());
-
-        if (!result.isEmpty()) {
-            PlayerGameLogDto firstGame = result.get(0);
-            log.info("First game - Date: {}, Opponent: {}, Goals: {}, Assists: {}, Points: {}",
-                    firstGame.getGameDate(),
-                    firstGame.getOpponentAbbrev(),
-                    firstGame.getGoals(),
-                    firstGame.getAssists(),
-                    firstGame.getPoints());
-
-            // Verify game log entry has required fields
-            Assertions.assertNotNull(firstGame.getGameId(), "Game ID should not be null");
-            Assertions.assertNotNull(firstGame.getGameDate(), "Game date should not be null");
-            Assertions.assertNotNull(firstGame.getOpponentAbbrev(), "Opponent abbreviation should not be null");
-        }
+    @BeforeEach
+    void setUp() {
+        var properties = new ApiRequestProperties(1, 1000, 10, 1, Duration.ofMillis(1),
+                Duration.ofMillis(1), Duration.ofSeconds(10), 5, Duration.ofSeconds(30));
+        RestClient.Builder builder = RestClient.builder();
+        server = MockRestServiceServer.bindTo(builder).build();
+        service = new NhlApiService(new ApiClient(builder.build(), new RequestThrottle(properties),
+                properties, IngestionMetrics.standalone()), WEB_URL, STATS_URL);
     }
 
-    /**
-     * Test getPlayerInfo with Connor McDavid (8478402)
-     */
-    @Test
-    void testGetPlayerInfo_ConnorMcDavid() {
-        // Arrange
-        Long playerId = 8478402L; // Connor McDavid
-
-        // Act
-        PlayerInfoDto result = nhlApiService.getPlayerInfo(playerId);
-
-        // Assert
-        Assertions.assertNotNull(result, "PlayerInfoDto should not be null");
-        log.info("Player ID: {}", result.getPlayerId());
-        log.info("Is Active: {}", result.isActive());
-        log.info("Headshot URL: {}", result.getHeadshotUrl());
-        log.info("Hero Image URL: {}", result.getHeroImage());
-
-        // Verify required fields
-        Assertions.assertNotNull(result.getPlayerId(), "Player ID should not be null");
-        Assertions.assertEquals(playerId, result.getPlayerId(), "Player ID should match requested ID");
-        Assertions.assertTrue(result.isActive(), "Connor McDavid should be an active player");
-        Assertions.assertNotNull(result.getHeadshotUrl(), "Headshot URL should not be null");
-    }
-
-    /**
-     * Test getSeasons
-     */
-    @Test
-    void testGetSeasons() {
-        // Act
-        List<SeasonDto> result = nhlApiService.getSeasons();
-
-        // Assert
-        Assertions.assertNotNull(result, "Seasons list should not be null");
-        Assertions.assertFalse(result.isEmpty(), "Seasons list should not be empty");
-        log.info("Number of seasons: {}", result.size());
-
-        if (!result.isEmpty()) {
-            SeasonDto firstSeason = result.get(0);
-            log.info("First season ID: {}", firstSeason.getId());
-            assertNotNull(firstSeason.getId(), "Season ID should not be null");
-        }
-    }
-
-    /**
-     * Test getTeamStandings
-     */
-    @Test
-    void testGetTeamStandings() {
-        // Act
-        List<TeamStandingsDto> result = nhlApiService.getTeamStandings();
-
-        // Assert
-        Assertions.assertNotNull(result, "Team standings list should not be null");
-        Assertions.assertFalse(result.isEmpty(), "Team standings list should not be empty");
-        log.info("Number of teams: {}", result.size());
-
-        if (!result.isEmpty()) {
-            TeamStandingsDto firstTeam = result.get(0);
-            log.info("First team - Name: {}, Wins: {}, Losses: {}, Points: {}",
-                    firstTeam.getTeamName(),
-                    firstTeam.getWins(),
-                    firstTeam.getLosses(),
-                    firstTeam.getPoints());
-            Assertions.assertNotNull(firstTeam.getTeamAbbrev(), "Team abbreviation should not be null");
-        }
-    }
-
-    /**
-     * Test getPlayerStandingsOrder
-     */
-    @Test
-    void testGetPlayerStandingsOrder() {
-        // Arrange
-        String seasonId = "20252026";
-        int gameType = 2; // Regular season
-
-        // Act
-        List<PlayerStandingDto> result = nhlApiService.getPlayerStandingsOrder(seasonId, gameType);
-
-        // Assert
-        Assertions.assertNotNull(result, "Player standings list should not be null");
-        Assertions.assertFalse(result.isEmpty(), "Player standings list should not be empty");
-        log.info("Number of players in standings: {}", result.size());
-    }
-
-    /**
-     * Test getTeamSchedule for Edmonton Oilers
-     */
-    @Test
-    void testGetTeamSchedule_EdmontonOilers() {
-        // Arrange
-        String teamCode = "EDM";
-        String seasonId = "20252026";
-
-        // Act
-        List<GameDto> result = nhlApiService.getTeamSchedule(teamCode, seasonId);
-
-        // Assert
-        Assertions.assertNotNull(result, "Team schedule list should not be null");
-        Assertions.assertFalse(result.isEmpty(), "Team schedule should not be empty");
-    }
-
-    /**
-     * Test getGameBoxscore
-     * Uses a recent game ID that should have completed
-     */
-    @Test
-    void testGetGameBoxScore() {
-        // Arrange
-        // First get a game ID from team schedule
-        String teamCode = "EDM";
-        String seasonId = "20252026";
-        List<GameDto> schedule = nhlApiService.getTeamSchedule(teamCode, seasonId);
-
-        Assertions.assertNotNull(schedule, "Schedule should not be null");
-        Assertions.assertFalse(schedule.isEmpty(), "Schedule should not be empty");
-
-        Long gameId = schedule.get(0).getId();
-        log.info("Testing boxscore for game ID: {}", gameId);
-
-        // Act
-        BoxScoreDto result = nhlApiService.getGameBoxScore(gameId);
-
-        // Assert
-        Assertions.assertNotNull(result, "BoxScoreDto should not be null");
+    @AfterEach
+    void verifyRequests() {
+        server.verify();
     }
 
     @Test
-    void testGetLeagueSchedule() {
-        // Act
-        List<GameDto> schedule = nhlApiService.getLeagueSchedule();
-        // Assert
-        Assertions.assertNotNull(schedule, "League schedule should not be null");
+    void seasons_useStatsHostAndMapDates() {
+        respond(STATS_URL + "/stats/rest/en/season", """
+                {"data":[{"id":20242025,"startDate":"2024-10-04T00:00:00",
+                  "regularSeasonEndDate":"2025-04-17T00:00:00"}],"total":1}
+                """);
+
+        assertThat(service.getSeasons()).singleElement().satisfies(season -> {
+            assertThat(season.getId()).isEqualTo("20242025");
+            assertThat(season.getStartDate()).isEqualTo(LocalDateTime.parse("2024-10-04T00:00:00"));
+            assertThat(season.getRegularSeasonEndDate()).isEqualTo(LocalDateTime.parse("2025-04-17T00:00:00"));
+        });
+    }
+
+    @Test
+    void playerStandingsOrder_requestsEveryPlayerForSeasonAndGameType() {
+        respond(WEB_URL + "/v1/skater-stats-leaders/20252026/2?categories=points&limit=-1", """
+                {"points":[{"id":8478402,"value":42}]}
+                """);
+
+        assertThat(service.getPlayerStandingsOrder("20252026", 2)).singleElement().satisfies(standing -> {
+            assertThat(standing.getId()).isEqualTo(8478402L);
+            assertThat(standing.getPoints()).isEqualTo(42);
+        });
+    }
+
+    @Test
+    void playerInfo_mapsLocalizedNamesAndProfile() {
+        respond(WEB_URL + "/v1/player/8478402/landing", """
+                {"playerId":8478402,"isActive":true,"headshot":"h.png","teamLogo":"t.svg",
+                 "firstName":{"default":"Connor"},"lastName":{"default":"McDavid"},
+                 "currentTeamAbbrev":"EDM","position":"C"}
+                """);
+
+        var info = service.getPlayerInfo(8478402L);
+
+        assertThat(info.getPlayerId()).isEqualTo(8478402L);
+        assertThat(info.isActive()).isTrue();
+        assertThat(info.getFirstName().getName()).isEqualTo("Connor");
+        assertThat(info.getLastName().getName()).isEqualTo("McDavid");
+        assertThat(info.getHeadshotUrl()).isEqualTo("h.png");
+        assertThat(info.getTeamLogoUrl()).isEqualTo("t.svg");
+        assertThat(info.getCurrentTeamAbbrev()).isEqualTo("EDM");
+    }
+
+    @Test
+    void playerGameLogs_requestSeasonAndGameType() {
+        respond(WEB_URL + "/v1/player/8478402/game-log/20252026/2", """
+                {"gameLog":[{"gameId":2025020001,"gameDate":"2025-10-08","opponentAbbrev":"CGY",
+                  "homeRoadFlag":"H","goals":1,"assists":2,"points":3,"toi":"21:30"}]}
+                """);
+
+        assertThat(service.getPlayerGameLogs(8478402L, "20252026", 2)).singleElement().satisfies(log -> {
+            assertThat(log.getGameId()).isEqualTo(2025020001L);
+            assertThat(log.getPoints()).isEqualTo(3);
+            assertThat(log.getToi()).isEqualTo("21:30");
+        });
+    }
+
+    @Test
+    void teamSchedule_requestsTeamAndSeason() {
+        respond(WEB_URL + "/v1/club-schedule-season/EDM/20252026", """
+                {"games":[{"id":2025020001,"gameType":2,"gameState":"OFF",
+                  "startTimeUTC":"2025-10-09T02:00:00Z","gameDate":"2025-10-08",
+                  "awayTeam":{"abbrev":"CGY","score":1},"homeTeam":{"abbrev":"EDM","score":3}}]}
+                """);
+
+        assertThat(service.getTeamSchedule("EDM", "20252026")).singleElement().satisfies(game -> {
+            assertThat(game.getGameState()).isEqualTo(GameState.OFF);
+            assertThat(game.getHomeTeam().getScore()).isEqualTo(3);
+        });
+    }
+
+    @Test
+    void teamStandings_withoutDate_requestsNow() {
+        respond(WEB_URL + "/v1/standings/now", """
+                {"standings":[{"teamAbbrev":{"default":"EDM"},"points":10}]}
+                """);
+
+        assertThat(service.getTeamStandings()).singleElement()
+                .satisfies(team -> assertThat(team.getTeamAbbrev().getDefaultValue()).isEqualTo("EDM"));
+    }
+
+    @Test
+    void teamStandings_withDate_requestsThatDatesFinalStandings() {
+        respond(WEB_URL + "/v1/standings/2025-04-17", """
+                {"standings":[{"teamAbbrev":{"default":"EDM"}}]}
+                """);
+
+        assertThat(service.getTeamStandings("2025-04-17")).hasSize(1);
+    }
+
+    @Test
+    void leagueSchedule_flattensGameWeeksAndToleratesMissingGames() {
+        respond(WEB_URL + "/v1/schedule/now", """
+                {"gameWeek":[{"games":[{"id":1},{"id":2}]},{}]}
+                """);
+
+        assertThat(service.getLeagueSchedule()).hasSize(2);
+    }
+
+    private void respond(String url, String json) {
+        server.expect(requestTo(url)).andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
     }
 }

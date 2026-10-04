@@ -5,7 +5,6 @@ import com.whoshot.nhl.datajob.model.BackfillRequest;
 import com.whoshot.nhl.datajob.model.BackfillSummary;
 import com.whoshot.nhl.datajob.service.NhlApiService;
 import com.whoshot.nhl.datajob.service.SeasonBackfillService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -27,7 +26,6 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @Profile("backfill")
-@RequiredArgsConstructor
 public class BackfillRunner implements CommandLineRunner {
 
     private static final int EXIT_SUCCESS = 0;
@@ -38,12 +36,20 @@ public class BackfillRunner implements CommandLineRunner {
     private final NhlApiService nhlApiService;
     private final SeasonBackfillService seasonBackfillService;
     private final ConfigurableApplicationContext context;
+    private final String seasonId;
+    private final boolean dryRun;
 
-    @Value("${backfill.season:}")
-    private String seasonId;
-
-    @Value("${backfill.dry-run:false}")
-    private boolean dryRun;
+    public BackfillRunner(NhlApiService nhlApiService,
+                          SeasonBackfillService seasonBackfillService,
+                          ConfigurableApplicationContext context,
+                          @Value("${backfill.season:}") String seasonId,
+                          @Value("${backfill.dry-run:false}") boolean dryRun) {
+        this.nhlApiService = nhlApiService;
+        this.seasonBackfillService = seasonBackfillService;
+        this.context = context;
+        this.seasonId = seasonId;
+        this.dryRun = dryRun;
+    }
 
     @Override
     public void run(String... args) {

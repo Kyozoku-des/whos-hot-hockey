@@ -35,15 +35,13 @@ class TeamControllerTest {
         String season = "20252026";
 
         TeamStandingsDto team = new TeamStandingsDto(
-                "TOR", "Toronto Maple Leafs", "Maple Leafs",
+                "TOR", "Toronto Maple Leafs",
                 "https://logo.png",
                 50, 30, 15, 5, 65, 0.65,
                 180, 150, 30,
                 "Eastern", "Atlantic",
                 3, 0,
-                0.7, 0.8, 2.2,
-                true, false, true,
-                "BOS", "2026-03-28", true
+                0.8, 2.2
         );
 
         when(teamService.getTeamStandings(season)).thenReturn(List.of(team));
@@ -55,10 +53,9 @@ class TeamControllerTest {
                 .andExpect(jsonPath("$[0].teamName").value("Toronto Maple Leafs"))
                 .andExpect(jsonPath("$[0].wins").value(30))
                 .andExpect(jsonPath("$[0].points").value(65))
-                .andExpect(jsonPath("$[0].hot").value(true))
                 .andExpect(jsonPath("$[0].currentWinStreak").value(3))
                 .andExpect(jsonPath("$[0].divisionName").value("Atlantic"))
-                .andExpect(jsonPath("$[0].nextOpponentCode").value("BOS"));
+                .andExpect(jsonPath("$[0].last10GamesPointPercentage").value(0.8));
     }
 
     @Test
@@ -70,15 +67,13 @@ class TeamControllerTest {
         );
 
         TeamDetailDto detail = new TeamDetailDto(
-                "TOR", "Toronto Maple Leafs", "Maple Leafs",
+                "TOR", "Toronto Maple Leafs",
                 "https://logo.png",
                 50, 30, 15, 5, 65, 0.65,
                 180, 150, 30,
                 "Eastern", "Atlantic",
                 3, 0,
-                0.7, 0.8, 2.2,
-                true, false, true,
-                "BOS", "2026-03-28", true,
+                0.8, 2.2,
                 List.of(player)
         );
 

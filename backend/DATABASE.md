@@ -30,10 +30,13 @@ container but retains its data. Do not add `--volumes` unless you intend to eras
 
 Flyway runs automatically before Hibernate on backend startup. Shared migrations
 live in `domain/src/main/resources/db/migration`, available to both modules.
-`V1__create_nhl_schema.sql` creates the five entity tables. Hibernate uses
-`ddl-auto=validate` and never creates or alters tables itself.
+`V1__create_nhl_schema.sql` creates the five entity tables;
+`V2__drop_unpopulated_columns.sql` drops columns that no ingestion path ever wrote.
+`V3__consistent_season_and_timestamp_columns.sql` names the season column `season_id` in every
+table and stores every `last_updated` as a timestamp.
+Hibernate uses `ddl-auto=validate` and never creates or alters tables itself.
 
-Add future changes as `V2__description.sql`, `V3__description.sql`, etc. Never edit
+Add future changes as `V4__description.sql`, `V5__description.sql`, etc. Never edit
 a migration after it has been applied; Flyway checks its checksum. The
 `flyway_schema_history` table records applied versions. Flyway coordinates
 concurrent startup against the same database.
@@ -45,15 +48,12 @@ otherwise apply a corrective migration or restore a backup. Flyway clean is disa
 
 ## Verify migrations and entity mappings
 
-With the container running, execute from the repository root:
+`PostgresMigrationTest` runs with the regular test suite against a disposable
+Testcontainers PostgreSQL (Docker required). It applies every migration to an
+empty database, validates the Hibernate mappings, checks that a repeated migration
+run is a no-op, and tests identity and composite-key persistence. It never touches
+your local database and makes no NHL requests.
 
 ```powershell
-$env:RUN_POSTGRES_TESTS = 'true'
-mvn -f backend/pom.xml -pl data-job -am test '-Dtest=PostgresMigrationTest,DataSyncServiceTest' '-Dsurefire.failIfNoSpecifiedTests=false'
-Remove-Item Env:RUN_POSTGRES_TESTS
+mvn -f backend/pom.xml -pl data-job -am test '-Dtest=PostgresMigrationTest' '-Dsurefire.failIfNoSpecifiedTests=false'
 ```
-
-The PostgreSQL test applies pending migrations to the configured database,
-validates Hibernate mappings, checks a repeated migration run, and tests identity
-and composite-key persistence. Test records are rolled back. NHL synchronization
-is mocked, so this test makes no NHL requests and does not ingest player data.

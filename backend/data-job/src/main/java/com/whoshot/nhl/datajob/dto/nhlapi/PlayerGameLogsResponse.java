@@ -2,6 +2,7 @@ package com.whoshot.nhl.datajob.dto.nhlapi;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
+
 import java.util.List;
 
 /**
@@ -12,6 +13,5 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PlayerGameLogsResponse {
 
-    private Integer seasonId;
     private List<PlayerGameLogDto> gameLog;
 }

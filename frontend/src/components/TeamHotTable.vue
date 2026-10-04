@@ -8,7 +8,6 @@
         v-for="(team, index) in teams"
         :key="team.teamCode"
         class="team-item"
-        :class="{ 'hot-team': team.hot, 'cold-team': team.cold }"
         @click="goToTeam(team.teamCode)"
       >
         <FavoriteToggle :item="teamFavorite(team)" />
@@ -143,13 +142,6 @@ const goToTeam = (teamCode) => {
   flex: 1;
 }
 
-.hot-team {
-  background-color: rgba(255, 140, 0, 0.15) !important;
-}
-
-.cold-team {
-  background-color: rgba(135, 206, 250, 0.15) !important;
-}
 
 .team-stats {
   display: flex;

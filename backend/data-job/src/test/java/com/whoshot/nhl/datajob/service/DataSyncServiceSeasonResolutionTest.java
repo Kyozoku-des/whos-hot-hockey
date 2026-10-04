@@ -1,11 +1,11 @@
 package com.whoshot.nhl.datajob.service;
 
 import com.whoshot.nhl.datajob.dto.SeasonDto;
+import com.whoshot.nhl.datajob.factory.PlayerFactory;
 import com.whoshot.nhl.domain.entity.CurrentSeason;
 import com.whoshot.nhl.domain.repository.CurrentSeasonRepository;
 import com.whoshot.nhl.domain.repository.PlayerRepository;
 import com.whoshot.nhl.domain.repository.TeamRepository;
-import com.whoshot.nhl.datajob.factory.PlayerFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

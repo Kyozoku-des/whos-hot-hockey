@@ -19,8 +19,6 @@ public class PlayerInfoDto {
 
     @JsonProperty("headshot")
     private String headshotUrl;
-    // Unused
-    private String heroImage;
 
     @JsonProperty("firstName")
     private NameDto firstName;

@@ -11,7 +11,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -42,9 +41,7 @@ class BackfillRunnerTest {
 
     @BeforeEach
     void setUp() {
-        runner = new BackfillRunner(nhlApiService, seasonBackfillService, context);
-        ReflectionTestUtils.setField(runner, "seasonId", SEASON);
-        ReflectionTestUtils.setField(runner, "dryRun", false);
+        runner = new BackfillRunner(nhlApiService, seasonBackfillService, context, SEASON, false);
     }
 
     @Test

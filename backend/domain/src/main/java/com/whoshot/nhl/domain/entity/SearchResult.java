@@ -1,25 +1,20 @@
 package com.whoshot.nhl.domain.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 /**
- * JPQL projection class for search queries.
- * Used as a constructor expression result in repository queries.
+ * JPQL projection for search queries, built by a constructor expression in the repositories.
+ *
+ * @param type          {@code "PLAYER"} or {@code "TEAM"}
+ * @param id            player ID (as a string) or team code
+ * @param name          player full name or team name
+ * @param secondaryInfo player position or team code
+ * @param teamCode      the player's team code, or the team's own code
+ * @param imageUrl      headshot or logo
  */
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class SearchResult {
-
-    private String type; // "PLAYER" or "TEAM"
-    private String id; // playerId (as string) or teamCode
-    private String name; // player full name or team name
-    private String secondaryInfo; // player position or team abbreviation
-    private String teamCode; // player's team code (null for teams)
-    private String imageUrl; // headshot or logo
-    private String season; // season ID for context
-}
+public record SearchResult(
+        String type,
+        String id,
+        String name,
+        String secondaryInfo,
+        String teamCode,
+        String imageUrl
+) {}

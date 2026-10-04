@@ -20,8 +20,7 @@ import org.testcontainers.utility.DockerImageName;
  * between test classes and Spring's test-context cache can safely reuse one Spring context for
  * every subclass). A shutdown hook stops it when the JVM exits.
  * <p>
- * These tests never touch a developer's real database (see the known problem with
- * {@code NhlApiServiceTest} booting the full context against dev Postgres). Every table this
+ * These tests never touch a developer's real database. Every table this
  * feature writes is truncated before each test method so container reuse cannot leak state between
  * tests.
  */

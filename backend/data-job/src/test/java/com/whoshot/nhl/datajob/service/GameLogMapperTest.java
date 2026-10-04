@@ -1,8 +1,7 @@
 package com.whoshot.nhl.datajob.service;
 
-import com.whoshot.nhl.datajob.model.TeamGameIndex;
-
 import com.whoshot.nhl.datajob.dto.nhlapi.PlayerGameLogDto;
+import com.whoshot.nhl.datajob.model.TeamGameIndex;
 import com.whoshot.nhl.domain.entity.GameLog;
 import com.whoshot.nhl.domain.entity.TeamGame;
 import org.junit.jupiter.api.Test;

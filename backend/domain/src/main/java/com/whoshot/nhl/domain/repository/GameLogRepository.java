@@ -2,36 +2,13 @@ package com.whoshot.nhl.domain.repository;
 
 import com.whoshot.nhl.domain.entity.GameLog;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Repository for GameLog entities.
  */
-@Repository
 public interface GameLogRepository extends JpaRepository<GameLog, Long> {
-
-    /**
-     * Get game logs for a specific player, ordered by date descending.
-     *
-     * @param playerId NHL player identifier
-     * @return game logs sorted by most recent date first
-     */
-    List<GameLog> findByPlayerIdOrderByGameDateDesc(Long playerId);
-
-    /**
-     * Get the last N game logs for a player.
-     *
-     * @param playerId NHL player identifier
-     * @param limit number of game logs to return
-     * @return most recent game logs up to the requested limit
-     */
-    @Query(value = "SELECT * FROM game_logs WHERE player_id = :playerId ORDER BY game_date DESC LIMIT :limit", nativeQuery = true)
-    List<GameLog> findLastNGamesByPlayer(@Param("playerId") Long playerId, @Param("limit") int limit);
 
     /**
      * Get game logs for a specific player and season, ordered by game number ascending.
@@ -40,8 +17,7 @@ public interface GameLogRepository extends JpaRepository<GameLog, Long> {
      * @param seasonId season identifier
      * @return season game logs in chronological game-number order
      */
-    @Query(value = "SELECT * FROM game_logs WHERE player_id = :playerId AND season_id = :seasonId ORDER BY game_number ASC", nativeQuery = true)
-    List<GameLog> findByPlayerIdAndSeasonIdOrderByGameNumberAsc(@Param("playerId") Long playerId, @Param("seasonId") String seasonId);
+    List<GameLog> findByPlayerIdAndSeasonIdOrderByGameNumberAsc(Long playerId, String seasonId);
 
     /**
      * Find game logs by player ID and season ID.
@@ -50,16 +26,5 @@ public interface GameLogRepository extends JpaRepository<GameLog, Long> {
      * @param seasonId season identifier
      * @return all game logs for the player in the given season
      */
-    @Query(value = "SELECT * FROM game_logs WHERE player_id = :playerId AND season_id = :seasonId", nativeQuery = true)
-    List<GameLog> findByPlayerIdAndSeasonId(@Param("playerId") Long playerId, @Param("seasonId") String seasonId);
-
-    /**
-     * Find the existing row for a player/game pair, used to upsert a game log without creating
-     * duplicates when a load (backfill or live sync) is re-run.
-     *
-     * @param playerId NHL player identifier
-     * @param gameId   NHL game identifier
-     * @return the existing game log row, if one was already written
-     */
-    Optional<GameLog> findByPlayerIdAndGameId(Long playerId, Long gameId);
+    List<GameLog> findByPlayerIdAndSeasonId(Long playerId, String seasonId);
 }

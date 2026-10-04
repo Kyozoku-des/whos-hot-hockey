@@ -20,9 +20,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.CancellationException;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
 
 /**
@@ -149,10 +149,10 @@ public class DataSyncService {
         log.info("Starting scoped player sync for teams {} in season {}", teamCodes, seasonId);
 
         Set<Long> rosterIds = teamCodes.stream()
-                .flatMap(teamCode -> playerRepository.findByTeamCodeAndIdSeason(teamCode, seasonId).stream())
+                .flatMap(teamCode -> playerRepository.findByTeamCodeAndIdSeasonId(teamCode, seasonId).stream())
                 .map(player -> player.getId().playerId())
                 .collect(Collectors.toSet());
-        Set<Long> storedIds = playerRepository.findPlayerIdsBySeason(seasonId);
+        Set<Long> storedIds = playerRepository.findPlayerIdsBySeasonId(seasonId);
         var players = nhlApiService.getPlayerStandingsOrder(seasonId, gameType).stream()
                 .filter(standing -> rosterIds.contains(standing.getId()) || !storedIds.contains(standing.getId()))
                 .toList();
@@ -356,13 +356,5 @@ public class DataSyncService {
         if (Thread.currentThread().isInterrupted()) {
             throw new CancellationException("Synchronization was stopped");
         }
-    }
-
-    /** Checks for live, critical, or pre-game entries in the current schedule. */
-    public boolean isAnyGameActive() {
-        List<GameDto> games = nhlApiService.getLeagueSchedule();
-
-        return games.stream()
-                .anyMatch(game -> (game.getGameState() == GameState.LIVE || game.getGameState() == GameState.CRIT || game.getGameState() == GameState.PRE));
     }
 }

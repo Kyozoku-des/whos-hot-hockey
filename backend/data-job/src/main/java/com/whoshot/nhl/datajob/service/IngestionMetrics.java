@@ -134,9 +134,6 @@ public class IngestionMetrics {
         if (path.contains("/schedule/")) {
             return "league-schedule";
         }
-        if (path.endsWith("/boxscore")) {
-            return "boxscore";
-        }
         if (path.endsWith("/season")) {
             return "seasons";
         }

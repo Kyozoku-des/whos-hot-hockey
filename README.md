@@ -50,8 +50,8 @@ podman-compose run --rm -e SPRING_PROFILES_ACTIVE=local,initial-load data-job
 podman-compose up -d data-job
 ```
 
-This runs a one-shot load of team standings and player statistics, then resumes the daemon.
-Game logs are currently used for player calculations but are not persisted for the game-log endpoints.
+This runs a one-shot load of team standings, team schedules, player statistics and game logs,
+then resumes the daemon.
 
 ### Stopping Services
 
@@ -69,7 +69,7 @@ whos-hot-nhl/
 │   └── data-job/            # NHL data sync daemon
 ├── frontend/                # Vue 3 SPA (port 3000)
 ├── specs/                   # Feature specifications
-└── docker-compose.yml       # All services configuration
+└── compose.yaml             # All services configuration
 ```
 
 ## Development
@@ -119,7 +119,6 @@ mvn test
 - [Backend README](backend/README.md) - Detailed backend documentation
 - [API Reference](backend/API_REFERENCE.md) - Complete API endpoint documentation
 - [Quickstart Guide](specs/001-api-data-split/quickstart.md) - Development setup guide
-- [Claude Development Guidelines](CLAUDE.md) - Project conventions and commands
 
 ## Using Docker Instead of Podman
 

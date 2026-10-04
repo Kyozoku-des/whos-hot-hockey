@@ -21,7 +21,6 @@ class IngestionMetricsTest {
             "https://api-web.nhle.com/v1/skater-stats-leaders/20252026/2?categories=points&limit=-1, player-standings",
             "https://api-web.nhle.com/v1/standings/now, team-standings",
             "https://api-web.nhle.com/v1/schedule/now, league-schedule",
-            "https://api-web.nhle.com/v1/gamecenter/2025020001/boxscore, boxscore",
             "https://api.nhle.com/stats/rest/en/season, seasons",
             "https://api-web.nhle.com/v1/unknown, other"
     })

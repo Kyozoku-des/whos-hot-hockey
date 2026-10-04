@@ -1,11 +1,10 @@
 package com.whoshot.nhl.datajob.dto.nhlapi;
 
-import java.util.Arrays;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-
 import lombok.Getter;
+
+import java.util.Arrays;
 
 @Getter
 public enum GameState {

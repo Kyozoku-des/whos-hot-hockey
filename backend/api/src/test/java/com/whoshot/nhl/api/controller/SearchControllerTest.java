@@ -1,10 +1,8 @@
 package com.whoshot.nhl.api.controller;
 
-import com.whoshot.nhl.domain.entity.CurrentSeason;
-import com.whoshot.nhl.domain.entity.SearchResult;
-import com.whoshot.nhl.domain.repository.CurrentSeasonRepository;
-import com.whoshot.nhl.domain.repository.PlayerRepository;
-import com.whoshot.nhl.domain.repository.TeamRepository;
+import com.whoshot.nhl.api.dto.SearchIndexDto;
+import com.whoshot.nhl.api.dto.SearchResultDto;
+import com.whoshot.nhl.api.service.SearchService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -13,7 +11,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.when;
@@ -28,24 +25,15 @@ class SearchControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private PlayerRepository playerRepository;
-
-    @MockitoBean
-    private TeamRepository teamRepository;
-
-    @MockitoBean
-    private CurrentSeasonRepository currentSeasonRepository;
+    private SearchService searchService;
 
     @Test
-    void getAllSearchableItems_returnsPlayersAndTeams() throws Exception {
+    void getAllSearchableItems_returnsIndexEnvelope() throws Exception {
         String season = "20252026";
-
-        when(playerRepository.findAllForSearch(season)).thenReturn(List.of(
-                new SearchResult("PLAYER", "8478402", "Connor McDavid", "EDM", "EDM", "https://headshot.jpg", season)
-        ));
-        when(teamRepository.findAllForSearch(season)).thenReturn(List.of(
-                new SearchResult("TEAM", "TOR", "Toronto Maple Leafs", "Eastern", "TOR", "https://logo.png", season)
-        ));
+        when(searchService.getSearchIndex(season)).thenReturn(new SearchIndexDto(season, 2, List.of(
+                new SearchResultDto("TEAM", "TOR", "Toronto Maple Leafs", "TOR", "TOR", "https://logo.png"),
+                new SearchResultDto("PLAYER", "8478402", "Connor McDavid", "C", "EDM", "https://headshot.jpg")
+        )));
 
         mockMvc.perform(get("/api/search/all").param("season", season))
                 .andExpect(status().isOk())
@@ -54,26 +42,18 @@ class SearchControllerTest {
                 .andExpect(jsonPath("$.results", hasSize(2)))
                 .andExpect(jsonPath("$.results[0].type").value("TEAM"))
                 .andExpect(jsonPath("$.results[1].type").value("PLAYER"))
+                .andExpect(jsonPath("$.results[1].secondaryInfo").value("C"))
                 // The season lives on the envelope only, not repeated per row.
                 .andExpect(jsonPath("$.results[0].season").doesNotExist());
     }
 
     @Test
-    void getAllSearchableItems_autoDetectsSeasonWhenNull() throws Exception {
-        String activeSeason = "20252026";
-
-        CurrentSeason current = new CurrentSeason();
-        current.setSeasonId(activeSeason);
-        current.setIsActive(true);
-        when(currentSeasonRepository.findByIsActiveTrue()).thenReturn(Optional.of(current));
-
-        when(playerRepository.findAllForSearch(activeSeason)).thenReturn(List.of());
-        when(teamRepository.findAllForSearch(activeSeason)).thenReturn(List.of());
+    void getAllSearchableItems_passesMissingSeasonThrough() throws Exception {
+        when(searchService.getSearchIndex(null)).thenReturn(new SearchIndexDto("20252026", 0, List.of()));
 
         mockMvc.perform(get("/api/search/all"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.season").value(activeSeason))
-                .andExpect(jsonPath("$.count").value(0))
+                .andExpect(jsonPath("$.season").value("20252026"))
                 .andExpect(jsonPath("$.results", hasSize(0)));
     }
 }

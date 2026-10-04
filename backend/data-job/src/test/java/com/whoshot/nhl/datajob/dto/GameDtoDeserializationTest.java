@@ -1,8 +1,8 @@
 package com.whoshot.nhl.datajob.dto;
 
-import tools.jackson.databind.ObjectMapper;
 import com.whoshot.nhl.datajob.dto.nhlapi.GameDto;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

@@ -2,7 +2,9 @@
 
 Base URL: `http://localhost:8080`
 
-All endpoints return JSON. The `season` query parameter is optional on every endpoint and defaults to the active NHL season when omitted. Format: `YYYYYYYY` (e.g., `20242025`).
+All endpoints are `GET` and return JSON. The `season` query parameter is optional on every endpoint and defaults to the active NHL season when omitted. Format: `YYYYYYYY` (e.g., `20242025`).
+
+Numeric fields are `null` when the data job has not computed them yet.
 
 ---
 
@@ -26,7 +28,7 @@ Returns the full search index for one season: every team followed by every playe
       "type": "TEAM",
       "id": "EDM",
       "name": "Edmonton Oilers",
-      "secondaryInfo": "Pacific",
+      "secondaryInfo": "EDM",
       "teamCode": "EDM",
       "imageUrl": "https://assets.nhle.com/logos/nhl/svg/EDM_light.svg"
     },
@@ -46,86 +48,58 @@ Returns the full search index for one season: every team followed by every playe
 
 ## Players
 
-### GET /api/players/standings
+The three list endpoints below return the same player row:
 
-All players with season stats, ordered by points.
-
-- **Query params**: `season` (optional)
-
-**Example response:**
-```json
-[
-  {
-    "playerId": 8478402,
-    "name": "Connor McDavid",
-    "teamCode": "EDM",
-    "position": "C",
-    "gamesPlayed": 60,
-    "goals": 30,
-    "assists": 50,
-    "points": 80
-  }
-]
-```
-
-### GET /api/players/point-streaks
-
-Players with active point streaks.
-
-- **Query params**: `season` (optional)
-- **Description**: Returns players who have recorded at least one point in consecutive recent games, sorted by streak length descending.
-
-**Example response:**
-```json
-[
-  {
-    "playerId": 8478402,
-    "name": "Connor McDavid",
-    "teamCode": "EDM",
-    "streakLength": 12
-  }
-]
-```
-
-### GET /api/players/hot
-
-Players with strong recent performance ("hot" players).
-
-- **Query params**: `season` (optional)
-- **Description**: Returns players ranked by their points-per-game average over recent games.
-
-**Example response:**
-```json
-[
-  {
-    "playerId": 8478402,
-    "name": "Connor McDavid",
-    "teamCode": "EDM",
-    "hotRating": 2.1
-  }
-]
-```
-
-### GET /api/players/{playerId}
-
-Player detail with identity info and season stats.
-
-- **Path params**: `playerId` (int) - NHL player ID
-- **Query params**: `season` (optional)
-
-**Example response:**
 ```json
 {
   "playerId": 8478402,
-  "name": "Connor McDavid",
+  "firstName": "Connor",
+  "lastName": "McDavid",
+  "fullName": "Connor McDavid",
+  "positionCode": "C",
   "teamCode": "EDM",
-  "position": "C",
+  "teamLogoUrl": "https://assets.nhle.com/logos/nhl/svg/EDM_light.svg",
+  "headshotUrl": "https://assets.nhle.com/mugs/nhl/20252026/EDM/8478402.png",
   "gamesPlayed": 60,
   "goals": 30,
   "assists": 50,
-  "points": 80
+  "points": 80,
+  "pointsPerGame": 1.33,
+  "plusMinus": 12,
+  "pointsPerLastNGames": 2.1,
+  "currentPointStreak": 12,
+  "currentPointlessStreak": 0
 }
 ```
+
+- `pointsPerLastNGames` — points per game over the player's last 10 games (fewer if they have played fewer).
+- `currentPointStreak` / `currentPointlessStreak` — consecutive most-recent games with / without a point; at most one of them is non-zero.
+
+### GET /api/players/standings
+
+All players for the season, ordered by `points` descending.
+
+- **Query params**: `season` (optional)
+
+### GET /api/players/point-streaks
+
+Players with an active point streak (`currentPointStreak > 0`), ordered by streak length descending.
+
+- **Query params**: `season` (optional)
+
+### GET /api/players/hot
+
+Players ordered by recent form: `pointsPerLastNGames` descending. Players without a value are left out.
+
+- **Query params**: `season` (optional)
+
+### GET /api/players/{playerId}
+
+Player detail. Same fields as the player row above.
+
+- **Path params**: `playerId` (int) - NHL player ID
+- **Query params**: `season` (optional)
+- **Errors**: `404` `{ "error": "Player not found", "playerId": 8478402 }` when the player has no row for the season.
 
 ### GET /api/players/{playerId}/game-log
 
@@ -159,85 +133,74 @@ in, returns `200` with an empty list `[]` — never an error or zeroed rows.
 ]
 ```
 
+`timeOnIce` is in seconds. `gameWon` is `null` until the team's result for that game has been loaded.
+
 ---
 
 ## Teams
 
+The three list endpoints below return the same team row:
+
+```json
+{
+  "teamCode": "WPG",
+  "teamName": "Winnipeg Jets",
+  "logoUrl": "https://assets.nhle.com/logos/nhl/svg/WPG_light.svg",
+  "gamesPlayed": 60,
+  "wins": 40,
+  "losses": 15,
+  "overtimeLosses": 5,
+  "points": 85,
+  "pointPercentage": 0.708,
+  "goalsFor": 210,
+  "goalsAgainst": 150,
+  "goalDifferential": 60,
+  "conferenceName": "Western",
+  "divisionName": "Central",
+  "currentWinStreak": 7,
+  "currentLossStreak": 0,
+  "last10GamesPointPercentage": 0.8,
+  "last10GamesPPG": 1.6
+}
+```
+
+- `currentLossStreak` counts overtime losses as losses.
+- `last10GamesPointPercentage` = points / (games × 2) over the last 10 games; `last10GamesPPG` = points per game over the same games.
+
 ### GET /api/teams/standings
 
-All 32 teams with standings, ordered by points.
+All 32 teams, ordered by `points` descending.
 
 - **Query params**: `season` (optional)
-
-**Example response:**
-```json
-[
-  {
-    "teamCode": "WPG",
-    "name": "Winnipeg Jets",
-    "gamesPlayed": 60,
-    "wins": 40,
-    "losses": 15,
-    "otLosses": 5,
-    "points": 85
-  }
-]
-```
 
 ### GET /api/teams/win-streaks
 
-Teams with active win streaks.
+Teams with an active win streak (`currentWinStreak > 0`), ordered by streak length descending.
 
 - **Query params**: `season` (optional)
-
-**Example response:**
-```json
-[
-  {
-    "teamCode": "WPG",
-    "name": "Winnipeg Jets",
-    "streakLength": 7
-  }
-]
-```
 
 ### GET /api/teams/loss-streaks
 
-Teams with active loss streaks.
+Teams with an active loss streak (`currentLossStreak > 0`), ordered by streak length descending.
 
 - **Query params**: `season` (optional)
-
-**Example response:**
-```json
-[
-  {
-    "teamCode": "SJS",
-    "name": "San Jose Sharks",
-    "streakLength": 5
-  }
-]
-```
 
 ### GET /api/teams/{teamCode}
 
-Team detail with roster.
+Team detail: the team row above plus the season's roster.
 
 - **Path params**: `teamCode` (string) - Three-letter team code (e.g., `EDM`, `TOR`)
 - **Query params**: `season` (optional)
+- **Errors**: `404` `{ "error": "Team not found", "teamCode": "XYZ" }` when the team has no row for the season.
 
-**Example response:**
+**Example `roster` entry:**
 ```json
 {
+  "playerId": 8478402,
+  "fullName": "Connor McDavid",
+  "positionCode": "C",
   "teamCode": "EDM",
-  "name": "Edmonton Oilers",
-  "gamesPlayed": 60,
-  "wins": 35,
-  "losses": 18,
-  "otLosses": 7,
-  "points": 77,
-  "roster": [
-    { "playerId": 8478402, "name": "Connor McDavid", "position": "C" }
-  ]
+  "headshotUrl": "https://assets.nhle.com/mugs/nhl/20252026/EDM/8478402.png"
 }
 ```
 
@@ -248,10 +211,7 @@ Team game results for a season, ordered by `gameDate` descending.
 - **Path params**: `teamCode` (string) - Three-letter team code
 - **Query params**: `season` (optional)
 
-**Season scoping**: `season` (e.g. `20242025`) selects any season present in the database, including
-past seasons loaded with the backfill (see `README.md`, "Backfilling a past season"). Omitted, it
-defaults to the active season. A season that was never loaded, or one the player/team has no games
-in, returns `200` with an empty list `[]` — never an error or zeroed rows.
+**Season scoping**: same as the player game log above.
 
 **Example response:**
 ```json
@@ -275,10 +235,9 @@ in, returns `200` with an empty list `[]` — never an error or zeroed rows.
 
 ## Error Responses
 
-All endpoints may return the following errors:
-
-| Status | Meaning | Example |
-|--------|---------|---------|
-| 400 | Bad request (invalid parameters) | `{ "error": "Invalid season format" }` |
-| 404 | Resource not found | `{ "error": "Player not found" }` |
+| Status | Meaning | Body |
+|--------|---------|------|
+| 400 | A parameter has the wrong type (e.g. a non-numeric `playerId`) | `{ "error": "Invalid parameter", "detail": "..." }` |
+| 404 | Unknown player or team for the season | `{ "error": "Player not found", "playerId": ... }` / `{ "error": "Team not found", "teamCode": "..." }` |
+| 404 | Unknown path | `{ "error": "Not found", "path": "..." }` |
 | 500 | Internal server error | `{ "error": "Internal server error" }` |

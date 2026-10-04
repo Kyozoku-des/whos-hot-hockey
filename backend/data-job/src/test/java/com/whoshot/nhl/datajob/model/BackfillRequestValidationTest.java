@@ -57,9 +57,9 @@ class BackfillRequestValidationTest {
     void rejectsSeasonThatHasNotStarted() {
         // A syntactically valid season id (within SeasonValidator's max-bound tolerance of
         // "current season + 1") whose start date is nonetheless still in the future.
-        String nextSeasonId = com.whoshot.nhl.datajob.util.SeasonValidator.yearToSeasonId(
-                com.whoshot.nhl.datajob.util.SeasonValidator.getStartYear(
-                        com.whoshot.nhl.datajob.util.SeasonValidator.getCurrentSeasonId()) + 1);
+        int nextStartYear = Integer.parseInt(
+                com.whoshot.nhl.datajob.util.SeasonValidator.getCurrentSeasonId().substring(0, 4)) + 1;
+        String nextSeasonId = "" + nextStartYear + (nextStartYear + 1);
         SeasonDto notStarted = season(nextSeasonId,
                 LocalDateTime.now().plusMonths(6), LocalDateTime.now().plusMonths(18));
 

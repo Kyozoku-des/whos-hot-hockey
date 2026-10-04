@@ -1,5 +1,6 @@
 package com.whoshot.nhl.datajob.service;
 
+import com.whoshot.nhl.datajob.dto.nhlapi.GameDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -8,8 +9,6 @@ import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
-
-import com.whoshot.nhl.datajob.dto.nhlapi.GameDto;
 
 import java.time.Duration;
 import java.time.Instant;

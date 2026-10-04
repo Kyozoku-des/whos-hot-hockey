@@ -1,17 +1,17 @@
 package com.whoshot.nhl.datajob.util;
 
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 
 /**
  * Utility class for validating and working with NHL seasons.
  */
-@Service
-public class SeasonValidator {
+public final class SeasonValidator {
 
     // NHL founded in 1917, use 1917-1918 as minimum season
     private static final int MIN_SEASON_START_YEAR = 1917;
+
+    private SeasonValidator() {
+    }
 
     /**
      * Get the current NHL season ID.
@@ -25,19 +25,9 @@ public class SeasonValidator {
         int year = now.getYear();
         int month = now.getMonthValue();
 
-        // If we're in January-June, we're in the second half of the season
-        // If we're in July-December, we're in the first half or pre-season of next season
-        int startYear;
-        if (month <= 6) {
-            // Jan-June: Still in previous season (e.g., Jan 2026 is in 2025-2026 season)
-            startYear = year - 1;
-        } else if (month >= 10) {
-            // Oct-Dec: New season has started (e.g., Oct 2025 is in 2025-2026 season)
-            startYear = year;
-        } else {
-            // July-Sept: Off-season, but prepare for next season
-            startYear = year;
-        }
+        // Jan-June still belongs to the season that started the previous year; from July on,
+        // the off-season already counts toward the season starting this year.
+        int startYear = month <= 6 ? year - 1 : year;
 
         int endYear = startYear + 1;
         return String.format("%d%d", startYear, endYear);
@@ -76,47 +66,5 @@ public class SeasonValidator {
         } catch (NumberFormatException e) {
             return true;
         }
-    }
-
-    /**
-     * Convert a year to season ID.
-     * For example: 2025 -> 20252026 (the season starting in 2025)
-     *
-     * @param year Starting year of the season
-     * @return Season ID in format YYYYYYYY
-     */
-    public static String yearToSeasonId(int year) {
-        return String.format("%d%d", year, year + 1);
-    }
-
-    /**
-     * Extract the start year from a season ID.
-     * For example: 20252026 -> 2025
-     *
-     * @param seasonId Season ID in format YYYYYYYY
-     * @return Start year of the season
-     * @throws IllegalArgumentException if the supplied season ID is invalid
-     */
-    public static int getStartYear(String seasonId) {
-        if (isNotValidSeasonId(seasonId)) {
-            throw new IllegalArgumentException("Invalid season ID: " + seasonId);
-        }
-        return Integer.parseInt(seasonId.substring(0, 4));
-    }
-
-    /**
-     * Format a season ID into human-readable format.
-     * For example: 20252026 -> "2025-2026"
-     *
-     * @param seasonId Season ID in format YYYYYYYY
-     * @return Human-readable season string
-     */
-    public static String formatSeason(String seasonId) {
-        if (isNotValidSeasonId(seasonId)) {
-            return "Invalid Season";
-        }
-        String startYear = seasonId.substring(0, 4);
-        String endYear = seasonId.substring(4, 8);
-        return startYear + "-" + endYear;
     }
 }
