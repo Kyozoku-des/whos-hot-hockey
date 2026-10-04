@@ -137,6 +137,26 @@ class RequestThrottleTest {
     }
 
     @Test
+    void cooldownImposedWhileQueuedForASlot_stillHoldsTheRequestBack() throws Exception {
+        RequestThrottle throttle = unpaced(1);
+        var holder = throttle.acquire(HOST, deadlineIn(Duration.ofSeconds(1)));
+        // Passes the host check now, then queues for the only slot.
+        var queued = CompletableFuture.supplyAsync(() -> {
+            throttle.acquire(HOST, deadlineIn(Duration.ofSeconds(5)));
+            return System.nanoTime();
+        });
+        TimeUnit.MILLISECONDS.sleep(100);
+
+        // The running request gets a 429: every worker for this host must wait.
+        long cooledAt = System.nanoTime();
+        throttle.cooldown(HOST, Duration.ofMillis(400));
+        throttle.release(holder, false);
+
+        long startedAt = queued.get(2, TimeUnit.SECONDS);
+        assertThat(Duration.ofNanos(startedAt - cooledAt)).isGreaterThanOrEqualTo(Duration.ofMillis(350));
+    }
+
+    @Test
     void cooldownBeyondDeadline_isDeferredImmediately() {
         RequestThrottle throttle = unpaced(4);
         throttle.cooldown(HOST, Duration.ofSeconds(30));

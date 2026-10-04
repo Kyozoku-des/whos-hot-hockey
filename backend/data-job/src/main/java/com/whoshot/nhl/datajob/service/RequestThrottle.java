@@ -84,23 +84,36 @@ public class RequestThrottle {
     public Permit acquire(String host, long deadlineNanos) {
         long started = System.nanoTime();
         HostState state = hosts.computeIfAbsent(host, h -> new HostState());
-        boolean probe = awaitHost(host, state, deadlineNanos);
-        try {
-            acquireInFlight(host, deadlineNanos);
-        } catch (RuntimeException e) {
-            if (probe) {
-                state.endProbe();
+        boolean probe;
+        while (true) {
+            probe = awaitHost(host, state, deadlineNanos);
+            try {
+                acquireInFlight(host, deadlineNanos);
+            } catch (RuntimeException e) {
+                if (probe) {
+                    state.endProbe();
+                }
+                throw e;
             }
-            throw e;
-        }
-        try {
-            awaitRate(host, deadlineNanos);
-        } catch (RuntimeException e) {
+            try {
+                awaitRate(host, deadlineNanos);
+            } catch (RuntimeException e) {
+                inFlight.release();
+                if (probe) {
+                    state.endProbe();
+                }
+                throw e;
+            }
+            // The slot and rate waits can be long: a cooldown or open circuit imposed meanwhile
+            // (another worker's 429/503) must hold this request back too, so check again right
+            // before dispatch and go back to waiting if the host was blocked in between.
+            if (state.stillAdmits(probe, properties)) {
+                break;
+            }
             inFlight.release();
             if (probe) {
                 state.endProbe();
             }
-            throw e;
         }
         peakInFlight.accumulateAndGet(properties.maxInFlight() - inFlight.availablePermits(), Math::max);
         long waited = System.nanoTime() - started;
@@ -260,6 +273,18 @@ public class RequestThrottle {
                 return true;
             }
             return false;
+        }
+
+        /**
+         * Whether a request that already passed {@link #awaitHost} may still start: the host must
+         * not have been cooled down since, and (unless this request is the probe) its circuit must
+         * not have opened.
+         */
+        synchronized boolean stillAdmits(boolean probe, ApiRequestProperties properties) {
+            if (System.nanoTime() - blockedUntil < 0) {
+                return false;
+            }
+            return probe || consecutiveFailures < properties.circuitFailureThreshold();
         }
 
         synchronized void endProbe() {
