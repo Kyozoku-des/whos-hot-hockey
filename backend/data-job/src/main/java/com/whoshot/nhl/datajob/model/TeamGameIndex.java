@@ -5,6 +5,7 @@ import com.whoshot.nhl.domain.entity.TeamGame;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Immutable lookup of team-game outcomes for one season, keyed by {@code (gameId, opponentTeamCode)}.
@@ -66,7 +67,7 @@ public final class TeamGameIndex {
     }
 
     private static Map<Key, Boolean> withoutNullValues(Map<Key, Boolean> index) {
-        index.values().removeIf(java.util.Objects::isNull);
+        index.values().removeIf(Objects::isNull);
         return index;
     }
 }

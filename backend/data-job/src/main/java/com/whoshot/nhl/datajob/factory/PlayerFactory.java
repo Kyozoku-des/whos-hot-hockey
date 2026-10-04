@@ -3,10 +3,10 @@ package com.whoshot.nhl.datajob.factory;
 import com.whoshot.nhl.datajob.dto.nhlapi.PlayerGameLogDto;
 import com.whoshot.nhl.datajob.dto.nhlapi.PlayerInfoDto;
 import com.whoshot.nhl.datajob.dto.nhlapi.PlayerStandingDto;
-import com.whoshot.nhl.domain.entity.Player;
 import com.whoshot.nhl.datajob.exception.PlayerStatisticsException;
 import com.whoshot.nhl.datajob.model.PlayerStatistics;
 import com.whoshot.nhl.datajob.service.StatisticsCalculationService;
+import com.whoshot.nhl.domain.entity.Player;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

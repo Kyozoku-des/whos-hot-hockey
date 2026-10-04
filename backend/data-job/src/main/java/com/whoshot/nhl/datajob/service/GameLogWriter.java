@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -128,7 +129,7 @@ public class GameLogWriter {
      */
     static List<PlayerGameLogDto> chronological(List<PlayerGameLogDto> mostRecentFirst) {
         List<PlayerGameLogDto> copy = new ArrayList<>(mostRecentFirst);
-        java.util.Collections.reverse(copy);
+        Collections.reverse(copy);
         return copy;
     }
 
