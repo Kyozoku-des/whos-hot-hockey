@@ -1,17 +1,17 @@
 package com.whoshot.nhl.datajob.util;
 
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 
 /**
  * Utility class for validating and working with NHL seasons.
  */
-@Service
-public class SeasonValidator {
+public final class SeasonValidator {
 
     // NHL founded in 1917, use 1917-1918 as minimum season
     private static final int MIN_SEASON_START_YEAR = 1917;
+
+    private SeasonValidator() {
+    }
 
     /**
      * Get the current NHL season ID.

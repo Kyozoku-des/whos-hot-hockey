@@ -8,14 +8,14 @@ import com.whoshot.nhl.datajob.exception.PlayerStatisticsException;
 import com.whoshot.nhl.datajob.model.PlayerStatistics;
 import com.whoshot.nhl.datajob.service.StatisticsCalculationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 /**
  * Factory responsible for creating {@link Player} entities from NHL API DTOs.
  */
-@Service
+@Component
 @RequiredArgsConstructor
 public class PlayerFactory {
 

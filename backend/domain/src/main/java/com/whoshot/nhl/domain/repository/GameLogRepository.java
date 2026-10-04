@@ -2,14 +2,12 @@ package com.whoshot.nhl.domain.repository;
 
 import com.whoshot.nhl.domain.entity.GameLog;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 /**
  * Repository for GameLog entities.
  */
-@Repository
 public interface GameLogRepository extends JpaRepository<GameLog, Long> {
 
     /**

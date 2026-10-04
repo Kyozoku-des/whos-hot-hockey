@@ -8,9 +8,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 /**
  * Main application class for the Data Ingestion Job.
  */
-@SpringBootApplication(scanBasePackages = "com.whoshot.nhl")
-@EntityScan(basePackages = "com.whoshot.nhl.domain.entity")
-@EnableJpaRepositories(basePackages = "com.whoshot.nhl.domain.repository")
+@SpringBootApplication
+@EntityScan("com.whoshot.nhl.domain.entity")
+@EnableJpaRepositories("com.whoshot.nhl.domain.repository")
 public class DataIngestionJob {
 
     /**

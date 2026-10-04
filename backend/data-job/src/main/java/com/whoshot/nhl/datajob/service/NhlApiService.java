@@ -3,7 +3,6 @@ package com.whoshot.nhl.datajob.service;
 import com.whoshot.nhl.datajob.dto.SeasonDto;
 import com.whoshot.nhl.datajob.dto.SeasonsResponseDto;
 import com.whoshot.nhl.datajob.dto.nhlapi.*;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -17,16 +16,23 @@ import java.util.List;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class NhlApiService {
 
     private final ApiClient apiClient;
+    private final String baseUrl;
+    private final String alternateBaseUrl;
 
-    @Value("${nhle.api.base-url}")
-    private String baseUrl;
-
-    @Value("${nhle.api.alternate-base-url}")
-    private String alternateBaseUrl;
+    /**
+     * @param baseUrl          web API host ({@code api-web.nhle.com}): schedules, standings, players
+     * @param alternateBaseUrl stats API host ({@code api.nhle.com}): the seasons list
+     */
+    public NhlApiService(ApiClient apiClient,
+                         @Value("${nhle.api.base-url}") String baseUrl,
+                         @Value("${nhle.api.alternate-base-url}") String alternateBaseUrl) {
+        this.apiClient = apiClient;
+        this.baseUrl = baseUrl;
+        this.alternateBaseUrl = alternateBaseUrl;
+    }
 
     /**
      * Fetches all available seasons from the NHL statistics API.

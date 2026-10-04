@@ -6,7 +6,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
@@ -36,9 +35,7 @@ class NhlApiServiceTest {
         RestClient.Builder builder = RestClient.builder();
         server = MockRestServiceServer.bindTo(builder).build();
         service = new NhlApiService(new ApiClient(builder.build(), new RequestThrottle(properties),
-                properties, IngestionMetrics.standalone()));
-        ReflectionTestUtils.setField(service, "baseUrl", WEB_URL);
-        ReflectionTestUtils.setField(service, "alternateBaseUrl", STATS_URL);
+                properties, IngestionMetrics.standalone()), WEB_URL, STATS_URL);
     }
 
     @AfterEach
