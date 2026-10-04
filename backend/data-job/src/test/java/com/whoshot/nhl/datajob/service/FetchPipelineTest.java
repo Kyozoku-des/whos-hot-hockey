@@ -168,6 +168,38 @@ class FetchPipelineTest {
     }
 
     @Test
+    void interruptingTheCaller_alsoCancelsTheFetchItIsWaitingFor() throws Exception {
+        CountDownLatch headStarted = new CountDownLatch(1);
+        CountDownLatch headInterrupted = new CountDownLatch(1);
+        FetchPipeline pipeline = pipeline(2);
+        var caller = new Thread[1];
+        var run = CompletableFuture.runAsync(() -> {
+            caller[0] = Thread.currentThread();
+            pipeline.<Integer, Integer>run(inputs(2), input -> {
+                if (input == 0) {
+                    headStarted.countDown();
+                    try {
+                        TimeUnit.SECONDS.sleep(30);
+                    } catch (InterruptedException e) {
+                        headInterrupted.countDown();
+                        throw e;
+                    }
+                }
+                return input;
+            }, (input, result) -> {
+            });
+        }, runnable -> new Thread(runnable).start());
+        assertThat(headStarted.await(2, TimeUnit.SECONDS)).isTrue();
+
+        caller[0].interrupt();
+
+        assertThatThrownBy(() -> run.get(2, TimeUnit.SECONDS)).hasCauseInstanceOf(CancellationException.class);
+        assertThat(headInterrupted.await(1, TimeUnit.SECONDS))
+                .as("the fetch the caller was waiting on must not keep running")
+                .isTrue();
+    }
+
+    @Test
     void sequentialPipeline_runsOnTheCallingThread() {
         Thread caller = Thread.currentThread();
         List<Thread> fetchThreads = new ArrayList<>();

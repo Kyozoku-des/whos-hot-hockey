@@ -126,12 +126,15 @@ public class FetchPipeline implements DisposableBean {
                     outstandingNow.incrementAndGet();
                     peakOutstanding.accumulateAndGet(outstanding.size(), Math::max);
                 }
-                Pending<I, T> next = outstanding.poll();
+                // Stays tracked while awaited, so an interrupt here cancels it with the rest.
+                Pending<I, T> next = outstanding.peek();
                 if (next == null) {
                     return;
                 }
+                Result<T> result = await(next.future());
+                outstanding.poll();
                 outstandingNow.decrementAndGet();
-                consumer.accept(next.input(), await(next.future()));
+                consumer.accept(next.input(), result);
             }
         } finally {
             outstanding.forEach(pending -> pending.future().cancel(true));
