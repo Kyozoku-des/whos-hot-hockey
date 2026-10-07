@@ -27,6 +27,12 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# The official nginx entrypoint renders this before starting nginx. No TCP
+# peers are trusted by default; production must set Caddy's exact address.
+ENV CADDY_TRUSTED_PROXY=unix:
+ENV NGINX_ENVSUBST_FILTER=^CADDY_TRUSTED_PROXY$
+COPY nginx/realip.conf.template /etc/nginx/templates/realip.conf.template
+
 # Expose port
 EXPOSE 3000
 

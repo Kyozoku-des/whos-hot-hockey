@@ -99,6 +99,88 @@ npm run preview
 The frontend calls the backend REST API under a relative `/api` base. See
 [backend/API_REFERENCE.md](../backend/API_REFERENCE.md) for the endpoints and response shapes.
 
+### Public API rate limiting
+
+The container's nginx limits `/api/` to **10 requests/second per client IP**,
+with **50 excess requests** allowed as an immediate burst (`nodelay`). Excess
+traffic receives **HTTP 429** before reaching the backend. All API endpoints
+share the same bucket, including paths with asset extensions. SPA routes and
+static assets are unlimited. Clients behind the same NAT share a bucket.
+
+The 10 MB zone is shared by nginx workers, but not across frontend containers;
+this is intended for the single-VPS deployment. Rejections appear at `warn`
+level in nginx's error log (`docker compose logs frontend`). Tune `rate` and
+`burst` in `nginx.conf` if real traffic warrants it. Buckets reset on restart.
+
+#### Caddy deployment wiring
+
+The local `compose.yaml` has no Caddy. By default, the image trusts **no TCP
+peer** for forwarded addresses (`CADDY_TRUSTED_PROXY=unix:`), so direct requests
+are limited by their socket address. The official nginx image renders
+`nginx/realip.conf.template` at startup; changing the environment requires
+recreating the frontend container.
+
+When adding the production stack from issues #21/#23, give Caddy a fixed IP on
+a dedicated proxy network and pass **that exact IP** to the frontend container.
+For example, these are fragments for the production Compose file, not an
+override for the local file:
+
+```yaml
+services:
+  caddy:
+    # Existing image, ports (80/443), config and volumes go here.
+    networks:
+      proxy:
+        ipv4_address: 172.30.40.2
+  frontend:
+    # Existing frontend image goes here. No published ports in production.
+    environment:
+      CADDY_TRUSTED_PROXY: "172.30.40.2"
+    networks:
+      - proxy
+      - default # backend-api is reachable here
+networks:
+  proxy:
+    ipam:
+      config:
+        - subnet: 172.30.40.0/29
+```
+
+Choose a subnet that does not overlap the VPS's other networks. Attach only
+Caddy and frontend to `proxy`. Do not trust an entire Docker subnet or
+`0.0.0.0/0`. Only Caddy should publish public ports; neither frontend nor
+backend-api should have public port mappings that bypass the proxy path.
+
+For Caddy directly facing the internet, its Caddyfile route can be:
+
+```caddyfile
+nhl.example.com {
+    reverse_proxy frontend:3000
+}
+```
+
+Caddy supplies `X-Forwarded-For` using the connecting client's IP and ignores
+untrusted incoming forwarded values by default. nginx accepts the last XFF
+address only when the immediate peer matches `CADDY_TRUSTED_PROXY`; it does not
+walk further into the chain. nginx then replaces both `X-Real-IP` and
+`X-Forwarded-For` sent to the backend with the verified address. No backend
+application changes or Caddy plugins are needed. If a CDN or another proxy is
+added ahead of Caddy, review the trust chain before enabling that deployment.
+
+#### Verification
+
+With Python 3 and nginx (including `http_realip_module`) installed:
+
+```bash
+python3 -m unittest discover -s frontend/tests -v
+```
+
+These integration tests start isolated nginx instances and a mock backend.
+They cover 429 responses, refill, independent IPv4/IPv6 clients, spoofed
+headers from untrusted peers, upstream header sanitization, API paths with
+asset extensions, and unlimited SPA/static requests. Set `NGINX_BINARY` if
+nginx is not on `PATH`. They do not start the database or call the NHL API.
+
 ## Design
 
 The application follows the reference designs provided:
