@@ -74,7 +74,7 @@ public class PlayerService {
         String resolved = seasonResolver.resolve(season);
         Player player = playerRepository.findById(new Player.PlayerId(playerId, resolved))
                 .orElseThrow(() -> new GlobalExceptionHandler.PlayerNotFoundException(playerId));
-        return toDetailDto(player);
+        return toDetailDto(player, SeasonPace.regularSeasonGames(resolved));
     }
 
     /**
@@ -104,7 +104,7 @@ public class PlayerService {
                 .toList();
     }
 
-    private PlayerDetailDto toDetailDto(Player player) {
+    private PlayerDetailDto toDetailDto(Player player, int seasonGames) {
         return new PlayerDetailDto(
                 player.getId().playerId(),
                 player.getFirstName(),
@@ -122,7 +122,9 @@ public class PlayerService {
                 player.getPlusMinus(),
                 player.getCurrentPointStreak(),
                 player.getCurrentPointlessStreak(),
-                player.getPointsPerLastNGames()
+                player.getPointsPerLastNGames(),
+                seasonGames,
+                SeasonPace.projectedPoints(player.getPoints(), player.getGamesPlayed(), seasonGames)
         );
     }
 

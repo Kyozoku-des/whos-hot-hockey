@@ -57,6 +57,20 @@ class TeamServiceTest {
         });
     }
 
+    @Test
+    void teamDetail_projectsSeasonPointsAtTheCurrentPace() {
+        Team team = new Team();
+        team.setTeamCode("EDM");
+        team.setGamesPlayed(21);
+        team.setPoints(30);
+        when(teamRepository.findByTeamCodeAndSeasonId("EDM", SEASON)).thenReturn(Optional.of(team));
+
+        var detail = teamService.getTeamDetail("EDM", SEASON);
+
+        assertThat(detail.seasonGames()).isEqualTo(84);
+        assertThat(detail.projectedPoints()).isEqualTo(120);
+    }
+
     private static Player player(long id, int goals, int assists, int points) {
         return Player.builder().id(new Player.PlayerId(id, SEASON))
                 .goals(goals).assists(assists).points(points).build();

@@ -25,5 +25,7 @@ public record TeamDetailDto(
         Integer currentLossStreak,
         Double last10GamesPointPercentage,
         Double last10GamesPPG,
+        Integer seasonGames,
+        Integer projectedPoints,
         List<RosterPlayerDto> roster
 ) {}
