@@ -24,7 +24,6 @@
         </div>
 
         <div class="section">
-          <h2 class="section-title">Win/Loss Progression</h2>
           <TeamGameLogGraph
             :current-season-data="teamGameLogs"
             :previous-season-data="previousSeasonTeamGameLogs"

@@ -302,8 +302,9 @@ const chartOptions = computed(() => ({
     height: 300px;
   }
 
+  /* The mode toggle already says what the graph shows */
   .graph-title {
-    font-size: 1.2rem;
+    display: none;
   }
 }
 </style>

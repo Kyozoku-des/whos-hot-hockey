@@ -23,7 +23,6 @@
         </div>
 
         <div class="section">
-          <h2 class="section-title">Points Progression</h2>
           <PlayerGameLogGraph
             :current-season-data="gameLogs"
             :previous-season-data="previousSeasonGameLogs"
