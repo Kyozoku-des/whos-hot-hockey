@@ -7,6 +7,7 @@
         <div class="team-header">
           <div class="team-info-card">
             <TeamLogo
+              class="card-image"
               :logoUrl="team?.logoUrl"
               :teamCode="team?.teamCode"
               :alt="team?.teamName"
@@ -58,6 +59,14 @@
           </ul>
           <p v-else class="placeholder-text">No roster data available</p>
         </div>
+
+        <TeamLogo
+          class="bottom-image"
+          :logoUrl="team?.logoUrl"
+          :teamCode="team?.teamCode"
+          :alt="team?.teamName"
+          size="large"
+        />
       </div>
     </div>
   </div>
@@ -183,6 +192,10 @@ onMounted(async () => {
   margin: 0.5rem 0;
 }
 
+.bottom-image {
+  display: none;
+}
+
 .section {
   background-color: var(--color-bg-card);
   border-radius: 8px;
@@ -280,6 +293,16 @@ onMounted(async () => {
     flex-direction: column;
     text-align: center;
     padding: 1.5rem 1rem;
+  }
+
+  /* The image moves from the card to the bottom of the page */
+  .team-info-card .card-image {
+    display: none;
+  }
+
+  .bottom-image {
+    display: block;
+    margin: 0 auto;
   }
 
   .section {
