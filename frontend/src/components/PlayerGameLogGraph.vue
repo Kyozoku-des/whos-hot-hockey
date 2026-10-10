@@ -3,7 +3,7 @@
     <h3 class="graph-title">{{ graphTitle }}</h3>
     <GraphModeToggle />
     <div class="chart-wrapper">
-      <Line v-if="hasData" :data="combinedChartData" :options="chartOptions" />
+      <Line v-if="hasData" :data="combinedChartData" :options="chartOptions" :plugins="[tapToggleTooltip]" />
       <div v-else class="no-data">No game log data available</div>
     </div>
   </div>
@@ -12,7 +12,7 @@
 <script setup>
 import { computed } from 'vue'
 import GraphModeToggle from './GraphModeToggle.vue'
-import { useGraphMode, toCumulative, projectionMarker } from '../composables/useGraphMode'
+import { useGraphMode, toCumulative, projectionMarker, tooltipColorBox, tooltipLabelColor, tapTooltipEvents, tapToggleTooltip, GRAPH_ORANGE, GRAPH_ORANGE_FILL } from '../composables/useGraphMode'
 import { useIsMobile } from '../composables/useIsMobile'
 import { Line } from 'vue-chartjs'
 import {
@@ -139,8 +139,8 @@ const combinedChartData = computed(() => {
       totals: toCumulative(currentPoints),
       goals: currentGoals,
       assists: currentAssists,
-      borderColor: '#FFAA00',
-      backgroundColor: 'rgba(255, 170, 0, 0.1)',
+      borderColor: GRAPH_ORANGE,
+      backgroundColor: GRAPH_ORANGE_FILL,
       borderWidth: 3,
       tension: 0.1,
       pointRadius: 0,
@@ -162,6 +162,7 @@ const combinedChartData = computed(() => {
 const chartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
+  ...(isMobile.value ? { events: tapTooltipEvents } : {}),
   interaction: {
     mode: 'index',
     intersect: false
@@ -201,9 +202,11 @@ const chartOptions = computed(() => ({
         family: 'Minecraft, sans-serif',
         size: 12
       },
+      ...tooltipColorBox,
       // The on-pace marker only has a value at the last game
       filter: (item) => item.raw != null,
       callbacks: {
+        labelColor: tooltipLabelColor,
         title: (context) => {
           return `Game ${context[0].label}`
         },
