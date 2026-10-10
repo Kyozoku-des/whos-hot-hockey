@@ -9,6 +9,8 @@
         :key="player.playerId"
         class="player-item"
         @click="goToPlayer(player.playerId)"
+        @mouseenter="showNextGame($event, player.teamCode)"
+        @mouseleave="hideNextGame"
       >
         <FavoriteToggle :item="playerFavorite(player)" />
         <div class="player-main">
@@ -32,9 +34,11 @@ import { usePlayerStats } from '../composables/useApi'
 import { useSearchStore } from '../stores/searchStore'
 import { playerFavorite } from '../composables/useFavorites'
 import TeamLogo from './TeamLogo.vue'
+import { useNextGames } from '../composables/useNextGames'
 import FavoriteToggle from './FavoriteToggle.vue'
 
 const router = useRouter()
+const { showNextGame, hideNextGame } = useNextGames()
 const { loading, error, getHottestPlayers } = usePlayerStats()
 const searchStore = useSearchStore()
 const allPlayers = ref([])

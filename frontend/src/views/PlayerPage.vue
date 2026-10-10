@@ -16,6 +16,7 @@
               <p class="stat-line">Points: {{ player?.points || 0 }}</p>
               <p class="stat-line">Goals: {{ player?.goals || 0 }}</p>
               <p class="stat-line">Assists: {{ player?.assists || 0 }}</p>
+              <NextGameLine :team-code="player?.teamCode" />
               <FavoriteButton v-if="player" :item="playerFavorite(player)" />
             </div>
           </div>
@@ -68,6 +69,7 @@ import { usePlayerStats } from '../composables/useApi'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
 import PlayerGameLogGraph from '../components/PlayerGameLogGraph.vue'
 import FavoriteButton from '../components/FavoriteButton.vue'
+import NextGameLine from '../components/NextGameLine.vue'
 import { playerFavorite } from '../composables/useFavorites'
 
 const route = useRoute()
