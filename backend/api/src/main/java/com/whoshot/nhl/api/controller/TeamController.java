@@ -2,6 +2,7 @@ package com.whoshot.nhl.api.controller;
 
 import com.whoshot.nhl.api.dto.TeamDetailDto;
 import com.whoshot.nhl.api.dto.TeamGameLogDto;
+import com.whoshot.nhl.api.dto.TeamNextGameDto;
 import com.whoshot.nhl.api.dto.TeamStandingsDto;
 import com.whoshot.nhl.api.service.TeamService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,6 +46,14 @@ public class TeamController {
     public ResponseEntity<List<TeamStandingsDto>> getTeamLossStreaks(
             @RequestParam(required = false) String season) {
         return ResponseEntity.ok(teamService.getTeamLossStreaks(season));
+    }
+
+    @GetMapping("/next-games")
+    @Operation(summary = "Get every team's next game",
+               description = "Returns each team's next unfinished game for a season, including a game in progress")
+    public ResponseEntity<List<TeamNextGameDto>> getNextGames(
+            @RequestParam(required = false) String season) {
+        return ResponseEntity.ok(teamService.getNextGames(season));
     }
 
     @GetMapping("/{teamCode}")

@@ -4,6 +4,7 @@ import com.whoshot.nhl.api.config.GlobalExceptionHandler;
 import com.whoshot.nhl.api.dto.RosterPlayerDto;
 import com.whoshot.nhl.api.dto.TeamDetailDto;
 import com.whoshot.nhl.api.dto.TeamGameLogDto;
+import com.whoshot.nhl.api.dto.TeamNextGameDto;
 import com.whoshot.nhl.api.dto.TeamStandingsDto;
 import com.whoshot.nhl.api.service.TeamService;
 import org.junit.jupiter.api.Test;
@@ -120,5 +121,23 @@ class TeamControllerTest {
                 .andExpect(jsonPath("$[0].goalsFor").value(4))
                 .andExpect(jsonPath("$[0].won").value(true))
                 .andExpect(jsonPath("$[0].gameNumber").value(1));
+    }
+
+    @Test
+    void getNextGames_returns200WithNextOpponents() throws Exception {
+        TeamNextGameDto next = new TeamNextGameDto(
+                "TOR", "BOS", false, "2026-10-11", "2026-10-11T23:00:00Z", "FUT");
+
+        when(teamService.getNextGames(null)).thenReturn(List.of(next));
+
+        mockMvc.perform(get("/api/teams/next-games"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].teamCode").value("TOR"))
+                .andExpect(jsonPath("$[0].opponentTeamCode").value("BOS"))
+                .andExpect(jsonPath("$[0].homeGame").value(false))
+                .andExpect(jsonPath("$[0].gameDate").value("2026-10-11"))
+                .andExpect(jsonPath("$[0].startTimeUtc").value("2026-10-11T23:00:00Z"))
+                .andExpect(jsonPath("$[0].gameState").value("FUT"));
     }
 }
