@@ -144,6 +144,38 @@ class NhlApiServiceTest {
         assertThat(service.getLeagueSchedule()).hasSize(2);
     }
 
+    @Test
+    void scores_mapGamesWithGoalsInOrder() {
+        respond(WEB_URL + "/v1/score/now", """
+                {"prevDate":"2026-10-08","currentDate":"2026-10-09","games":[{
+                  "id":2026020066,"season":20262027,"gameType":2,"gameDate":"2026-10-09",
+                  "startTimeUTC":"2026-10-09T23:00:00Z","gameState":"OFF",
+                  "awayTeam":{"abbrev":"SEA","score":6},"homeTeam":{"abbrev":"DET","score":3},
+                  "gameOutcome":{"lastPeriodType":"REG"},
+                  "goals":[{"period":1,"periodDescriptor":{"number":1,"periodType":"REG"},
+                    "timeInPeriod":"09:19","playerId":8478042,"name":{"default":"V. Arvidsson"},
+                    "teamAbbrev":"DET","awayScore":0,"homeScore":1,"strength":"pp",
+                    "assists":[{"playerId":8482078,"name":{"default":"L. Raymond"}},
+                               {"playerId":8481542,"name":{"default":"M. Seider"}}]}]}]}
+                """);
+
+        var scores = service.getScores("now");
+
+        assertThat(scores.getPrevDate()).isEqualTo("2026-10-08");
+        assertThat(scores.getCurrentDate()).isEqualTo("2026-10-09");
+        assertThat(scores.getGames()).singleElement().satisfies(game -> {
+            assertThat(game.getId()).isEqualTo(2026020066L);
+            assertThat(game.getGameState()).isEqualTo(GameState.OFF);
+            assertThat(game.getAwayTeam().getScore()).isEqualTo(6);
+            assertThat(game.getGoals()).singleElement().satisfies(goal -> {
+                assertThat(goal.getName().getName()).isEqualTo("V. Arvidsson");
+                assertThat(goal.getPeriodDescriptor().getPeriodType()).isEqualTo("REG");
+                assertThat(goal.getAssists()).extracting(assist -> assist.getPlayerId())
+                        .containsExactly(8482078L, 8481542L);
+            });
+        });
+    }
+
     private void respond(String url, String json) {
         server.expect(requestTo(url)).andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
     }

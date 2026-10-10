@@ -61,7 +61,7 @@ class PostgresMigrationTest extends PostgresIntegrationTestBase {
 
         Flyway upgrade = Flyway.configure().dataSource(dataSource).defaultSchema("upgrade_test")
                 .locations("classpath:db/migration").load();
-        assertEquals(2, upgrade.migrate().migrationsExecuted);
+        assertEquals(3, upgrade.migrate().migrationsExecuted);
         upgrade.validate();
         assertEquals(0, upgrade.migrate().migrationsExecuted);
 

@@ -30,6 +30,7 @@ public class DynamicSchedulingService {
     private final TaskScheduler taskScheduler;
     private final DataSyncService dataSyncService;
     private final BackfillLockService seasonLock;
+    private final ScoreboardSyncService scoreboardSyncService;
     private ScheduledFuture<?> syncTask;
     private volatile boolean stopping;
     private LocalDateTime lastGameTime;
@@ -62,6 +63,7 @@ public class DynamicSchedulingService {
             })) {
                 log.warn("[game-sync] Season {} is being written by another job; skipping this full sync", seasonId);
             }
+            scoreboardSyncService.syncScoreboard(true);
             LocalDateTime firstGameTime = dataSyncService.getFirstGameTimeForToday();
             lastGameTime = dataSyncService.getLastGameTimeForToday();
             if (firstGameTime != null) {
@@ -120,6 +122,7 @@ public class DynamicSchedulingService {
                 schedule(this::syncAndReschedule, Instant.now().plusSeconds(60));
                 return;
             }
+            scoreboardSyncService.syncScoreboard(false);
             // Retain participants through their first completed poll for final statistics.
             previousActiveTeams = Set.copyOf(activeTeams);
             log.info("[game-sync] Poll #{} in {}s: games [{}]; finished {}; updated {} teams, {} team schedules, {} players",
@@ -137,6 +140,7 @@ public class DynamicSchedulingService {
                 } else {
                     log.warn("[game-sync] Season is being written by another job; the next hourly sync catches up");
                 }
+                scoreboardSyncService.syncScoreboard(true);
                 log.info("[game-sync] Game window closed after {} polls ({} failed); final full sync done in {}s, next check in 1h",
                         polls, failedPolls, secondsSince(finalStarted));
                 schedule(this::hourlyCheck, Instant.now().plusSeconds(3600));
