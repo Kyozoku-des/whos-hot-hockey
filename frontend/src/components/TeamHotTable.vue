@@ -19,6 +19,7 @@
           <span class="stat-item">W: {{ team.wins }}</span>
           <span class="stat-item">L: {{ team.losses }}</span>
           <span class="stat-item">OTL: {{ team.overtimeLosses }}</span>
+          <span class="stat-item" title="Standings points per game over the last 10 games (or all games played if fewer)">L10 PPG: {{ team.last10GamesPPG?.toFixed(2) ?? 'N/A' }}</span>
           <span v-if="isExpanded" class="stat-item">GP: {{ team.gamesPlayed }}</span>
           <span v-if="isExpanded" class="stat-item">PTS: {{ team.points }}</span>
           <span v-if="isExpanded" class="stat-item">Streak: {{ team.currentWinStreak }}</span>
