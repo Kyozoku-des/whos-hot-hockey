@@ -14,7 +14,8 @@ import { useRoute } from 'vue-router'
 import { useNextGames, formatOpponent, formatGameTime } from '../composables/useNextGames'
 
 const route = useRoute()
-const { hovered, hideNextGame } = useNextGames()
+const { hovered, hideNextGame, refresh } = useNextGames()
+let refreshTimer = null
 
 // Clicking a row navigates away before its mouseleave fires
 watch(() => route.fullPath, hideNextGame)
@@ -34,10 +35,16 @@ const position = computed(() => {
 // The tooltip is placed from the row's position when hovered, so it would drift on scroll
 onMounted(() => {
   window.addEventListener('scroll', hideNextGame, true)
+  // Mounted once for the whole app, so this keeps open pages' next opponents current;
+  // refresh() only requests once the data is older than its max age
+  refreshTimer = setInterval(refresh, 60 * 1000)
+  document.addEventListener('visibilitychange', refresh)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', hideNextGame, true)
+  clearInterval(refreshTimer)
+  document.removeEventListener('visibilitychange', refresh)
 })
 </script>
 
