@@ -7,13 +7,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SeasonPaceTest {
 
     @Test
-    void regularSeasonGames_is84FromThe2025To2026Season() {
-        assertThat(SeasonPace.regularSeasonGames("20252026")).isEqualTo(84);
+    void regularSeasonGames_is84FromThe2026To2027Season() {
         assertThat(SeasonPace.regularSeasonGames("20262027")).isEqualTo(84);
+        assertThat(SeasonPace.regularSeasonGames("20272028")).isEqualTo(84);
     }
 
     @Test
     void regularSeasonGames_coversShortenedAndStandardSeasons() {
+        assertThat(SeasonPace.regularSeasonGames("20252026")).isEqualTo(82);
         assertThat(SeasonPace.regularSeasonGames("20242025")).isEqualTo(82);
         assertThat(SeasonPace.regularSeasonGames("20202021")).isEqualTo(56);
         assertThat(SeasonPace.regularSeasonGames("20122013")).isEqualTo(48);
@@ -29,6 +30,12 @@ class SeasonPaceTest {
     void projectedPoints_extendsThePointsPerGameRateToTheFullSeason() {
         assertThat(SeasonPace.projectedPoints(30, 20, 84)).isEqualTo(126);
         assertThat(SeasonPace.projectedPoints(10, 3, 84)).isEqualTo(280);
+    }
+
+    @Test
+    void projectedPoints_afterACompleted2025To2026Season_isTheActualTotal() {
+        int seasonGames = SeasonPace.regularSeasonGames("20252026");
+        assertThat(SeasonPace.projectedPoints(100, 82, seasonGames)).isEqualTo(100);
     }
 
     @Test

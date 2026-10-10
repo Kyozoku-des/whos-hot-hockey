@@ -97,7 +97,7 @@ Players ordered by recent form: `pointsPerLastNGames` descending. Players withou
 
 Player detail. Same fields as the player row above, plus:
 
-- `seasonGames` — regular-season games per team (84 from 2025-26, 82 before; shortened seasons excepted).
+- `seasonGames` — regular-season games per team (84 from 2026-27, 82 before; shortened seasons excepted).
 - `projectedPoints` — points the player is on pace for: `points / gamesPlayed × seasonGames`, rounded. `null` before their first game.
 
 - **Path params**: `playerId` (int) - NHL player ID

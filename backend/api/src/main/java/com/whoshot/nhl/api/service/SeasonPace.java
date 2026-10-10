@@ -20,7 +20,7 @@ public final class SeasonPace {
         } catch (RuntimeException e) {
             return 82;
         }
-        if (startYear >= 2025) {
+        if (startYear >= 2026) {
             return 84;
         }
         return switch (startYear) {

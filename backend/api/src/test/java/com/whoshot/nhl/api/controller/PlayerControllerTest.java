@@ -63,7 +63,7 @@ class PlayerControllerTest {
                 playerId, "Connor", "McDavid", "Connor McDavid",
                 "C", "EDM", "https://logo.png", "https://headshot.jpg",
                 50, 30, 45, 75, 1.5, 15,
-                5, 0, 2.0, 84, 126
+                5, 0, 2.0, 82, 123
         );
 
         when(playerService.getPlayerDetail(playerId, season)).thenReturn(detail);
@@ -76,8 +76,8 @@ class PlayerControllerTest {
                 .andExpect(jsonPath("$.points").value(75))
                 .andExpect(jsonPath("$.currentPointStreak").value(5))
                 .andExpect(jsonPath("$.pointsPerLastNGames").value(2.0))
-                .andExpect(jsonPath("$.seasonGames").value(84))
-                .andExpect(jsonPath("$.projectedPoints").value(126));
+                .andExpect(jsonPath("$.seasonGames").value(82))
+                .andExpect(jsonPath("$.projectedPoints").value(123));
     }
 
     @Test
