@@ -61,7 +61,7 @@
         </div>
         <span class="team-stats">
           <span class="stat-item stat-form" title="Current consecutive wins or losses, including overtime losses">{{ formatTeamStreak(team) }}</span>
-          <span class="stat-item stat-form" title="Standings points per game over the last 10 games (or all games played if fewer)">L10 PPG: {{ formatPPG(team.last10GamesPPG) }}</span>
+          <span class="stat-item stat-form" title="Share of available standings points over the last 10 games (or all games played if fewer)">L10 P%: {{ formatPointPct(team.last10GamesPPG) }}</span>
           <span class="stat-item">GP: {{ team.gamesPlayed }}</span>
           <span class="stat-item">W: {{ team.wins }}</span>
           <span class="stat-item">L: {{ team.losses }}</span>
@@ -93,6 +93,8 @@ const { loading: teamsLoading, getStandings } = useTeamStats()
 
 const maxFavorites = 10
 const formatPPG = (value) => Number.isFinite(value) ? value.toFixed(2) : '—'
+// Two standings points are available per game.
+const formatPointPct = (ppg) => Number.isFinite(ppg) ? (ppg / 2 * 100).toFixed(1) : '—'
 const formatTeamStreak = (team) => {
   if (team.currentWinStreak > 0) return `Win streak: ${team.currentWinStreak}`
   if (team.currentLossStreak > 0) return `Loss streak: ${team.currentLossStreak}`
