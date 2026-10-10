@@ -95,7 +95,10 @@ Players ordered by recent form: `pointsPerLastNGames` descending. Players withou
 
 ### GET /api/players/{playerId}
 
-Player detail. Same fields as the player row above.
+Player detail. Same fields as the player row above, plus:
+
+- `seasonGames` — regular-season games per team (84 from 2026-27, 82 before; shortened seasons excepted).
+- `projectedPoints` — points the player is on pace for: `points / gamesPlayed × seasonGames`, rounded. `null` before their first game.
 
 - **Path params**: `playerId` (int) - NHL player ID
 - **Query params**: `season` (optional)
@@ -187,7 +190,7 @@ Teams with an active loss streak (`currentLossStreak > 0`), ordered by streak le
 
 ### GET /api/teams/{teamCode}
 
-Team detail: the team row above plus the season's roster.
+Team detail: the team row above plus the season's roster, `seasonGames` and `projectedPoints` (same meaning as on player detail).
 
 - **Path params**: `teamCode` (string) - Three-letter team code (e.g., `EDM`, `TOR`)
 - **Query params**: `season` (optional)

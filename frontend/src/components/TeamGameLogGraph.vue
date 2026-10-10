@@ -12,7 +12,7 @@
 <script setup>
 import { computed } from 'vue'
 import GraphModeToggle from './GraphModeToggle.vue'
-import { useGraphMode, toCumulative } from '../composables/useGraphMode'
+import { useGraphMode, toCumulative, projectionMarker } from '../composables/useGraphMode'
 import { useIsMobile } from '../composables/useIsMobile'
 import { Line } from 'vue-chartjs'
 import {
@@ -50,6 +50,15 @@ const props = defineProps({
   previousSeason: {
     type: String,
     default: ''
+  },
+  // Regular-season length and the current season's on-pace points, from the API
+  seasonGames: {
+    type: Number,
+    default: 82
+  },
+  projectedPoints: {
+    type: Number,
+    default: null
   }
 })
 
@@ -108,14 +117,14 @@ const calculatePointsData = (gameData) => {
 
 // Combine both seasons into one chart with two datasets
 const combinedChartData = computed(() => {
-  // Determine max game count (82 for full season, or longest available)
+  // Determine max game count (full season length, or longest available)
   const maxGames = Math.max(
-    82,
+    props.seasonGames,
     props.currentSeasonData?.length || 0,
     props.previousSeasonData?.length || 0
   )
 
-  // Create labels (1-82)
+  // Create labels (1 to season length)
   const labels = Array.from({ length: maxGames }, (_, i) => i + 1)
 
   const datasets = []
@@ -153,6 +162,11 @@ const combinedChartData = computed(() => {
       pointHoverRadius: 0,
       cumulativePoints: currentData.cumulativePoints // Store for tooltip
     })
+  }
+
+  // Season total the current pace leads to, at the last game of the season
+  if (isCumulative.value && props.projectedPoints != null && props.currentSeasonData?.length > 0) {
+    datasets.push(projectionMarker(props.projectedPoints, maxGames))
   }
 
   return {
@@ -203,11 +217,16 @@ const chartOptions = computed(() => ({
         family: 'Minecraft, sans-serif',
         size: 12
       },
+      // The on-pace marker only has a value at the last game
+      filter: (item) => item.raw != null,
       callbacks: {
         title: (context) => {
           return `Game ${context[0].label}`
         },
         label: (context) => {
+          if (context.dataset.projected) {
+            return `Projected points: ${context.raw} pts`
+          }
           const gameIndex = context.dataIndex
           const points = context.dataset.pointsPerGame?.[gameIndex] || 0
           const cumulative = context.dataset.cumulativePoints?.[gameIndex] || 0

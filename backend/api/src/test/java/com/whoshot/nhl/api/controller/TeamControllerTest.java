@@ -75,6 +75,7 @@ class TeamControllerTest {
                 "Eastern", "Atlantic",
                 3, 0,
                 0.8, 2.2,
+                82, 107,
                 List.of(player)
         );
 

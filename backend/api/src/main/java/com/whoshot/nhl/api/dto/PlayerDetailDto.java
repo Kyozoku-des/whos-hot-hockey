@@ -20,5 +20,7 @@ public record PlayerDetailDto(
         Integer plusMinus,
         Integer currentPointStreak,
         Integer currentPointlessStreak,
-        Double pointsPerLastNGames
+        Double pointsPerLastNGames,
+        Integer seasonGames,
+        Integer projectedPoints
 ) {}

@@ -94,7 +94,7 @@ public class TeamService {
                 .map(this::toRosterPlayerDto)
                 .toList();
 
-        return toDetailDto(team, roster);
+        return toDetailDto(team, roster, SeasonPace.regularSeasonGames(resolved));
     }
 
     /**
@@ -159,7 +159,7 @@ public class TeamService {
         );
     }
 
-    private TeamDetailDto toDetailDto(Team team, List<RosterPlayerDto> roster) {
+    private TeamDetailDto toDetailDto(Team team, List<RosterPlayerDto> roster, int seasonGames) {
         return new TeamDetailDto(
                 team.getTeamCode(),
                 team.getTeamName(),
@@ -179,6 +179,8 @@ public class TeamService {
                 team.getCurrentLossStreak(),
                 team.getLast10GamesPointPercentage(),
                 team.getLast10GamesPPG(),
+                seasonGames,
+                SeasonPace.projectedPoints(team.getPoints(), team.getGamesPlayed(), seasonGames),
                 roster
         );
     }
