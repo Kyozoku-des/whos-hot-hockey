@@ -112,7 +112,7 @@ const slideWidth = ref(0)
 const animateSlides = ref(false)
 
 const CARDS = [
-  { key: 'favorites', title: 'My Favorites', component: FavoritesTable },
+  { key: 'favorites', title: 'Favorites', component: FavoritesTable },
   { key: 'standings', title: 'Player standings', component: TopPointsTable },
   { key: 'streaks', title: 'Point streaks', component: PointStreaksTable },
   { key: 'hot-players', title: 'Last 10 games', component: HottestPlayersTable },

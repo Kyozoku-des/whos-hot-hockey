@@ -18,7 +18,7 @@
           <span class="team-name">{{ team.teamName }}</span>
         </div>
         <span class="team-stats">
-          <span class="stat-item stat-streak">Game streak: {{ team.currentWinStreak }}</span>
+          <span class="stat-item stat-streak">Games: {{ team.currentWinStreak }}</span>
           <span v-if="isExpanded" class="stat-item">W: {{ team.wins }}</span>
           <span v-if="isExpanded" class="stat-item">L: {{ team.losses }}</span>
           <span v-if="isExpanded" class="stat-item">GP: {{ team.gamesPlayed }}</span>

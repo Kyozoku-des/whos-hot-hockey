@@ -18,7 +18,7 @@
           <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
         </div>
         <span class="player-icons">
-          <span class="streak-count">Game streak: {{ player.currentPointStreak }}</span>
+          <span class="streak-count">Games: {{ player.currentPointStreak }}</span>
         </span>
       </div>
     </div>
