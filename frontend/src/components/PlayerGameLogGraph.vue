@@ -107,10 +107,8 @@ const combinedChartData = computed(() => {
       backgroundColor: 'rgba(107, 114, 128, 0.1)',
       borderWidth: 2,
       tension: 0.1,
-      pointStyle: 'cross',
-      pointRadius: 4,
-      pointHoverRadius: 6,
-      pointBorderWidth: 2,
+      pointRadius: 0,
+      pointHoverRadius: 0,
       borderDash: [5, 5] // Dashed line for previous season
     })
   }
@@ -131,10 +129,8 @@ const combinedChartData = computed(() => {
       backgroundColor: 'rgba(255, 170, 0, 0.1)',
       borderWidth: 3,
       tension: 0.1,
-      pointStyle: 'cross',
-      pointRadius: 5,
-      pointHoverRadius: 7,
-      pointBorderWidth: 2
+      pointRadius: 0,
+      pointHoverRadius: 0
     })
   }
 
@@ -157,10 +153,16 @@ const chartOptions = computed(() => ({
       position: 'top',
       labels: {
         color: '#ffffff',
-        usePointStyle: true,
-        // Solid plus signs in the legend, even for the dashed previous-season line
+        // Small solid squares in the line color, even for the dashed previous-season line
+        boxWidth: 8,
+        boxHeight: 8,
         generateLabels: (chart) =>
-          ChartJS.defaults.plugins.legend.labels.generateLabels(chart).map(item => ({ ...item, lineDash: [] })),
+          ChartJS.defaults.plugins.legend.labels.generateLabels(chart).map(item => ({
+            ...item,
+            fillStyle: item.strokeStyle,
+            lineWidth: 0,
+            lineDash: []
+          })),
         padding: 15,
         font: {
           family: 'Minecraft, sans-serif',
