@@ -1,9 +1,9 @@
 <template>
   <Teleport to="body">
-    <div v-if="hovered" class="next-game-tooltip" :style="position" role="tooltip">
+    <div v-if="game" class="next-game-tooltip" :style="position" role="tooltip">
       <span class="label">Next:</span>
-      <span class="opponent">{{ formatOpponent(hovered.game) }}</span>
-      <span class="time">{{ formatGameTime(hovered.game) }}</span>
+      <span class="opponent">{{ formatOpponent(game) }}</span>
+      <span class="time">{{ formatGameTime(game) }}</span>
     </div>
   </Teleport>
 </template>
@@ -14,8 +14,11 @@ import { useRoute } from 'vue-router'
 import { useNextGames, formatOpponent, formatGameTime } from '../composables/useNextGames'
 
 const route = useRoute()
-const { hovered, hideNextGame, refresh } = useNextGames()
+const { hovered, hideNextGame, refresh, nextGameFor } = useNextGames()
 let refreshTimer = null
+
+// Read from the shared cache on every render, so a refresh while hovering shows the new game
+const game = computed(() => (hovered.value ? nextGameFor(hovered.value.teamCode) : null))
 
 // Clicking a row navigates away before its mouseleave fires
 watch(() => route.fullPath, hideNextGame)

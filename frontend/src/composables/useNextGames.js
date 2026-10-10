@@ -9,7 +9,8 @@ const nextGamesByTeam = ref({})
 let loadedAt = 0
 let pending = null
 
-// Row currently hovered on a pointer device: { game, rect }
+// Row currently hovered on a pointer device: { teamCode, rect }. The game is looked up from the
+// cache when rendered, so a refresh while hovering updates the tooltip.
 const hovered = ref(null)
 
 const load = () => {
@@ -38,9 +39,8 @@ export function useNextGames() {
   const showNextGame = (event, teamCode) => {
     // Timers are throttled in background tabs, so a hover also refreshes stale data
     load()
-    const game = nextGameFor(teamCode)
-    if (!game || !canHover()) return
-    hovered.value = { game, rect: event.currentTarget.getBoundingClientRect() }
+    if (!canHover()) return
+    hovered.value = { teamCode, rect: event.currentTarget.getBoundingClientRect() }
   }
 
   const hideNextGame = () => {
