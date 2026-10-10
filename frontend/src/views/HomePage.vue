@@ -95,8 +95,10 @@ import ScoreTicker from '../components/ScoreTicker.vue'
 import FavoritesTable from '../components/FavoritesTable.vue'
 import CookieConsent from '../components/CookieConsent.vue'
 import { useFavorites } from '../composables/useFavorites'
+import { useSettings, HOME_CARDS, normalizeOrder } from '../composables/useSettings'
 
 const { initializeFavorites, favoritesCount, consentGiven } = useFavorites()
+const { mobileCardOrder } = useSettings()
 
 // Show favorites card only if user has favorites
 const showFavorites = computed(() => favoritesCount.value > 0)
@@ -111,21 +113,25 @@ const slideWidth = ref(0)
 // Off until the first layout, so a restored card shows without sliding in
 const animateSlides = ref(false)
 
-const CARDS = [
-  { key: 'favorites', title: 'Favorites', component: FavoritesTable },
-  { key: 'standings', title: 'Player standings', component: TopPointsTable },
-  { key: 'streaks', title: 'Point streaks', component: PointStreaksTable },
-  { key: 'hot-players', title: 'Last 10 games', component: HottestPlayersTable },
-  { key: 'team-standings', title: 'Team standings', component: TeamStandingsTable },
-  { key: 'win-streaks', title: 'Win streaks', component: TeamWinStreaksTable },
-  { key: 'team-hot', title: 'Last 10 games', component: TeamHotTable }
-]
+const COMPONENTS = {
+  favorites: FavoritesTable,
+  standings: TopPointsTable,
+  streaks: PointStreaksTable,
+  'hot-players': HottestPlayersTable,
+  'team-standings': TeamStandingsTable,
+  'win-streaks': TeamWinStreaksTable,
+  'team-hot': TeamHotTable
+}
+
+const CARDS = HOME_CARDS.map(card => ({ ...card, component: COMPONENTS[card.key] }))
+const cardByKey = (key) => CARDS.find(card => card.key === key)
 
 // The favorites card only shows once something has been favorited
 const visibleCards = (cards) =>
   cards.filter(card => card.key !== 'favorites' || showFavorites.value)
 
-const mobileCards = computed(() => visibleCards(CARDS))
+// Mobile card order is picked on the settings page
+const mobileCards = computed(() => visibleCards(mobileCardOrder.value.map(cardByKey)))
 
 // Desktop card order, changed by drag and drop. Saved alongside favorites,
 // so it is only remembered between visits when storage consent was given.
@@ -133,17 +139,13 @@ const CARD_ORDER_KEY = 'nhl_card_order'
 const cardOrder = ref(CARDS.map(card => card.key))
 
 const desktopCards = computed(() =>
-  visibleCards(cardOrder.value.map(key => CARDS.find(card => card.key === key)))
+  visibleCards(cardOrder.value.map(cardByKey))
 )
 
 const loadCardOrder = () => {
   if (consentGiven.value !== true) return
   try {
-    const saved = JSON.parse(localStorage.getItem(CARD_ORDER_KEY) || '[]')
-    const known = saved.filter(key => CARDS.some(card => card.key === key))
-    // Cards added since the order was saved go at the end
-    const missing = CARDS.map(card => card.key).filter(key => !known.includes(key))
-    cardOrder.value = [...known, ...missing]
+    cardOrder.value = normalizeOrder(JSON.parse(localStorage.getItem(CARD_ORDER_KEY) || '[]'))
   } catch {
     // Keep the default order
   }

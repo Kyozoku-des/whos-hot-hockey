@@ -4,6 +4,10 @@
       <router-view />
     </main>
 
+    <nav class="site-links">
+      <router-link to="/settings">Settings</router-link>
+    </nav>
+
     <footer class="app-footer">
       <div class="container">
         <p>Stats last updated: {{ lastUpdated }}</p>
@@ -15,26 +19,24 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed } from 'vue'
 import NextGameTooltip from './components/NextGameTooltip.vue'
+import { timeZoneOption } from './composables/useSettings'
 
-const lastUpdated = ref('')
+const loadedAt = new Date()
 
-const formatLastUpdated = () => {
-  const now = new Date()
+// Shown in the time zone picked in settings
+const lastUpdated = computed(() => {
   const options = {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    timeZoneName: 'short'
+    timeZoneName: 'short',
+    timeZone: timeZoneOption()
   }
-  lastUpdated.value = now.toLocaleString('en-US', options)
-}
-
-onMounted(() => {
-  formatLastUpdated()
+  return loadedAt.toLocaleString('en-US', options)
 })
 </script>
 
@@ -48,7 +50,27 @@ onMounted(() => {
 .app-main {
   flex: 1;
   padding: 0;
-  padding-bottom: 5rem;
+}
+
+/* Below all page content, clear of the fixed footer */
+.site-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 2rem;
+  padding: 2rem 1rem 6rem;
+  font-size: 0.9rem;
+}
+
+.site-links a {
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.site-links a:hover,
+.site-links a.router-link-active {
+  color: var(--color-text-primary);
 }
 
 .app-footer {
