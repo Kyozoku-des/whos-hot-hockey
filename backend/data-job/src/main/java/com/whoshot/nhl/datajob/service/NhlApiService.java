@@ -143,6 +143,20 @@ public class NhlApiService {
     }
 
     /**
+     * Get one game day's scores, each game with its goals in the order scored.
+     *
+     * @param date game date in {@code YYYY-MM-DD} format, or the literal {@code "now"}
+     * @return the day's scores, with a link to the previous game day
+     */
+    public ScoreResponseDto getScores(String date) {
+        String url = baseUrl + "/v1/score/" + date;
+        log.debug("Fetching scores from: {}", url);
+
+        return apiClient.get(url, new ParameterizedTypeReference<>() {
+        });
+    }
+
+    /**
      * Get league schedule as of now.
      *
      * @return List of games containing schedule data with game results

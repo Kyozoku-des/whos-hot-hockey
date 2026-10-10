@@ -233,6 +233,60 @@ Team game results for a season, ordered by `gameDate` descending.
 
 ---
 
+## Games
+
+### GET /api/games/latest
+
+Scores for the homepage ticker. Returns today's games while any game is in progress (`live: true`),
+otherwise the most recent day with finished games. Games are ordered by start time and goals in the
+order scored; shootout goals are not included. Every player credited with a point carries two flags:
+
+- `streakExtended`: the player also had a point in their previous game of the season.
+- `hot`: the player's points per game over the last ten games is at least
+  `scoreboard.hot-points-per-game` (default `1.5`).
+
+Takes no parameters. Before any game has been played the response is
+`{ "gameDate": null, "live": false, "games": [] }`.
+
+**Example response:**
+```json
+{
+  "gameDate": "2026-10-09",
+  "live": false,
+  "games": [
+    {
+      "gameId": 2026020066,
+      "gameState": "OFF",
+      "startTimeUtc": "2026-10-09T23:00:00Z",
+      "awayTeamCode": "SEA",
+      "awayScore": 6,
+      "homeTeamCode": "DET",
+      "homeScore": 3,
+      "lastPeriodType": "REG",
+      "goals": [
+        {
+          "goalNumber": 1,
+          "period": 1,
+          "periodType": "REG",
+          "timeInPeriod": "09:19",
+          "teamCode": "DET",
+          "awayScore": 0,
+          "homeScore": 1,
+          "strength": "pp",
+          "scorer": { "playerId": 8478042, "name": "V. Arvidsson", "streakExtended": true, "hot": false },
+          "assists": [
+            { "playerId": 8482078, "name": "L. Raymond", "streakExtended": false, "hot": true },
+            { "playerId": 8481542, "name": "M. Seider", "streakExtended": false, "hot": false }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
 ## Error Responses
 
 | Status | Meaning | Body |
