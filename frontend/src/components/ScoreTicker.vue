@@ -68,6 +68,8 @@ const setViewport = (el) => {
 }
 let refreshTimer = null
 let motionQuery = null
+// Set on unmount so a request still in flight cannot start a new refresh loop
+let disposed = false
 
 // With reduced motion the content is shown once and scrolled by hand
 const copies = computed(() =>
@@ -112,16 +114,19 @@ const updateLayout = () => {
 
 const load = async () => {
   const scoreboard = await getLatestScoreboard()
+  if (disposed) return
   games.value = scoreboard.games
   live.value = scoreboard.live
   gameDate.value = scoreboard.gameDate
   await nextTick()
+  if (disposed) return
   updateLayout()
   scheduleRefresh()
 }
 
 const scheduleRefresh = () => {
   clearTimeout(refreshTimer)
+  if (disposed) return
   refreshTimer = setTimeout(load, live.value ? LIVE_REFRESH_MS : IDLE_REFRESH_MS)
 }
 
@@ -138,6 +143,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  disposed = true
   clearTimeout(refreshTimer)
   motionQuery?.removeEventListener('change', onMotionChange)
   window.removeEventListener('resize', updateLayout)
