@@ -17,7 +17,7 @@ A Vue.js 3 application for tracking NHL statistics with a focus on identifying "
 ### Team Detail Page
 - Team statistics and standings information
 - Win/loss records and streaks
-- Team roster (placeholder)
+- Team roster with goals, assists and points
 
 ## Technology Stack
 
