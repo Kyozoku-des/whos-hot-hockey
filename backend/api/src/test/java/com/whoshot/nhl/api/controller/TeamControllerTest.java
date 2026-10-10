@@ -64,7 +64,7 @@ class TeamControllerTest {
         String season = "20252026";
 
         RosterPlayerDto player = new RosterPlayerDto(
-                34L, "Auston Matthews", "C", "TOR", "https://headshot.png"
+                34L, "Auston Matthews", "C", "TOR", "https://headshot.png", 40, 35, 75
         );
 
         TeamDetailDto detail = new TeamDetailDto(
@@ -88,7 +88,10 @@ class TeamControllerTest {
                 .andExpect(jsonPath("$.roster", hasSize(1)))
                 .andExpect(jsonPath("$.roster[0].playerId").value(34))
                 .andExpect(jsonPath("$.roster[0].fullName").value("Auston Matthews"))
-                .andExpect(jsonPath("$.roster[0].positionCode").value("C"));
+                .andExpect(jsonPath("$.roster[0].positionCode").value("C"))
+                .andExpect(jsonPath("$.roster[0].goals").value(40))
+                .andExpect(jsonPath("$.roster[0].assists").value(35))
+                .andExpect(jsonPath("$.roster[0].points").value(75));
     }
 
     @Test

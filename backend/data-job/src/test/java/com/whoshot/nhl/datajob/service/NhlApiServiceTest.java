@@ -70,6 +70,15 @@ class NhlApiServiceTest {
     }
 
     @Test
+    void teamRoster_returnsForwardsDefensemenAndGoalies() {
+        respond(WEB_URL + "/v1/roster/VGK/20262027", """
+                {"forwards":[{"id":1,"positionCode":"C"}],"defensemen":[{"id":2}],"goalies":[{"id":3}]}
+                """);
+
+        assertThat(service.getTeamRoster("VGK", "20262027")).containsExactly(1L, 2L, 3L);
+    }
+
+    @Test
     void playerInfo_mapsLocalizedNamesAndProfile() {
         respond(WEB_URL + "/v1/player/8478402/landing", """
                 {"playerId":8478402,"isActive":true,"headshot":"h.png","teamLogo":"t.svg",

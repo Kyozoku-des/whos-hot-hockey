@@ -56,7 +56,30 @@
 
         <div class="section">
           <h2 class="section-title">Roster</h2>
-          <p class="placeholder-text">Team roster would be displayed here</p>
+          <ul v-if="sortedRoster.length" class="roster-list">
+            <li class="roster-row roster-header">
+              <span class="roster-name">Player</span>
+              <span class="roster-stats">
+                <span class="roster-stat">G</span>
+                <span class="roster-stat">A</span>
+                <span class="roster-stat">P</span>
+              </span>
+            </li>
+            <li
+              v-for="player in sortedRoster"
+              :key="player.playerId"
+              class="roster-row roster-player"
+              @click="goToPlayer(player.playerId)"
+            >
+              <span class="roster-name">{{ player.fullName }}</span>
+              <span class="roster-stats">
+                <span class="roster-stat">{{ player.goals ?? 0 }}</span>
+                <span class="roster-stat">{{ player.assists ?? 0 }}</span>
+                <span class="roster-stat roster-points">{{ player.points ?? 0 }}</span>
+              </span>
+            </li>
+          </ul>
+          <p v-else class="placeholder-text">No roster data available</p>
         </div>
       </div>
     </div>
@@ -64,8 +87,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useTeamStats } from '../composables/useApi'
 import TeamLogo from '../components/TeamLogo.vue'
 import TeamGameLogGraph from '../components/TeamGameLogGraph.vue'
@@ -80,6 +103,17 @@ const team = ref(null)
 const teamGameLogs = ref([])
 const previousSeasonTeamGameLogs = ref([])
 const previousSeason = ref('')
+
+const router = useRouter()
+
+// Highest scorers first
+const sortedRoster = computed(() =>
+  [...(team.value?.roster || [])].sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
+)
+
+const goToPlayer = (playerId) => {
+  router.push(`/player/${playerId}`)
+}
 
 // Calculate previous season ID
 const calculatePreviousSeason = () => {
@@ -209,6 +243,58 @@ onMounted(async () => {
   font-size: 1.2rem;
 }
 
+.roster-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.roster-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+}
+
+/* Matches the game log table on the player page */
+.roster-header {
+  font-weight: 700;
+  background-color: var(--color-bg-dark);
+  color: var(--color-text-secondary);
+}
+
+.roster-player {
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+}
+
+.roster-player:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.roster-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roster-stats {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.roster-stat {
+  width: 3rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.roster-points {
+  font-weight: 700;
+}
+
 .placeholder-text {
   text-align: center;
   padding: 2rem;
@@ -260,6 +346,12 @@ onMounted(async () => {
 
   .stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .roster-row {
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    padding: 0.5rem 0.35rem;
   }
 
   /* Reorder sections on mobile: image -> graph -> stats -> roster */

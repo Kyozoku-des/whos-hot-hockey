@@ -200,7 +200,10 @@ Team detail: the team row above plus the season's roster.
   "fullName": "Connor McDavid",
   "positionCode": "C",
   "teamCode": "EDM",
-  "headshotUrl": "https://assets.nhle.com/mugs/nhl/20252026/EDM/8478402.png"
+  "headshotUrl": "https://assets.nhle.com/mugs/nhl/20252026/EDM/8478402.png",
+  "goals": 32,
+  "assists": 68,
+  "points": 100
 }
 ```
 

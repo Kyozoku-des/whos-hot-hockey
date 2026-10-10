@@ -51,6 +51,18 @@ public interface PlayerRepository extends JpaRepository<Player, Player.PlayerId>
     List<Player> findByTeamCodeAndIdSeasonId(String teamCode, String seasonId);
 
     /**
+     * Find the players on a team's official roster for a season.
+     *
+     * @param teamCode team abbreviation code
+     * @param seasonId season identifier
+     * @return stored players listed on the team's roster
+     */
+    @Query("SELECT p FROM Player p, TeamRosterEntry r " +
+           "WHERE r.seasonId = :seasonId AND r.teamCode = :teamCode " +
+           "AND p.id.seasonId = r.seasonId AND p.id.playerId = r.playerId")
+    List<Player> findRosterPlayers(@Param("teamCode") String teamCode, @Param("seasonId") String seasonId);
+
+    /**
      * Get the IDs of every player stored for a season.
      *
      * @param seasonId season identifier

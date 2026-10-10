@@ -6,7 +6,9 @@ covers the initial load, the live daemon (hourly full sync and game-time polls) 
 ## How a run works
 
 1. **Season-wide inputs first.** Standings and the skater-leaders list are fetched once per run
-   and reused for the whole run.
+   and reused for the whole run. A full sync also fetches every team's roster in parallel and
+   writes each one in its own transaction; rostered players missing from the leaders (no points
+   yet, goalies) are added to the run without a points total to cross-check.
 2. **Team schedules, in parallel.** Up to `ingestion.fetch.concurrency` workers fetch club
    schedules. The calling thread writes each team's completed games in its own short transaction.
    Players are not started until every team has been written or skipped. That barrier is what

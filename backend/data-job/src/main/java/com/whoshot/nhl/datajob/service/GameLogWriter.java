@@ -274,7 +274,7 @@ public class GameLogWriter {
         target.setHomeGame("H".equals(dto.getHomeRoadFlag()));
         target.setGoals(dto.getGoals());
         target.setAssists(dto.getAssists());
-        target.setPoints(dto.getPoints());
+        target.setPoints(StatisticsCalculationService.gamePoints(dto));
         target.setPlusMinus(dto.getPlusMinus());
         target.setShots(dto.getShots());
         target.setTimeOnIce(toiSeconds(dto.getToi()));

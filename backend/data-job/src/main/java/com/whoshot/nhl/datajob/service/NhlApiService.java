@@ -67,6 +67,23 @@ public class NhlApiService {
     }
 
     /**
+     * Get the IDs of every player on a team's official roster, including goalies and players
+     * without points or games.
+     *
+     * @param teamCode Team code (e.g., "COL")
+     * @param seasonId Season ID in format YYYYYYYY (e.g., "20252026")
+     * @return rostered player IDs
+     */
+    public List<Long> getTeamRoster(String teamCode, String seasonId) {
+        String url = String.format("%s/v1/roster/%s/%s", baseUrl, teamCode, seasonId);
+        log.debug("Fetching roster for {} season {} from: {}", teamCode, seasonId, url);
+
+        TeamRosterResponseDto response = apiClient.get(url, new ParameterizedTypeReference<>() {
+        });
+        return response.playerIds();
+    }
+
+    /**
      * Get player landing page information.
      *
      * @param playerId NHL player identifier

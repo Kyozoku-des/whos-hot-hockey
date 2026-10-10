@@ -49,6 +49,8 @@ class DataSyncServiceScopedSyncTest {
     private TeamGameRepository teamGameRepository;
     @Mock
     private GameLogWriter gameLogWriter;
+    @Mock
+    private TeamRosterSync teamRosterSync;
 
     private DataSyncService service;
 
@@ -62,10 +64,10 @@ class DataSyncServiceScopedSyncTest {
         when(playerFactory.createFromApiData(any(), any(), any(), any())).thenAnswer(invocation ->
                 player(invocation.<PlayerInfoDto>getArgument(0).getPlayerId()));
         // A real writer over mocked repositories, so writes are observable on the mocks.
-        var writer = new SeasonDataWriter(currentSeasonRepository, teamRepository, playerRepository, gameLogWriter);
+        var writer = new SeasonDataWriter(currentSeasonRepository, teamRepository, playerRepository, gameLogWriter, null);
         service = new DataSyncService(nhlApiService, playerRepository, playerFactory, writer,
                 teamGameRepository, gameLogWriter, FetchPipeline.sequential(),
-                new PlayerInfoCache(java.time.Duration.ofMinutes(30), 100));
+                new PlayerInfoCache(java.time.Duration.ofMinutes(30), 100), teamRosterSync);
         service.initialize();
     }
 
@@ -97,6 +99,33 @@ class DataSyncServiceScopedSyncTest {
 
         assertEquals(2, written);
         verify(nhlApiService, never()).getPlayerInfo(3L);
+        verify(gameLogWriter).writePlayerGameLogs(eq(1L), eq(SEASON), any(), any());
+        verify(gameLogWriter).writePlayerGameLogs(eq(2L), eq(SEASON), any(), any());
+    }
+
+    @Test
+    void scopedPlayerSync_includesRosteredPlayersMissingFromLeaders() throws Exception {
+        // A goalie or a player without points is on the playing team's roster but not in the leaders.
+        when(teamRosterSync.rosterPlayerIds(SEASON, Set.of("EDM"))).thenReturn(Set.of(4L));
+        when(playerRepository.findPlayerIdsBySeasonId(SEASON)).thenReturn(Set.of(3L, 4L));
+        when(nhlApiService.getPlayerStandingsOrder(SEASON, 2)).thenReturn(List.of(standing(3L)));
+        when(nhlApiService.getPlayerInfo(4L)).thenReturn(info(4L, "EDM"));
+        when(nhlApiService.getPlayerGameLogs(anyLong(), eq(SEASON), eq(2))).thenReturn(List.of());
+
+        assertEquals(1, service.syncPlayersForTeams(Set.of("EDM")));
+        verify(nhlApiService, never()).getPlayerInfo(3L);
+        verify(gameLogWriter).writePlayerGameLogs(eq(4L), eq(SEASON), any(), any());
+    }
+
+    @Test
+    void fullPlayerSync_refreshesRostersAndAddsRosteredPlayersMissingFromLeaders() throws Exception {
+        when(teamRosterSync.syncRosters(SEASON)).thenReturn(Set.of(1L, 2L));
+        when(nhlApiService.getPlayerStandingsOrder(SEASON, 2)).thenReturn(List.of(standing(1L)));
+        when(nhlApiService.getPlayerInfo(1L)).thenReturn(info(1L, "EDM"));
+        when(nhlApiService.getPlayerInfo(2L)).thenReturn(info(2L, "EDM"));
+        when(nhlApiService.getPlayerGameLogs(anyLong(), eq(SEASON), eq(2))).thenReturn(List.of());
+
+        assertEquals(2, service.syncPlayers().written());
         verify(gameLogWriter).writePlayerGameLogs(eq(1L), eq(SEASON), any(), any());
         verify(gameLogWriter).writePlayerGameLogs(eq(2L), eq(SEASON), any(), any());
     }

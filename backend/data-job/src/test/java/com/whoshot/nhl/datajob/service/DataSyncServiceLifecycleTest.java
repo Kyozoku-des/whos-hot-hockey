@@ -36,7 +36,7 @@ class DataSyncServiceLifecycleTest {
     void constructingDataSyncService_performsNoApiCallsOrWrites() {
         new DataSyncService(nhlApiService, playerRepository, playerFactory, seasonDataWriter,
                 teamGameRepository, gameLogWriter, FetchPipeline.sequential(),
-                new PlayerInfoCache(java.time.Duration.ofMinutes(30), 100));
+                new PlayerInfoCache(java.time.Duration.ofMinutes(30), 100), org.mockito.Mockito.mock(TeamRosterSync.class));
 
         verifyNoInteractions(nhlApiService, playerRepository, playerFactory, seasonDataWriter,
                 teamGameRepository, gameLogWriter);

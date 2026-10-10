@@ -168,4 +168,33 @@ class StatisticsCalculationServiceTest {
         assertTrue(e.getMessage().contains("calculated 3"), e.getMessage());
         assertTrue(e.getMessage().contains("expected 4"), e.getMessage());
     }
+
+    @Test
+    void rosterPlayerWithoutGames_hasZeroTotalsAndNoExpectedTotal() throws PlayerStatisticsException {
+        PlayerStandingDto rosterOnly = new PlayerStandingDto();
+        rosterOnly.setId(8479639L);
+
+        PlayerStatistics stats = service.calculatePlayerStatistics(rosterOnly, List.of());
+
+        assertEquals(0, stats.gamesPlayed());
+        assertEquals(0, stats.points());
+        assertEquals(0.0, stats.pointsPerGame(), DELTA);
+    }
+
+    @Test
+    void goalieGameLogWithoutPoints_countsGoalsAndAssists() throws PlayerStatisticsException {
+        PlayerStandingDto goalie = new PlayerStandingDto();
+        goalie.setId(8478499L);
+        PlayerGameLogDto withAssist = game(0, 1, null);
+        withAssist.setPoints(null);
+        PlayerGameLogDto withoutPoints = game(0, 0, null);
+        withoutPoints.setPoints(null);
+
+        PlayerStatistics stats = service.calculatePlayerStatistics(goalie, List.of(withAssist, withoutPoints));
+
+        assertEquals(2, stats.gamesPlayed());
+        assertEquals(1, stats.points());
+        assertEquals(1, stats.assists());
+        assertEquals(1, stats.currentPointStreak());
+    }
 }
