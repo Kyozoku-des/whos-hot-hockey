@@ -112,6 +112,11 @@ this is intended for the single-VPS deployment. Rejections appear at `warn`
 level in nginx's error log (`docker compose logs frontend`). Tune `rate` and
 `burst` in `nginx.conf` if real traffic warrants it. Buckets reset on restart.
 
+With the local `compose.yaml`, Docker's port publishing can make every request
+from the host appear to come from the same bridge gateway address, so all local
+clients (browser tabs, scripts, load tests) may share one bucket. Unexpected
+429s during local testing usually mean that shared bucket is exhausted.
+
 #### Caddy deployment wiring
 
 The local `compose.yaml` has no Caddy. By default, the image trusts **no TCP
@@ -180,6 +185,8 @@ They cover 429 responses, refill, independent IPv4/IPv6 clients, spoofed
 headers from untrusted peers, upstream header sanitization, API paths with
 asset extensions, and unlimited SPA/static requests. Set `NGINX_BINARY` if
 nginx is not on `PATH`. They do not start the database or call the NHL API.
+CI runs them via `.github/workflows/nginx-tests.yml` when the nginx config or
+tests change. They are skipped on Windows.
 
 ## Design
 
