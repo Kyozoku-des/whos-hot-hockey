@@ -9,11 +9,14 @@
         <p>Stats last updated: {{ lastUpdated }}</p>
       </div>
     </footer>
+
+    <NextGameTooltip />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import NextGameTooltip from './components/NextGameTooltip.vue'
 
 const lastUpdated = ref('')
 

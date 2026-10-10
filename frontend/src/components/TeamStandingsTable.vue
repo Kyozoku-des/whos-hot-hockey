@@ -9,6 +9,8 @@
         :key="team.teamCode"
         class="team-item"
         @click="goToTeam(team.teamCode)"
+        @mouseenter="showNextGame($event, team.teamCode)"
+        @mouseleave="hideNextGame"
       >
         <FavoriteToggle :item="teamFavorite(team)" />
         <div class="team-main">
@@ -40,9 +42,11 @@ import { useTeamStats } from '../composables/useApi'
 import { useSearchStore } from '../stores/searchStore'
 import { teamFavorite } from '../composables/useFavorites'
 import TeamLogo from './TeamLogo.vue'
+import { useNextGames } from '../composables/useNextGames'
 import FavoriteToggle from './FavoriteToggle.vue'
 
 const router = useRouter()
+const { showNextGame, hideNextGame } = useNextGames()
 const { loading, error, getStandings } = useTeamStats()
 const searchStore = useSearchStore()
 const allTeams = ref([])

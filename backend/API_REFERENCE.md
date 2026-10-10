@@ -231,6 +231,28 @@ Team game results for a season, ordered by `gameDate` descending.
 ]
 ```
 
+### GET /api/teams/next-games
+
+Each team's next unfinished regular-season or playoff game, ordered by `teamCode`. A game in
+progress counts (`gameState` `LIVE`/`CRIT`), so a team playing right now shows its current opponent.
+Teams with no game left are omitted.
+
+- **Query params**: `season` (optional)
+
+**Example response:**
+```json
+[
+  {
+    "teamCode": "TOR",
+    "opponentTeamCode": "BOS",
+    "homeGame": false,
+    "gameDate": "2026-10-11",
+    "startTimeUtc": "2026-10-11T23:00:00Z",
+    "gameState": "FUT"
+  }
+]
+```
+
 ---
 
 ## Games

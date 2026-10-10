@@ -63,6 +63,9 @@ class DynamicSchedulingServiceTest {
         tasks.remove().run();
         verify(sync, times(2)).syncTeamsForCodes(teams);
         verify(sync, times(2)).syncPlayersForTeams(teams);
+        // Every poll keeps the next-game state current while the game is live.
+        verify(sync).syncActiveNextGames(List.of(game("VAN", "EDM")));
+        verify(sync).syncActiveNextGames(List.of());
         // Only once the game has ended, and before its players so their gameWon resolves.
         var order = inOrder(sync);
         order.verify(sync).syncTeamGamesForCodes(teams);

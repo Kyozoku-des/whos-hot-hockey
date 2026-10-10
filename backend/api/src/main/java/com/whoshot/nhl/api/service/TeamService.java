@@ -4,16 +4,20 @@ import com.whoshot.nhl.api.config.GlobalExceptionHandler;
 import com.whoshot.nhl.api.dto.RosterPlayerDto;
 import com.whoshot.nhl.api.dto.TeamDetailDto;
 import com.whoshot.nhl.api.dto.TeamGameLogDto;
+import com.whoshot.nhl.api.dto.TeamNextGameDto;
 import com.whoshot.nhl.api.dto.TeamStandingsDto;
 import com.whoshot.nhl.domain.entity.Player;
 import com.whoshot.nhl.domain.entity.Team;
 import com.whoshot.nhl.domain.entity.TeamGame;
+import com.whoshot.nhl.domain.entity.TeamNextGame;
 import com.whoshot.nhl.domain.repository.PlayerRepository;
 import com.whoshot.nhl.domain.repository.TeamGameRepository;
+import com.whoshot.nhl.domain.repository.TeamNextGameRepository;
 import com.whoshot.nhl.domain.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -27,6 +31,7 @@ public class TeamService {
     private final SeasonResolver seasonResolver;
     private final TeamGameRepository teamGameRepository;
     private final PlayerRepository playerRepository;
+    private final TeamNextGameRepository teamNextGameRepository;
 
     /**
      * Get all teams for a season ordered by points descending.
@@ -99,6 +104,31 @@ public class TeamService {
         return teamGameRepository.findByTeamCodeAndSeasonIdOrderByGameDateDesc(teamCode, resolved).stream()
                 .map(this::toGameLogDto)
                 .toList();
+    }
+
+    /**
+     * Get every team's next unfinished game for a season.
+     *
+     * @param season season identifier, or null to auto-detect active season
+     * @return next games ordered by team code; teams without one are left out
+     */
+    public List<TeamNextGameDto> getNextGames(String season) {
+        String resolved = seasonResolver.resolve(season);
+        return teamNextGameRepository.findBySeasonId(resolved).stream()
+                .sorted(Comparator.comparing(TeamNextGame::getTeamCode))
+                .map(this::toNextGameDto)
+                .toList();
+    }
+
+    private TeamNextGameDto toNextGameDto(TeamNextGame game) {
+        return new TeamNextGameDto(
+                game.getTeamCode(),
+                game.getOpponentTeamCode(),
+                Boolean.TRUE.equals(game.getHomeGame()),
+                game.getGameDate(),
+                game.getStartTimeUtc(),
+                game.getGameState()
+        );
     }
 
     private TeamStandingsDto toStandingsDto(Team team) {

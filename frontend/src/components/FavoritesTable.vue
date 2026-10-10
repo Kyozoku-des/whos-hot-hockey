@@ -15,6 +15,8 @@
         :key="player.playerId"
         class="player-item"
         @click="goToPlayer(player.playerId)"
+        @mouseenter="showNextGame($event, player.teamCode)"
+        @mouseleave="hideNextGame"
       >
         <button
           class="remove-btn"
@@ -43,6 +45,8 @@
         :key="team.teamCode"
         class="team-item"
         @click="goToTeam(team.teamCode)"
+        @mouseenter="showNextGame($event, team.teamCode)"
+        @mouseleave="hideNextGame"
       >
         <button
           class="remove-btn"
@@ -78,9 +82,11 @@ import { useRouter } from 'vue-router'
 import { useFavorites } from '../composables/useFavorites'
 import { usePlayerStats, useTeamStats } from '../composables/useApi'
 import TeamLogo from './TeamLogo.vue'
+import { useNextGames } from '../composables/useNextGames'
 import PixelIcon from './PixelIcon.vue'
 
 const router = useRouter()
+const { showNextGame, hideNextGame } = useNextGames()
 const { favorites, removeFavorite } = useFavorites()
 const { loading: playersLoading, getTopScorers } = usePlayerStats()
 const { loading: teamsLoading, getStandings } = useTeamStats()

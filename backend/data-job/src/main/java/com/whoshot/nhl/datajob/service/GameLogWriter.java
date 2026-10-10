@@ -6,18 +6,22 @@ import com.whoshot.nhl.datajob.model.BackfillRequest;
 import com.whoshot.nhl.datajob.model.TeamGameIndex;
 import com.whoshot.nhl.domain.entity.GameLog;
 import com.whoshot.nhl.domain.entity.TeamGame;
+import com.whoshot.nhl.domain.entity.TeamNextGame;
 import com.whoshot.nhl.domain.repository.GameLogRepository;
 import com.whoshot.nhl.domain.repository.TeamGameRepository;
+import com.whoshot.nhl.domain.repository.TeamNextGameRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -38,6 +42,9 @@ public class GameLogWriter {
 
     private final GameLogRepository gameLogRepository;
     private final TeamGameRepository teamGameRepository;
+    private final TeamNextGameRepository teamNextGameRepository;
+
+    static final int PLAYOFF_GAME_TYPE = 3;
 
     /**
      * Writes one team's completed regular-season games for a season, in chronological order with a
@@ -64,7 +71,55 @@ public class GameLogWriter {
         }
         teamGameRepository.saveAll(rows);
         teamGameRepository.flush();
+        writeNextGame(teamCode, seasonId, games);
         return ordered.size();
+    }
+
+    /**
+     * Stores the team's next unfinished regular-season or playoff game, or removes the stored one
+     * when the schedule has none left (season over, or a historical season being backfilled).
+     */
+    private void writeNextGame(String teamCode, String seasonId, List<GameDto> games) {
+        var key = new TeamNextGame.TeamNextGameKey(teamCode, seasonId);
+        nextGame(games).ifPresentOrElse(
+                game -> teamNextGameRepository.save(toTeamNextGame(
+                        teamNextGameRepository.findById(key).orElse(new TeamNextGame()), teamCode, seasonId, game)),
+                () -> teamNextGameRepository.deleteById(key));
+    }
+
+    /**
+     * Records games in pre-game or in progress as both teams' next game, so their state follows the
+     * live poll: schedules are only rewritten once a team's game has finished.
+     *
+     * @param seasonId    season the games belong to
+     * @param activeGames games from the league schedule currently in pre-game or in progress
+     */
+    @Transactional
+    public void writeActiveNextGames(String seasonId, List<GameDto> activeGames) {
+        for (GameDto game : activeGames) {
+            // Same eligibility as a schedule's next game: regular season or playoffs, not finished
+            if (nextGame(List.of(game)).isEmpty()) {
+                continue;
+            }
+            for (String teamCode : List.of(game.getHomeTeam().getAbbrev(), game.getAwayTeam().getAbbrev())) {
+                var key = new TeamNextGame.TeamNextGameKey(teamCode, seasonId);
+                teamNextGameRepository.save(toTeamNextGame(
+                        teamNextGameRepository.findById(key).orElse(new TeamNextGame()), teamCode, seasonId, game));
+            }
+        }
+    }
+
+    /**
+     * Earliest regular-season or playoff game that has not finished. A game in progress counts, so
+     * a team playing right now shows its current opponent.
+     */
+    static Optional<GameDto> nextGame(List<GameDto> games) {
+        return games.stream()
+                .filter(g -> g.getGameType() != null
+                        && (g.getGameType() == BackfillRequest.REGULAR_SEASON_GAME_TYPE || g.getGameType() == PLAYOFF_GAME_TYPE))
+                .filter(g -> g.getGameState() != null && !g.getGameState().isCompleted())
+                .filter(g -> g.getStartTimeUTC() != null && g.getHomeTeam() != null && g.getAwayTeam() != null)
+                .min(Comparator.comparing(GameDto::getStartTimeUTC));
     }
 
     /**
@@ -193,6 +248,20 @@ public class GameLogWriter {
         target.setGameType(String.valueOf(game.getGameType()));
         target.setSeasonId(seasonId);
         target.setGameNumber(gameNumber);
+        return target;
+    }
+
+    static TeamNextGame toTeamNextGame(TeamNextGame target, String teamCode, String seasonId, GameDto game) {
+        boolean homeGame = teamCode.equals(game.getHomeTeam().getAbbrev());
+        target.setTeamCode(teamCode);
+        target.setSeasonId(seasonId);
+        target.setGameId(game.getId());
+        target.setGameDate(game.getGameDate() != null ? game.getGameDate() : datePart(game.getStartTimeUTC()));
+        target.setStartTimeUtc(game.getStartTimeUTC());
+        target.setGameState(game.getGameState().name());
+        target.setOpponentTeamCode(homeGame ? game.getAwayTeam().getAbbrev() : game.getHomeTeam().getAbbrev());
+        target.setHomeGame(homeGame);
+        target.setLastUpdated(LocalDateTime.now());
         return target;
     }
 

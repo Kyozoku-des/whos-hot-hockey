@@ -354,6 +354,15 @@ public class DataSyncService {
     }
 
     /**
+     * Records the given pre-game or in-progress games as their teams' next game, keeping its state
+     * current between schedule writes.
+     */
+    public void syncActiveNextGames(List<GameDto> activeGames) {
+        checkInterrupted();
+        gameLogWriter.writeActiveNextGames(season.getId(), activeGames);
+    }
+
+    /**
      * Returns the games currently in pre-game or in progress.
      */
     public List<GameDto> getActiveGames() {

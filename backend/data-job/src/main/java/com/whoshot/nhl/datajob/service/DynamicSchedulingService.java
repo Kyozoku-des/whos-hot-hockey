@@ -110,6 +110,7 @@ public class DynamicSchedulingService {
             int[] counts = new int[3]; // teams, team schedules, players
             if (!teamsToSync.isEmpty() && !seasonLock.runExclusively(dataSyncService.getSeasonId(), () -> {
                 counts[0] = dataSyncService.syncTeamsForCodes(teamsToSync);
+                dataSyncService.syncActiveNextGames(activeGames);
                 // Before players, so their game logs resolve gameWon for the finished game.
                 if (!pendingTeamGames.isEmpty()) {
                     Set<String> written = dataSyncService.syncTeamGamesForCodes(Set.copyOf(pendingTeamGames));
