@@ -85,7 +85,12 @@ public class TeamService {
         Team team = teamRepository.findByTeamCodeAndSeasonId(teamCode, resolved)
                 .orElseThrow(() -> new GlobalExceptionHandler.TeamNotFoundException(teamCode));
 
-        List<RosterPlayerDto> roster = playerRepository.findByTeamCodeAndIdSeasonId(teamCode, resolved).stream()
+        // The official roster; seasons stored without one (backfilled) list the team's players.
+        List<Player> players = playerRepository.findRosterPlayers(teamCode, resolved);
+        if (players.isEmpty()) {
+            players = playerRepository.findByTeamCodeAndIdSeasonId(teamCode, resolved);
+        }
+        List<RosterPlayerDto> roster = players.stream()
                 .map(this::toRosterPlayerDto)
                 .toList();
 
@@ -184,7 +189,10 @@ public class TeamService {
                 player.getFullName(),
                 player.getPositionCode(),
                 player.getTeamCode(),
-                player.getHeadshotUrl()
+                player.getHeadshotUrl(),
+                player.getGoals(),
+                player.getAssists(),
+                player.getPoints()
         );
     }
 

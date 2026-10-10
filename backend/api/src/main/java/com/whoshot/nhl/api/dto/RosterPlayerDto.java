@@ -8,5 +8,8 @@ public record RosterPlayerDto(
         String fullName,
         String positionCode,
         String teamCode,
-        String headshotUrl
+        String headshotUrl,
+        Integer goals,
+        Integer assists,
+        Integer points
 ) {}
