@@ -85,6 +85,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_FEEDBACK_EMAIL: ${VITE_FEEDBACK_EMAIL:-}
+        VITE_DONATION_URL: ${VITE_DONATION_URL:-}
     ports:
       - "127.0.0.1:${FRONTEND_PORT:-3000}:3000"
     # No VITE_API_BASE_URL here: Vite inlines import.meta.env at build time, so a
