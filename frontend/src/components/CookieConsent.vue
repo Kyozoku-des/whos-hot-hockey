@@ -4,7 +4,6 @@
       <div v-if="showBanner" class="cookie-consent-banner">
         <div class="banner-container">
           <div class="banner-content">
-            <div class="banner-icon">🍪</div>
             <div class="banner-text">
               <h3>Save Your Favorites</h3>
               <p>
@@ -21,7 +20,9 @@
               Enable Favorites
             </button>
           </div>
-          <button @click="decline" class="btn-close" title="Close">✕</button>
+          <button @click="decline" class="btn-close" title="Close">
+            <PixelIcon name="close" />
+          </button>
         </div>
       </div>
     </Transition>
@@ -31,6 +32,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useFavorites } from '../composables/useFavorites'
+import PixelIcon from './PixelIcon.vue'
 
 const { acceptConsent, declineConsent, checkConsent } = useFavorites()
 const showBanner = ref(false)
@@ -77,6 +79,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 2rem;
+  padding-right: 3rem;
   position: relative;
 }
 
@@ -85,11 +88,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 1.5rem;
-}
-
-.banner-icon {
-  font-size: 2.5rem;
-  flex-shrink: 0;
 }
 
 .banner-text h3 {
@@ -149,14 +147,16 @@ onMounted(() => {
 
 .btn-close {
   position: absolute;
-  top: 0;
+  top: 50%;
   right: 0;
+  transform: translateY(-50%);
   width: 32px;
   height: 32px;
+  padding: 0;
   border: none;
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 1.5rem;
+  font-size: 1rem;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -208,9 +208,14 @@ onMounted(() => {
     width: 100%;
   }
 
+  .banner-container {
+    padding-right: 0;
+  }
+
   .btn-close {
-    top: 1rem;
-    right: 1rem;
+    top: -0.5rem;
+    right: -0.5rem;
+    transform: none;
   }
 }
 </style>
