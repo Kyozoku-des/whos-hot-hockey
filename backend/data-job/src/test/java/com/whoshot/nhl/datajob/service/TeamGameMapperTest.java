@@ -3,9 +3,11 @@ package com.whoshot.nhl.datajob.service;
 import com.whoshot.nhl.datajob.dto.nhlapi.GameDto;
 import com.whoshot.nhl.datajob.dto.nhlapi.GameState;
 import com.whoshot.nhl.domain.entity.TeamGame;
+import com.whoshot.nhl.domain.entity.TeamNextGame;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -124,6 +126,47 @@ class TeamGameMapperTest {
         TeamGame mapped = GameLogWriter.toTeamGame(new TeamGame(), "COL", "20242025", evening, 1);
 
         assertEquals("2024-10-09", mapped.getGameDate());
+    }
+
+    @Test
+    void nextGame_isEarliestUnfinishedRegularSeasonOrPlayoffGame() {
+        GameDto finished = game(1L, "2025-01-01T00:00:00Z", 2, "COL", 3, "MTL", 2, "REG");
+        GameDto preseason = game(2L, "2025-01-02T00:00:00Z", 1, "COL", null, "MTL", null, null);
+        preseason.setGameState(GameState.FUT);
+        GameDto later = game(3L, "2025-01-05T00:00:00Z", 2, "COL", null, "BOS", null, null);
+        later.setGameState(GameState.FUT);
+        GameDto next = game(4L, "2025-01-03T00:00:00Z", 2, "TOR", null, "COL", null, null);
+        next.setGameState(GameState.FUT);
+
+        assertEquals(Optional.of(next), GameLogWriter.nextGame(List.of(finished, preseason, later, next)));
+    }
+
+    @Test
+    void nextGame_includesGameInProgress_andIsEmptyWhenScheduleIsDone() {
+        GameDto finished = game(1L, "2025-01-01T00:00:00Z", 2, "COL", 3, "MTL", 2, "REG");
+        GameDto live = game(2L, "2025-01-03T00:00:00Z", 3, "COL", 1, "MTL", 0, null);
+        live.setGameState(GameState.LIVE);
+
+        assertEquals(Optional.of(live), GameLogWriter.nextGame(List.of(finished, live)));
+        assertEquals(Optional.empty(), GameLogWriter.nextGame(List.of(finished)));
+    }
+
+    @Test
+    void mapsNextGameFromAwayTeamPerspective() {
+        GameDto g = game(5L, "2025-01-04T00:00:00Z", 2, "TOR", null, "COL", null, null);
+        g.setGameState(GameState.FUT);
+        g.setGameDate("2025-01-03");
+
+        TeamNextGame next = GameLogWriter.toTeamNextGame(new TeamNextGame(), "COL", "20242025", g);
+
+        assertEquals("COL", next.getTeamCode());
+        assertEquals("20242025", next.getSeasonId());
+        assertEquals(5L, next.getGameId());
+        assertEquals("2025-01-03", next.getGameDate());
+        assertEquals("2025-01-04T00:00:00Z", next.getStartTimeUtc());
+        assertEquals("FUT", next.getGameState());
+        assertEquals("TOR", next.getOpponentTeamCode());
+        assertFalse(next.getHomeGame());
     }
 
     @Test

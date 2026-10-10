@@ -44,6 +44,6 @@ public abstract class PostgresIntegrationTestBase {
     @BeforeEach
     void resetDatabase() {
         jdbcTemplate.execute(
-                "TRUNCATE TABLE players, teams, game_logs, team_games, current_season, scoreboard_goals, scoreboard_games RESTART IDENTITY");
+                "TRUNCATE TABLE players, teams, game_logs, team_games, current_season, scoreboard_goals, scoreboard_games, team_next_games RESTART IDENTITY");
     }
 }
