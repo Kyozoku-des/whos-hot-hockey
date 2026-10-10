@@ -34,7 +34,7 @@ public class StatisticsCalculationService {
         int plusMinus = 0;
 
         for (PlayerGameLogDto gameLog : playerGameLogs) {
-            points += gameLog.getPoints() != null ? gameLog.getPoints() : 0;
+            points += gamePoints(gameLog);
             goals += gameLog.getGoals() != null ? gameLog.getGoals() : 0;
             assists += gameLog.getAssists() != null ? gameLog.getAssists() : 0;
             plusMinus += gameLog.getPlusMinus() != null ? gameLog.getPlusMinus() : 0;
@@ -44,7 +44,7 @@ public class StatisticsCalculationService {
         int pointStreak = 0;
         int pointlessStreak = 0;
         for (PlayerGameLogDto gameLog : playerGameLogs) {
-            int gamePoints = gameLog.getPoints() != null ? gameLog.getPoints() : 0;
+            int gamePoints = gamePoints(gameLog);
             if (gamePoints > 0) {
                 pointStreak++;
             } else {
@@ -53,7 +53,7 @@ public class StatisticsCalculationService {
         }
         if (pointStreak == 0) {
             for (PlayerGameLogDto gameLog : playerGameLogs) {
-                int gamePoints = gameLog.getPoints() != null ? gameLog.getPoints() : 0;
+                int gamePoints = gamePoints(gameLog);
                 if (gamePoints == 0) {
                     pointlessStreak++;
                 } else {
@@ -62,7 +62,8 @@ public class StatisticsCalculationService {
             }
         }
 
-        if (playerStanding.getPoints() != points) {
+        // A rostered player missing from the leaders has no expected total to check against.
+        if (playerStanding.getPoints() != null && playerStanding.getPoints() != points) {
             String errorMessage = String.format("Points mismatch for player ID %d: calculated %d, expected %d", playerStanding.getId(), points, playerStanding.getPoints());
             throw new PlayerStatisticsException(errorMessage);
         }
@@ -74,7 +75,7 @@ public class StatisticsCalculationService {
         int lastNPoints = 0;
         for (int i = 0; i < lastN; i++) {
             PlayerGameLogDto gameLog = playerGameLogs.get(i);
-            lastNPoints += gameLog.getPoints() != null ? gameLog.getPoints() : 0;
+            lastNPoints += gamePoints(gameLog);
         }
         double pointsPerLastNGames = lastN > 0 ? (double) lastNPoints / lastN : 0.0;
 
@@ -90,5 +91,14 @@ public class StatisticsCalculationService {
                 .pointsPerLastNGames(pointsPerLastNGames)
                 .lastUpdated(LocalDateTime.now())
                 .build();
+    }
+
+    /** A game's points; goalie game logs carry goals and assists but no points. */
+    static int gamePoints(PlayerGameLogDto gameLog) {
+        if (gameLog.getPoints() != null) {
+            return gameLog.getPoints();
+        }
+        return (gameLog.getGoals() != null ? gameLog.getGoals() : 0)
+                + (gameLog.getAssists() != null ? gameLog.getAssists() : 0);
     }
 }

@@ -95,8 +95,10 @@ Clients (consume REST API)
 
 The data-job daemon alternates between two modes:
 
-- **Hourly full sync** – season, all team standings, all team schedules (`team_games`) and all
-  active players with their game logs (`game_logs`). It also reads today's schedule to find the
+- **Hourly full sync** – season, all team standings, all team schedules (`team_games`), every
+  team's official roster (`team_rosters`) and all active players with their game logs
+  (`game_logs`). Players are the skater points leaders plus everyone on a roster, so players
+  without points and goalies are stored too. It also reads today's schedule to find the
   first and last game start times.
 - **Game-time sync** – from 5 minutes before the first game until the last game has ended, a poll
   runs 60 seconds after the previous one finishes. Each poll:
@@ -116,8 +118,8 @@ The data-job daemon alternates between two modes:
 Both modes fetch teams and players in parallel and write them one at a time, committing each
 player with their game logs; see the [ingestion guide](INGESTION.md).
 
-Live data comes from the same endpoints as the full sync (standings, skater leaders, player
-landing and game log, club schedule); no boxscore or play-by-play is read.
+Live data comes from the same endpoints as the full sync (standings, skater leaders, team
+roster, player landing and game log, club schedule); no boxscore or play-by-play is read.
 
 ### No duplicates
 

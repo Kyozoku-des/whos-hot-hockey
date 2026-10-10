@@ -19,7 +19,9 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
@@ -47,6 +49,7 @@ public class DataSyncService {
     private final GameLogWriter gameLogWriter;
     private final FetchPipeline fetchPipeline;
     private final PlayerInfoCache playerInfoCache;
+    private final TeamRosterSync teamRosterSync;
 
     private IngestionMetrics metrics = IngestionMetrics.standalone();
 
@@ -116,7 +119,9 @@ public class DataSyncService {
     }
 
     /**
-     * Synchronizes active-player statistics for the resolved season, fetching players in parallel
+     * Synchronizes active-player statistics for the resolved season: the points leaders plus every
+     * player on a team's official roster, so players without points and goalies are stored too.
+     * Rosters are refreshed first. Players are fetched in parallel
      * through the {@link FetchPipeline} and writing each one (with their game logs) as it arrives.
      * A player that cannot be fetched or validated is skipped and keeps their previous row; only a
      * stop request or a lost database ends the sync early.
@@ -128,7 +133,9 @@ public class DataSyncService {
         String seasonId = season.getId();
         log.info("Starting player sync for season {}", seasonId);
 
-        var players = nhlApiService.getPlayerStandingsOrder(seasonId, REGULAR_SEASON_GAME_TYPE);
+        Set<Long> rosterIds = teamRosterSync.syncRosters(seasonId);
+        var players = withRosterPlayers(
+                nhlApiService.getPlayerStandingsOrder(seasonId, REGULAR_SEASON_GAME_TYPE), rosterIds);
         SyncResult result = syncPlayers(seasonId, players, null);
         log.info("Player sync completed: {}", result);
         return result;
@@ -137,7 +144,8 @@ public class DataSyncService {
     /**
      * Synchronizes only players belonging to the specified teams, including their game logs.
      * Used during game-time sync: players are picked from the roster stored by the last full sync,
-     * so players on teams that are not playing cost no API calls. Players in the standings with no
+     * together with the playing teams' official rosters, so players on teams that are not playing
+     * cost no API calls. Players in the standings with no
      * stored row yet (season debuts, opening night) are also checked, since their team is unknown.
      * Players traded to a playing team since the last full sync are picked up by the full sync that
      * ends the game window.
@@ -152,18 +160,36 @@ public class DataSyncService {
         String seasonId = season.getId();
         log.info("Starting scoped player sync for teams {} in season {}", teamCodes, seasonId);
 
+        Set<Long> teamRosterIds = teamRosterSync.rosterPlayerIds(seasonId, teamCodes);
         Set<Long> rosterIds = teamCodes.stream()
                 .flatMap(teamCode -> playerRepository.findByTeamCodeAndIdSeasonId(teamCode, seasonId).stream())
                 .map(player -> player.getId().playerId())
-                .collect(Collectors.toSet());
+                .collect(Collectors.toCollection(HashSet::new));
+        rosterIds.addAll(teamRosterIds);
         Set<Long> storedIds = playerRepository.findPlayerIdsBySeasonId(seasonId);
-        var players = nhlApiService.getPlayerStandingsOrder(seasonId, REGULAR_SEASON_GAME_TYPE).stream()
+        var players = withRosterPlayers(
+                nhlApiService.getPlayerStandingsOrder(seasonId, REGULAR_SEASON_GAME_TYPE), teamRosterIds).stream()
                 .filter(standing -> rosterIds.contains(standing.getId()) || !storedIds.contains(standing.getId()))
                 .toList();
         SyncResult result = syncPlayers(seasonId, players, teamCodes);
 
         log.info("Scoped player sync completed for teams {}: {}", teamCodes, result);
         return result.written();
+    }
+
+    /**
+     * Appends rostered players missing from the points leaders (no points yet, goalies) after them.
+     * Those have no expected total, so their points are not cross-checked against the leaders.
+     */
+    static List<PlayerStandingDto> withRosterPlayers(List<PlayerStandingDto> leaders, Set<Long> rosterIds) {
+        Map<Long, PlayerStandingDto> players = new LinkedHashMap<>();
+        leaders.forEach(standing -> players.putIfAbsent(standing.getId(), standing));
+        rosterIds.stream().sorted().forEach(playerId -> players.computeIfAbsent(playerId, id -> {
+            PlayerStandingDto rosterOnly = new PlayerStandingDto();
+            rosterOnly.setId(id);
+            return rosterOnly;
+        }));
+        return List.copyOf(players.values());
     }
 
     /**

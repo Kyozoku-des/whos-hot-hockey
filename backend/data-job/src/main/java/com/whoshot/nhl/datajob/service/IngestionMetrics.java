@@ -125,6 +125,9 @@ public class IngestionMetrics {
         if (path.contains("/club-schedule-season/")) {
             return "team-schedule";
         }
+        if (path.contains("/roster/")) {
+            return "team-roster";
+        }
         if (path.contains("/skater-stats-leaders/")) {
             return "player-standings";
         }

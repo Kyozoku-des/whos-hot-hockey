@@ -91,7 +91,7 @@ class DataSyncServiceParallelSyncTest {
         when(teamGameRepository.findBySeasonId(SEASON)).thenReturn(List.of());
         service = new DataSyncService(nhlApiService, playerRepository, playerFactory, seasonDataWriter,
                 teamGameRepository, gameLogWriter, pipeline,
-                new PlayerInfoCache(java.time.Duration.ofMinutes(30), 100));
+                new PlayerInfoCache(java.time.Duration.ofMinutes(30), 100), org.mockito.Mockito.mock(TeamRosterSync.class));
         service.initialize();
     }
 

@@ -201,7 +201,7 @@ class IngestionBenchmarkTest {
 
         DataSyncService sync = new DataSyncService(api, mock(PlayerRepository.class), factory, writer,
                 mock(TeamGameRepository.class), mock(GameLogWriter.class), pipeline,
-                new PlayerInfoCache(Duration.ofMinutes(30), 100));
+                new PlayerInfoCache(Duration.ofMinutes(30), 100), org.mockito.Mockito.mock(TeamRosterSync.class));
         sync.setMetrics(metrics);
         sync.initialize();
         return sync;

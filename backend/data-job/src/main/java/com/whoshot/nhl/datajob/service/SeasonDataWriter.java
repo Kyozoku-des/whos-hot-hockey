@@ -7,9 +7,11 @@ import com.whoshot.nhl.datajob.model.TeamGameIndex;
 import com.whoshot.nhl.domain.entity.CurrentSeason;
 import com.whoshot.nhl.domain.entity.Player;
 import com.whoshot.nhl.domain.entity.Team;
+import com.whoshot.nhl.domain.entity.TeamRosterEntry;
 import com.whoshot.nhl.domain.repository.CurrentSeasonRepository;
 import com.whoshot.nhl.domain.repository.PlayerRepository;
 import com.whoshot.nhl.domain.repository.TeamRepository;
+import com.whoshot.nhl.domain.repository.TeamRosterRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,7 +28,8 @@ import java.util.Set;
  * <ul>
  *   <li>{@link #activateSeason} — the active-season switch;</li>
  *   <li>{@link #persistStandings} — one standings snapshot;</li>
- *   <li>{@link #writePlayer} — one player together with all of their game logs.</li>
+ *   <li>{@link #writePlayer} — one player together with all of their game logs;</li>
+ *   <li>{@link #writeRoster} — one team's roster.</li>
  * </ul>
  * Callers pass fetched DTOs and new, unmanaged entities only; managed entities never leave the
  * transaction that loaded them.
@@ -40,6 +43,7 @@ public class SeasonDataWriter {
     private final TeamRepository teamRepository;
     private final PlayerRepository playerRepository;
     private final GameLogWriter gameLogWriter;
+    private final TeamRosterRepository teamRosterRepository;
 
     /**
      * Persists the resolved season as the sole active season. Deactivates any other season
@@ -122,6 +126,24 @@ public class SeasonDataWriter {
         playerRepository.flush();
         return gameLogWriter.writePlayerGameLogs(player.getId().playerId(), player.getId().seasonId(),
                 gameLogs, teamGames);
+    }
+
+    /**
+     * Replaces one team's roster for a season. A player listed here moves off any other team's
+     * roster, since a player is on at most one roster per season.
+     *
+     * @param seasonId  season the roster belongs to
+     * @param teamCode  team the roster belongs to
+     * @param playerIds every player on the team's roster
+     */
+    @Transactional
+    public void writeRoster(String seasonId, String teamCode, List<Long> playerIds) {
+        teamRosterRepository.deleteBySeasonIdAndTeamCode(seasonId, teamCode);
+        teamRosterRepository.flush();
+        LocalDateTime now = LocalDateTime.now();
+        teamRosterRepository.saveAll(playerIds.stream().distinct()
+                .map(playerId -> new TeamRosterEntry(seasonId, playerId, teamCode, now))
+                .toList());
     }
 
     /**

@@ -85,7 +85,7 @@ class DataJobShutdownTest {
     void interruptedPlayerSyncStopsBeforeAnyApiCall() {
         var api = mock(NhlApiService.class);
         var sync = new DataSyncService(api, null, null, null, null, null, FetchPipeline.sequential(),
-                new PlayerInfoCache(java.time.Duration.ofMinutes(30), 100));
+                new PlayerInfoCache(java.time.Duration.ofMinutes(30), 100), org.mockito.Mockito.mock(TeamRosterSync.class));
         try {
             Thread.currentThread().interrupt();
             assertThrows(CancellationException.class, sync::syncPlayers);

@@ -18,6 +18,7 @@ class IngestionMetricsTest {
             "https://api-web.nhle.com/v1/player/8478402/landing, player-landing",
             "https://api-web.nhle.com/v1/player/8478402/game-log/20252026/2, player-game-log",
             "https://api-web.nhle.com/v1/club-schedule-season/EDM/20252026, team-schedule",
+            "https://api-web.nhle.com/v1/roster/EDM/20252026, team-roster",
             "https://api-web.nhle.com/v1/skater-stats-leaders/20252026/2?categories=points&limit=-1, player-standings",
             "https://api-web.nhle.com/v1/standings/now, team-standings",
             "https://api-web.nhle.com/v1/schedule/now, league-schedule",
