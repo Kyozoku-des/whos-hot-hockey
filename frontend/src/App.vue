@@ -6,6 +6,7 @@
 
     <nav class="site-links">
       <router-link to="/settings">Settings</router-link>
+      <router-link to="/feedback">Feedback</router-link>
     </nav>
 
     <footer class="app-footer">
