@@ -10,8 +10,6 @@ import http.client
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import os
 from pathlib import Path
-import pwd
-import grp
 import shutil
 import socket
 import subprocess
@@ -23,6 +21,18 @@ import unittest
 
 FRONTEND = Path(__file__).resolve().parents[1]
 NGINX = os.environ.get("NGINX_BINARY") or shutil.which("nginx")
+# Enough requests that refill (10 r/s) cannot absorb the 50-request burst
+# unless a burst takes over 15 seconds, which keeps slow machines deterministic.
+BURST_REQUESTS = 200
+
+
+def can_bind(address):
+    with socket.socket() as probe:
+        try:
+            probe.bind((address, 0))
+        except OSError:
+            return False
+    return True
 
 
 class MockApi(BaseHTTPRequestHandler):
@@ -64,6 +74,7 @@ def running_nginx(trusted_proxy):
         main = root / "nginx.conf"
         user = ""
         if os.geteuid() == 0:
+            import grp, pwd  # POSIX-only; imported lazily so discovery works elsewhere.
             user = f"user {pwd.getpwuid(os.getuid()).pw_name} {grp.getgrgid(os.getgid()).gr_name};\n"
         main.write_text(
             user +
@@ -114,6 +125,7 @@ def request(port, path="/api/players", forwarded="203.0.113.1", source="127.0.0.
         connection.close()
 
 
+@unittest.skipIf(os.name == "nt", "nginx integration tests require a POSIX host")
 class RateLimitTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -122,7 +134,7 @@ class RateLimitTest(unittest.TestCase):
 
     def burst(self, port, **kwargs):
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as pool:
-            return list(pool.map(lambda _: request(port, **kwargs), range(100)))
+            return list(pool.map(lambda _: request(port, **kwargs), range(BURST_REQUESTS)))
 
     def assert_limited(self, responses):
         statuses = [status for status, _ in responses]
@@ -153,7 +165,7 @@ class RateLimitTest(unittest.TestCase):
             with concurrent.futures.ThreadPoolExecutor(max_workers=20) as pool:
                 responses = list(pool.map(
                     lambda i: request(port, source="127.0.0.2", forwarded=f"203.0.113.{i+1}"),
-                    range(100)))
+                    range(BURST_REQUESTS)))
             self.assert_limited(responses)
             self.assertTrue(all(body == "127.0.0.2|127.0.0.2"
                                 for status, body in responses if status == 200))
