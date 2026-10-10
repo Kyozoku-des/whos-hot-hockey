@@ -34,7 +34,7 @@
         <div class="section">
           <h2 class="section-title">Game Logs</h2>
           <div v-if="loadingGameLog" class="loading">Loading game logs...</div>
-          <div v-else class="table-scroll">
+          <div v-else ref="tableScroll" class="table-scroll" :style="{ maxHeight: tableMaxHeight }">
             <table class="game-log-table">
               <thead>
                 <tr>
@@ -63,7 +63,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePlayerStats } from '../composables/useApi'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
@@ -81,6 +81,19 @@ const gameLogsReversed = ref([]) // For table display (most recent first)
 const previousSeasonGameLogs = ref([])
 const previousSeason = ref('')
 const loadingGameLog = ref(false)
+const tableScroll = ref(null)
+const tableMaxHeight = ref('none')
+
+// Show the latest VISIBLE_GAMES rows; the rest are reached by scrolling the table
+const VISIBLE_GAMES = 10
+const updateTableMaxHeight = () => {
+  const rows = tableScroll.value?.querySelectorAll('tbody tr')
+  if (!rows || rows.length <= VISIBLE_GAMES) {
+    tableMaxHeight.value = 'none'
+    return
+  }
+  tableMaxHeight.value = `${rows[VISIBLE_GAMES].offsetTop}px`
+}
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A'
@@ -132,6 +145,13 @@ onMounted(async () => {
   }
 
   loadingGameLog.value = false
+  await nextTick()
+  updateTableMaxHeight()
+  window.addEventListener('resize', updateTableMaxHeight)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateTableMaxHeight)
 })
 </script>
 
@@ -209,7 +229,7 @@ onMounted(async () => {
 }
 
 .table-scroll {
-  overflow-x: auto;
+  overflow: auto;
 }
 
 .game-log-table {
@@ -217,12 +237,12 @@ onMounted(async () => {
   border-collapse: collapse;
 }
 
-.game-log-table thead {
+.game-log-table th {
+  /* Header stays visible while the rows scroll */
+  position: sticky;
+  top: 0;
   background-color: var(--color-bg-dark);
   color: var(--color-text-secondary);
-}
-
-.game-log-table th {
   padding: 0.75rem;
   text-align: left;
   font-weight: 700;
