@@ -6,7 +6,6 @@
       <div class="search-container">
         <SearchBar />
       </div>
-      <CurrentSeasonDisplay />
     </div>
 
     <!-- Mobile header: title above search bar, both centered -->
@@ -85,7 +84,6 @@ import HottestPlayersTable from '../components/HottestPlayersTable.vue'
 import TeamStandingsTable from '../components/TeamStandingsTable.vue'
 import TeamWinStreaksTable from '../components/TeamWinStreaksTable.vue'
 import TeamHotTable from '../components/TeamHotTable.vue'
-import CurrentSeasonDisplay from '../components/CurrentSeasonDisplay.vue'
 import SearchBar from '../components/SearchBar.vue'
 import ScoreTicker from '../components/ScoreTicker.vue'
 import FavoritesTable from '../components/FavoritesTable.vue'
@@ -281,7 +279,7 @@ onUnmounted(() => {
 .desktop-header {
   display: flex;
   align-items: center;
-  padding: 0rem 1rem;
+  padding: 1.5rem 1rem;
   gap: 2rem;
 }
 
@@ -314,10 +312,6 @@ onUnmounted(() => {
 .search-container {
   flex: 1;
   max-width: 500px;
-}
-
-.desktop-header :deep(.current-season-display) {
-  margin-left: auto;
 }
 
 .content-container {
