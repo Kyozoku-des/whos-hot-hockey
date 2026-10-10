@@ -2,6 +2,7 @@
   <div class="search-bar" ref="searchBarRef">
     <div class="search-input-wrapper">
       <input
+        ref="inputRef"
         type="text"
         :value="searchQuery"
         autocomplete="off"
@@ -52,6 +53,9 @@
           {{ result.type }}
         </div>
       </div>
+      <div v-if="searchStore.isLoaded" class="dropdown-filter-hint" @click="applyFilter">
+        Press Enter to filter
+      </div>
     </div>
   </div>
 </template>
@@ -70,9 +74,10 @@ const { fetchData } = useApi()
 // State
 const searchQuery = ref('')
 const searchResults = ref([])
-const selectedIndex = ref(0)
+const selectedIndex = ref(-1)
 const isFocused = ref(false)
 const searchBarRef = ref(null)
+const inputRef = ref(null)
 
 // Computed
 const showDropdown = computed(() => {
@@ -100,7 +105,7 @@ const performSearch = () => {
   }
 
   searchResults.value = searchStore.searchItems(searchQuery.value)
-  selectedIndex.value = 0
+  selectedIndex.value = -1
 }
 
 const handleKeydown = (event) => {
@@ -117,8 +122,12 @@ const handleKeydown = (event) => {
       break
     case 'Enter':
       event.preventDefault()
+      // Open a result only once the user has picked one; otherwise Enter just
+      // applies the filter.
       if (searchResults.value[selectedIndex.value]) {
         selectResult(searchResults.value[selectedIndex.value])
+      } else {
+        applyFilter()
       }
       break
     case 'Escape':
@@ -137,11 +146,19 @@ const selectResult = (result) => {
   closeDropdown()
 }
 
+// The table already filters as the user types, so applying the filter only means
+// keeping the query, closing the dropdown and dropping focus (which also
+// dismisses the keyboard on phones).
+const applyFilter = () => {
+  inputRef.value?.blur()
+  closeDropdown()
+}
+
 const closeDropdown = () => {
   // Only close the dropdown, keep the search query and filters
   isFocused.value = false
   searchResults.value = []
-  selectedIndex.value = 0
+  selectedIndex.value = -1
 }
 
 const clearSearch = () => {
@@ -253,7 +270,8 @@ onUnmounted(() => {
   border-bottom: 1px solid var(--color-border);
 }
 
-.dropdown-item:last-child {
+.dropdown-item:last-child,
+.dropdown-item:has(+ .dropdown-filter-hint) {
   border-bottom: none;
 }
 
@@ -311,6 +329,22 @@ onUnmounted(() => {
   font-weight: 600;
   text-transform: uppercase;
   flex-shrink: 0;
+}
+
+.dropdown-filter-hint {
+  position: sticky;
+  bottom: 0;
+  padding: 0.6rem 1rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-card);
+  border-top: 1px solid var(--color-border);
+  cursor: pointer;
+}
+
+.dropdown-filter-hint:hover {
+  color: var(--color-text-primary);
 }
 
 .badge-player {
