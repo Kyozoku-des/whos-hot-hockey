@@ -17,6 +17,9 @@
       </div>
     </div>
 
+    <!-- Latest game day's scores and point scorers -->
+    <ScoreTicker />
+
     <!-- Desktop: grid of cards, rearranged by dragging one onto another -->
     <div class="content-container desktop-content">
       <div class="cards-grid">
@@ -84,6 +87,7 @@ import TeamWinStreaksTable from '../components/TeamWinStreaksTable.vue'
 import TeamHotTable from '../components/TeamHotTable.vue'
 import CurrentSeasonDisplay from '../components/CurrentSeasonDisplay.vue'
 import SearchBar from '../components/SearchBar.vue'
+import ScoreTicker from '../components/ScoreTicker.vue'
 import FavoritesTable from '../components/FavoritesTable.vue'
 import CookieConsent from '../components/CookieConsent.vue'
 import { useFavorites } from '../composables/useFavorites'

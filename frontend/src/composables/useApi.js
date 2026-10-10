@@ -119,3 +119,19 @@ export function useTeamStats() {
     getTeamGameLog
   }
 }
+
+export function useGameScores() {
+  const { loading, error, fetchData } = useApi()
+
+  // Today's games while any is live, otherwise the latest day with finished games
+  const getLatestScoreboard = async () => {
+    const data = await fetchData(`/games/latest`)
+    return data || { gameDate: null, live: false, games: [] }
+  }
+
+  return {
+    loading,
+    error,
+    getLatestScoreboard
+  }
+}
