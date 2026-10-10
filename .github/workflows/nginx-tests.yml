@@ -1,0 +1,29 @@
+name: nginx tests
+
+on:
+  pull_request:
+    paths:
+      - "frontend/nginx.conf"
+      - "frontend/nginx/**"
+      - "frontend/tests/**"
+      - ".github/workflows/nginx-tests.yml"
+  push:
+    branches: [dev, master]
+    paths:
+      - "frontend/nginx.conf"
+      - "frontend/nginx/**"
+      - "frontend/tests/**"
+      - ".github/workflows/nginx-tests.yml"
+
+jobs:
+  rate-limit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install nginx
+        run: sudo apt-get update && sudo apt-get install -y nginx
+      - name: Run nginx integration tests
+        run: python -m unittest discover -s frontend/tests -v
