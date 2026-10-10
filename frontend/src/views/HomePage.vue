@@ -127,10 +127,6 @@ const visibleCards = (cards) =>
 
 const mobileCards = computed(() => visibleCards(CARDS))
 
-watch(activeCardIndex, (index) => {
-  lastCardKey = mobileCards.value[index]?.key ?? null
-})
-
 // Desktop card order, changed by drag and drop. Saved alongside favorites,
 // so it is only remembered between visits when storage consent was given.
 const CARD_ORDER_KEY = 'nhl_card_order'
@@ -277,6 +273,9 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  // Saved on leaving, by key: the favorites card may appear or vanish before
+  // coming back, which shifts the indexes
+  lastCardKey = mobileCards.value[activeCardIndex.value]?.key ?? null
   window.removeEventListener('resize', updateSlideWidth)
 })
 </script>
