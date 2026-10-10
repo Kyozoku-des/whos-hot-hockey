@@ -20,7 +20,7 @@
         <span class="player-stats">
           <span class="stat-item">P: {{ player.points }}</span>
           <span class="stat-item">GP: {{ player.gamesPlayed }}</span>
-          <span class="stat-item">L10 PPG: {{ player.pointsPerLastNGames?.toFixed(2) ?? '0.00' }}</span>
+          <span class="stat-item">PPG: {{ player.pointsPerLastNGames?.toFixed(2) ?? '0.00' }}</span>
         </span>
       </div>
     </div>

@@ -2,9 +2,13 @@
   <div
     v-if="games.length"
     class="score-ticker"
-    :class="{ 'reduced-motion': reducedMotion }"
+    :class="{ 'reduced-motion': reducedMotion, held }"
     :aria-label="ariaLabel"
     role="marquee"
+    @pointerdown="held = true"
+    @pointerup="held = false"
+    @pointercancel="held = false"
+    @pointerleave="held = false"
   >
     <div class="ticker-label">{{ live ? 'LIVE' : dayLabel }}</div>
     <div class="ticker-viewport" :ref="setViewport">
@@ -56,6 +60,9 @@ const duration = ref(60)
 // Copies of the content in each half of the track
 const repeats = ref(1)
 const reducedMotion = ref(false)
+// Paused only while pressed; touch screens keep :hover after a tap, which
+// would leave the ticker stopped
+const held = ref(false)
 
 // Measured to fill the line and set the scroll duration
 let content = null
@@ -182,9 +189,24 @@ onUnmounted(() => {
   animation: ticker-scroll linear infinite;
 }
 
-.score-ticker:hover .ticker-track,
+.score-ticker.held .ticker-track,
 .score-ticker:focus-within .ticker-track {
   animation-play-state: paused;
+}
+
+@media (hover: hover) {
+  .score-ticker:hover .ticker-track {
+    animation-play-state: paused;
+  }
+}
+
+/* A long press holds the ticker, so don't let it select text or open a menu */
+@media (hover: none) {
+  .score-ticker {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
 }
 
 .ticker-content {
