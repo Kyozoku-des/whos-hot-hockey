@@ -12,6 +12,8 @@ Thumbs.db
 
 .claude/settings.local.json
 .playwright-cli/
+__pycache__/
+*.pyc
 
 # Local debugging artifacts (browser accessibility dumps, screenshots).
 # Root-level only, so real assets under frontend/src/assets stay tracked.
