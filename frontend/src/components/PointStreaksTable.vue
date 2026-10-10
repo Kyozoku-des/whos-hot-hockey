@@ -18,7 +18,7 @@
           <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
         </div>
         <span class="player-icons">
-          <span class="streak-count">{{ player.currentPointStreak }}</span>
+          <span class="streak-count">Game streak: {{ player.currentPointStreak }}</span>
         </span>
       </div>
     </div>
@@ -139,10 +139,9 @@ const goToPlayer = (playerId) => {
 
 .streak-count {
   color: var(--color-text-primary);
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: bold;
-  min-width: 30px;
-  text-align: center;
+  white-space: nowrap;
 }
 
 
