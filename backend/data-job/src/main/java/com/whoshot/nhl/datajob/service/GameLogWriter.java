@@ -88,6 +88,28 @@ public class GameLogWriter {
     }
 
     /**
+     * Records games in pre-game or in progress as both teams' next game, so their state follows the
+     * live poll: schedules are only rewritten once a team's game has finished.
+     *
+     * @param seasonId    season the games belong to
+     * @param activeGames games from the league schedule currently in pre-game or in progress
+     */
+    @Transactional
+    public void writeActiveNextGames(String seasonId, List<GameDto> activeGames) {
+        for (GameDto game : activeGames) {
+            // Same eligibility as a schedule's next game: regular season or playoffs, not finished
+            if (nextGame(List.of(game)).isEmpty()) {
+                continue;
+            }
+            for (String teamCode : List.of(game.getHomeTeam().getAbbrev(), game.getAwayTeam().getAbbrev())) {
+                var key = new TeamNextGame.TeamNextGameKey(teamCode, seasonId);
+                teamNextGameRepository.save(toTeamNextGame(
+                        teamNextGameRepository.findById(key).orElse(new TeamNextGame()), teamCode, seasonId, game));
+            }
+        }
+    }
+
+    /**
      * Earliest regular-season or playoff game that has not finished. A game in progress counts, so
      * a team playing right now shows its current opponent.
      */

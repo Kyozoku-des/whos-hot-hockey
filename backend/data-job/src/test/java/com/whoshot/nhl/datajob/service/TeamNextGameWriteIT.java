@@ -52,6 +52,23 @@ class TeamNextGameWriteIT extends PostgresIntegrationTestBase {
     }
 
     @Test
+    void activeGamePoll_updatesStateOfBothTeams_andSkipsPreseason() {
+        GameDto game = game(1L, "2026-10-10T23:00:00Z", GameState.FUT, "COL", "MTL");
+        writer.writeTeamGames("COL", SEASON_ID, List.of(game));
+
+        game.setGameState(GameState.LIVE);
+        GameDto preseason = game(2L, "2026-10-10T23:00:00Z", GameState.LIVE, "TOR", "BOS");
+        preseason.setGameType(1);
+        writer.writeActiveNextGames(SEASON_ID, List.of(game, preseason));
+
+        assertThat(repository.findBySeasonId(SEASON_ID))
+                .extracting(TeamNextGame::getTeamCode, TeamNextGame::getGameState, TeamNextGame::getOpponentTeamCode)
+                .containsExactlyInAnyOrder(
+                        org.assertj.core.groups.Tuple.tuple("COL", "LIVE", "MTL"),
+                        org.assertj.core.groups.Tuple.tuple("MTL", "LIVE", "COL"));
+    }
+
+    @Test
     void scheduleWithoutUnfinishedGames_writesNothing() {
         GameDto played = game(1L, "2026-10-10T23:00:00Z", GameState.FUT, "COL", "MTL");
         finish(played);
