@@ -52,7 +52,7 @@
         @touchmove="onTouchMove"
         @touchend="onTouchEnd"
       >
-        <div class="swipe-track" :class="{ dragging: isSwiping }" :style="{ left: `${swipeOffset}px` }">
+        <div class="swipe-track" :class="{ dragging: isSwiping || !animateSlides }" :style="{ left: `${swipeOffset}px` }">
           <div v-for="(card, index) in mobileCards" :key="card.key" class="swipe-slide">
             <ExpandableCard :title="card.title" :class="{ 'favorites-card': card.key === 'favorites' }">
               <component :is="card.component" />
@@ -74,6 +74,12 @@
     <CookieConsent />
   </div>
 </template>
+
+<script>
+// Module-level so the mobile carousel reopens on the same card after visiting
+// a player or team page and coming back
+let lastCardKey = null
+</script>
 
 <script setup>
 import { computed, onMounted, ref, onUnmounted, nextTick, watch, shallowRef } from 'vue'
@@ -102,6 +108,8 @@ const touchStartX = ref(0)
 const touchCurrentX = ref(0)
 const isSwiping = ref(false)
 const slideWidth = ref(0)
+// Off until the first layout, so a restored card shows without sliding in
+const animateSlides = ref(false)
 
 const CARDS = [
   { key: 'favorites', title: 'My Favorites', component: FavoritesTable },
@@ -118,6 +126,10 @@ const visibleCards = (cards) =>
   cards.filter(card => card.key !== 'favorites' || showFavorites.value)
 
 const mobileCards = computed(() => visibleCards(CARDS))
+
+watch(activeCardIndex, (index) => {
+  lastCardKey = mobileCards.value[index]?.key ?? null
+})
 
 // Desktop card order, changed by drag and drop. Saved alongside favorites,
 // so it is only remembered between visits when storage consent was given.
@@ -254,7 +266,13 @@ const goToCard = (index) => {
 onMounted(() => {
   initializeFavorites()
   loadCardOrder()
-  nextTick(updateSlideWidth)
+  const restored = mobileCards.value.findIndex(card => card.key === lastCardKey)
+  if (restored !== -1) activeCardIndex.value = restored
+  nextTick(() => {
+    updateSlideWidth()
+    // Two frames: the restored position is painted before transitions return
+    requestAnimationFrame(() => requestAnimationFrame(() => { animateSlides.value = true }))
+  })
   window.addEventListener('resize', updateSlideWidth)
 })
 
