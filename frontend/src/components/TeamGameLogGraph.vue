@@ -13,6 +13,7 @@
 import { computed } from 'vue'
 import GraphModeToggle from './GraphModeToggle.vue'
 import { useGraphMode, toCumulative } from '../composables/useGraphMode'
+import { useIsMobile } from '../composables/useIsMobile'
 import { Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -64,6 +65,10 @@ const currentSeasonLabel = computed(() =>
 
 const { graphMode } = useGraphMode()
 const isCumulative = computed(() => graphMode.value === 'cumulative')
+
+// Phones get a compact chart: no axis titles, smaller text, left-aligned legend
+const { isMobile } = useIsMobile()
+const tickFontSize = computed(() => (isMobile.value ? 9 : 12))
 
 const graphTitle = computed(() =>
   isCumulative.value
@@ -167,6 +172,7 @@ const chartOptions = computed(() => ({
     legend: {
       display: true,
       position: 'top',
+      align: isMobile.value ? 'start' : 'center',
       labels: {
         color: '#ffffff',
         // Small solid squares in the line color, even for the dashed previous-season line
@@ -179,10 +185,10 @@ const chartOptions = computed(() => ({
             lineWidth: 0,
             lineDash: []
           })),
-        padding: 15,
+        padding: isMobile.value ? 8 : 15,
         font: {
           family: 'Minecraft, sans-serif',
-          size: 12
+          size: isMobile.value ? 10 : 12
         }
       }
     },
@@ -205,7 +211,9 @@ const chartOptions = computed(() => ({
           const gameIndex = context.dataIndex
           const points = context.dataset.pointsPerGame?.[gameIndex] || 0
           const cumulative = context.dataset.cumulativePoints?.[gameIndex] || 0
-          return `${context.dataset.label}: ${points} pts (Total: ${cumulative} pts)`
+          const stats = `${points} pts (Total: ${cumulative} pts)`
+          // Stats go on their own line on phones so the tooltip fits the screen
+          return isMobile.value ? [context.dataset.label, stats] : `${context.dataset.label}: ${stats}`
         }
       }
     }
@@ -213,7 +221,7 @@ const chartOptions = computed(() => ({
   scales: {
     x: {
       title: {
-        display: true,
+        display: !isMobile.value,
         text: 'Game Number',
         color: '#ffffff',
         font: {
@@ -224,9 +232,10 @@ const chartOptions = computed(() => ({
       },
       ticks: {
         color: '#ffffff',
-        maxTicksLimit: 20,
+        maxTicksLimit: isMobile.value ? 8 : 20,
         font: {
-          family: 'Minecraft, sans-serif'
+          family: 'Minecraft, sans-serif',
+          size: tickFontSize.value
         }
       },
       grid: {
@@ -235,7 +244,7 @@ const chartOptions = computed(() => ({
     },
     y: {
       title: {
-        display: true,
+        display: !isMobile.value,
         text: isCumulative.value ? 'Total Points' : 'Points (0, 1, 2)',
         color: '#ffffff',
         font: {
@@ -250,7 +259,8 @@ const chartOptions = computed(() => ({
         precision: 0,
         callback: (value) => (Number.isInteger(value) ? value : ''),
         font: {
-          family: 'Minecraft, sans-serif'
+          family: 'Minecraft, sans-serif',
+          size: tickFontSize.value
         }
       },
       grid: {
