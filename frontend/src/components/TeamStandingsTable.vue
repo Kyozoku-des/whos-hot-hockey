@@ -21,8 +21,8 @@
           <span class="stat-item">GP: {{ team.gamesPlayed }}</span>
           <span class="stat-item">W: {{ team.wins }}</span>
           <span class="stat-item">L: {{ team.losses }}</span>
+          <span class="stat-item">OTL: {{ team.overtimeLosses }}</span>
           <span class="stat-item stat-points">PTS: {{ team.points }}</span>
-          <span v-if="isExpanded" class="stat-item">OTL: {{ team.overtimeLosses }}</span>
           <span v-if="isExpanded" class="stat-item">P%: {{ (team.pointPercentage * 100).toFixed(1) }}%</span>
           <span v-if="isExpanded" class="stat-item">GF: {{ team.goalsFor }}</span>
           <span v-if="isExpanded" class="stat-item">GA: {{ team.goalsAgainst }}</span>
