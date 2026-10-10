@@ -8,6 +8,7 @@
       <router-link to="/settings">Settings</router-link>
       <router-link to="/feedback">Feedback</router-link>
       <router-link to="/donations">Donations</router-link>
+      <router-link to="/tips">Tips</router-link>
     </nav>
 
     <footer class="app-footer">
