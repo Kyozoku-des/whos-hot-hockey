@@ -24,28 +24,6 @@
         </div>
 
         <div class="section">
-          <h2 class="section-title">Team Statistics</h2>
-          <div class="stats-grid">
-            <div class="stat-item">
-              <span class="stat-label">Goals Per Game:</span>
-              <span class="stat-value">{{ team?.currentSeason?.goalsPerGame?.toFixed(2) || '0.00' }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Goals Against Per Game:</span>
-              <span class="stat-value">{{ team?.currentSeason?.goalsAgainstPerGame?.toFixed(2) || '0.00' }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Power Play %:</span>
-              <span class="stat-value">{{ team?.currentSeason?.powerPlayPercentage?.toFixed(1) || '0.0' }}%</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Penalty Kill %:</span>
-              <span class="stat-value">{{ team?.currentSeason?.penaltyKillPercentage?.toFixed(1) || '0.0' }}%</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="section">
           <h2 class="section-title">Win/Loss Progression</h2>
           <TeamGameLogGraph
             :current-season-data="teamGameLogs"
@@ -220,29 +198,6 @@ onMounted(async () => {
   text-align: center;
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-.stat-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 1rem;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-
-.stat-label {
-  font-weight: 600;
-}
-
-.stat-value {
-  font-weight: 700;
-  font-size: 1.2rem;
-}
-
 .roster-list {
   list-style: none;
   margin: 0;
@@ -344,39 +299,10 @@ onMounted(async () => {
     font-size: 1.2rem;
   }
 
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
   .roster-row {
     font-size: 0.8rem;
     letter-spacing: 1px;
     padding: 0.5rem 0.35rem;
-  }
-
-  /* Reorder sections on mobile: image -> graph -> stats -> roster */
-  .team-content {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .team-header {
-    order: 1;
-  }
-
-  .section:nth-child(3) {
-    /* Win/Loss Progression graph */
-    order: 2;
-  }
-
-  .section:nth-child(2) {
-    /* Team Statistics */
-    order: 3;
-  }
-
-  .section:nth-child(4) {
-    /* Roster */
-    order: 4;
   }
 }
 </style>
