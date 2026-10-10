@@ -14,3 +14,21 @@ export function toCumulative(values) {
   let total = 0
   return values.map(value => (total += value))
 }
+
+// Single-point dataset marking the season total a player/team is on pace for
+// at the last game of the season. Only meaningful on the cumulative graph.
+export function projectionMarker(projectedPoints, seasonGames) {
+  const data = Array(seasonGames).fill(null)
+  data[seasonGames - 1] = projectedPoints
+  return {
+    label: 'On Pace',
+    data,
+    projected: true,
+    showLine: false,
+    borderColor: '#FFAA00',
+    backgroundColor: '#FFAA00',
+    pointStyle: 'rectRot',
+    pointRadius: 6,
+    pointHoverRadius: 8
+  }
+}

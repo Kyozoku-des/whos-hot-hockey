@@ -28,6 +28,8 @@
             :current-season-data="gameLogs"
             :previous-season-data="previousSeasonGameLogs"
             :previous-season="previousSeason"
+            :season-games="player?.seasonGames"
+            :projected-points="player?.projectedPoints"
           />
         </div>
 

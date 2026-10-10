@@ -29,6 +29,8 @@
             :current-season-data="teamGameLogs"
             :previous-season-data="previousSeasonTeamGameLogs"
             :previous-season="previousSeason"
+            :season-games="team?.seasonGames"
+            :projected-points="team?.projectedPoints"
           />
         </div>
 
