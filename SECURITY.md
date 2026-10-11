@@ -80,3 +80,12 @@ runtime passwords must be distinct, non-default and at least 20 characters.
 See [deployment prerequisites](infra/server/README.md#before-deploying-the-issue-58-database-role-change).
 Local direct JVM runs retain their development defaults; use the runtime role
 credentials and disable Flyway when connecting them to a provisioned database.
+
+## Caddy security rebuild
+
+The release builds the standard Caddy 2.11.7 modules from the committed Go module
+lock files with Go 1.27.2 and `golang.org/x/net` 0.60.0. Alpine packages are upgraded
+during the build. This replaces the upstream image's vulnerable compiled binary;
+updating OS packages alone cannot repair embedded Go dependencies. CI validates
+the Caddyfile and access-log filter using this exact image. Publish/retain the
+`whos-hot-nhl-caddy` package alongside the other release images for rollback.

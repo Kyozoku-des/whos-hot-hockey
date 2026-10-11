@@ -68,11 +68,14 @@ jobs:
           docker compose --profile prod config --quiet
       - name: Validate Caddyfile
         run: |
-          image=$(docker compose --profile prod config --images | grep '^caddy:')
+          docker compose --profile prod build caddy
+          image=$(docker compose --profile prod config --format json | jq -r '.services.caddy.image')
           docker run --rm -e SITE_DOMAIN=example.com \
             -v "$PWD/caddy/Caddyfile:/etc/caddy/Caddyfile:ro" \
             "$image" caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
       - name: Test sanitized access logs
-        run: python3 -m unittest discover -s caddy/tests -v
+        run: |
+          export CADDY_TEST_IMAGE=$(docker compose --profile prod config --format json | jq -r '.services.caddy.image')
+          python3 -m unittest discover -s caddy/tests -v
       - name: Test deployment credential preflight
         run: python3 -m unittest discover -s infra/server/tests -v

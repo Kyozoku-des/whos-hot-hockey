@@ -171,7 +171,9 @@ services:
   # TLS and the public entry point (issue #21). Production only. Certificates live in
   # the caddy_data volume; keep it, Let's Encrypt rate-limits new certificates.
   caddy:
-    image: caddy:2.11.7-alpine
+    image: ghcr.io/kyozoku-des/whos-hot-nhl-caddy:${IMAGE_TAG:-local}
+    build:
+      context: ./caddy
     profiles:
       - prod
     ports:

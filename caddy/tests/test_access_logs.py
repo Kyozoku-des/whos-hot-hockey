@@ -19,7 +19,7 @@ class AccessLogTest(unittest.TestCase):
         config = config.replace("{$SITE_DOMAIN}", "review.test")
         config = config.replace("reverse_proxy frontend:3000", 'respond "fixture" 200')
         name = "whoshot-access-test-" + uuid.uuid4().hex[:12]
-        image = os.environ.get("CADDY_TEST_IMAGE", "caddy:2.11.7-alpine")
+        image = os.environ.get("CADDY_TEST_IMAGE", "ghcr.io/kyozoku-des/whos-hot-nhl-caddy:local")
         marker = "UNTRUSTED_ACCESS_LOG_MARKER"
 
         def docker(*args):

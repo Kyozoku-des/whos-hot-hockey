@@ -66,6 +66,9 @@ jobs:
           - image: deploy
             context: .
             file: infra/server/bundle.Dockerfile
+          - image: caddy
+            context: caddy
+            file: caddy/Dockerfile
     steps:
       - uses: actions/checkout@v7
       - uses: docker/setup-buildx-action@v4
@@ -161,7 +164,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        image: [api, data-job, frontend, deploy]
+        image: [api, data-job, frontend, caddy, deploy]
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       PACKAGE: whos-hot-nhl-${{ matrix.image }}
