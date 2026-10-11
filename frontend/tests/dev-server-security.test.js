@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
+import { mkdtemp, mkdir, realpath, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -7,7 +7,9 @@ import test from 'node:test'
 import { createServer } from 'vite'
 
 test('dev server rejects sensitive files with transform queries and Windows aliases', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'whoshot-vite-security-'))
+  // Windows CI can expose TEMP through an 8.3 alias (RUNNER~1). Vite rejects
+  // tilde paths, so resolve the fixture's real path before testing its files.
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'whoshot-vite-security-')))
   const marker = 'SYNTHETIC_SECURITY_TEST_VALUE'
   let server
   try {
