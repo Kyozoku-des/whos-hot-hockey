@@ -153,15 +153,31 @@ jobs:
     if: ${{ !inputs.sha }}
     runs-on: ubuntu-24.04
     permissions:
+      contents: read
       packages: write
     strategy:
       matrix:
         image: [api, data-job, frontend, deploy]
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PACKAGE: whos-hot-nhl-${{ matrix.image }}
+      KEEP_BUILDS: 10
     steps:
-      # Private packages count against the storage quota. Ten builds is plenty to roll
-      # back to.
-      - uses: actions/delete-package-versions@v5
+      - uses: actions/checkout@v7
         with:
-          package-name: whos-hot-nhl-${{ matrix.image }}
-          package-type: container
-          min-versions-to-keep: 10
+          fetch-depth: 50
+      # Private packages count against the storage quota. Keep the images of master's
+      # last ten builds by tag, not by date: when a build reproduces an earlier digest,
+      # its new SHA tag lands on the older package version, which must stay.
+      # Untagged versions are left alone (they could belong to a multi-platform image).
+      - name: Delete images of older builds
+        run: |
+          keep=$(git rev-list --first-parent --max-count="$KEEP_BUILDS" HEAD; echo latest)
+          versions="users/$GITHUB_REPOSITORY_OWNER/packages/container/$PACKAGE/versions"
+          gh api --paginate "$versions" --jq '.[] | [.id, (.metadata.container.tags | join(" "))] | @tsv' |
+            while IFS=$'\t' read -r id tags; do
+              [[ -n "$tags" ]] || continue
+              if grep -qxF -f <(tr ' ' '\n' <<<"$tags") <<<"$keep"; then continue; fi
+              echo "deleting $PACKAGE version $id ($tags)"
+              gh api -X DELETE "$versions/$id"
+            done
