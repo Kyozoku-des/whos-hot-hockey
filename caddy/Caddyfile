@@ -1,0 +1,35 @@
+# Public entry point in production (issue #21): TLS, security headers and access logs,
+# in front of the frontend's nginx, which serves the SPA and proxies /api/.
+# SITE_DOMAIN comes from the server's .env through compose.
+
+{
+	# The admin API would otherwise listen on localhost:2019, where the metrics site
+	# below listens. Config changes take a container restart instead of a reload.
+	admin off
+	metrics
+}
+
+# Internal only: compose does not publish 2019; the monitoring agent scrapes caddy:2019.
+:2019 {
+	metrics /metrics
+}
+
+{$SITE_DOMAIN} {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		-Server
+	}
+
+	log {
+		output stdout
+		format json
+	}
+
+	reverse_proxy frontend:3000
+}
+
+www.{$SITE_DOMAIN} {
+	redir https://{$SITE_DOMAIN}{uri} permanent
+}

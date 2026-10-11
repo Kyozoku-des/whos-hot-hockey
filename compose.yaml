@@ -1,5 +1,12 @@
 name: whos-hot-nhl
 
+# One file for local development and production (issues #21, #23).
+#   Local:      docker compose up -d --build        builds the images from source.
+#   Production: docker compose --profile prod ...   pulls the images CI pushed to GHCR,
+#               tagged with the commit SHA (IMAGE_TAG), and adds Caddy and Alloy.
+# The server's .env sets APP_PROFILE=prod, IMAGE_TAG, DB_PASSWORD and SITE_DOMAIN; see
+# infra/server/README.md.
+
 services:
   postgres:
     image: postgres:17
@@ -19,6 +26,7 @@ services:
       retries: 12
 
   backend-api:
+    image: ghcr.io/kyozoku-des/whos-hot-nhl-api:${IMAGE_TAG:-local}
     build:
       context: ./backend
       target: api
@@ -29,16 +37,25 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nhl_stats
       SPRING_DATASOURCE_USERNAME: whoshot
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-whoshot_local}
-      SPRING_PROFILES_ACTIVE: local
+      SPRING_PROFILES_ACTIVE: ${APP_PROFILE:-local}
       LOG_DIRECTORY: /app/logs
     volumes:
       - ./backend/logs:/app/logs
+    # Actuator on the unpublished management port. The Alpine JRE image has busybox
+    # wget but no curl.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 90s
     depends_on:
       postgres:
         condition: service_healthy
     restart: unless-stopped
 
   data-job:
+    image: ghcr.io/kyozoku-des/whos-hot-nhl-data-job:${IMAGE_TAG:-local}
     build:
       context: ./backend
       target: data-job
@@ -47,20 +64,24 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nhl_stats
       SPRING_DATASOURCE_USERNAME: whoshot
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-whoshot_local}
-      SPRING_PROFILES_ACTIVE: ${DATA_JOB_PROFILE:-local}
+      SPRING_PROFILES_ACTIVE: ${DATA_JOB_PROFILE:-${APP_PROFILE:-local}}
       LOG_DIRECTORY: /app/logs
       # Push metrics to the alloy service (prod profile). Off locally.
       METRICS_PUSH_ENABLED: ${METRICS_PUSH_ENABLED:-false}
     volumes:
       - ./backend/logs:/app/logs
+    # Both applications run Flyway: let the API migrate first so they never race.
     depends_on:
       postgres:
+        condition: service_healthy
+      backend-api:
         condition: service_healthy
     restart: unless-stopped
 
   # One-off historical season load. Not started by `up`; run explicitly:
   #   podman-compose run --rm -e BACKFILL_SEASON=20242025 backfill
   backfill:
+    image: ghcr.io/kyozoku-des/whos-hot-nhl-data-job:${IMAGE_TAG:-local}
     build:
       context: ./backend
       target: data-job
@@ -71,7 +92,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nhl_stats
       SPRING_DATASOURCE_USERNAME: whoshot
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-whoshot_local}
-      SPRING_PROFILES_ACTIVE: local,backfill
+      SPRING_PROFILES_ACTIVE: ${APP_PROFILE:-local},backfill
       LOGGING_FILE_NAME: /app/logs/backfill.log
       BACKFILL_SEASON: ${BACKFILL_SEASON:-}
     volumes:
@@ -82,6 +103,7 @@ services:
     restart: "no"
 
   frontend:
+    image: ghcr.io/kyozoku-des/whos-hot-nhl-frontend:${IMAGE_TAG:-local}
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -95,8 +117,40 @@ services:
     # No VITE_API_BASE_URL here: Vite inlines import.meta.env at build time, so a
     # runtime env var has no effect on the already-built bundle. The app uses a
     # relative /api base and nginx proxies it to backend-api.
+    environment:
+      # nginx takes the client address from X-Forwarded-For only when the request
+      # comes from Caddy's fixed address on the edge network (rate limiting is per
+      # client). Locally nothing uses that address, so nothing is trusted.
+      CADDY_TRUSTED_PROXY: ${EDGE_NET:-172.30.250}.2
+    networks:
+      - default
+      - edge
     depends_on:
       - backend-api
+    restart: unless-stopped
+
+  # TLS and the public entry point (issue #21). Production only. Certificates live in
+  # the caddy_data volume; keep it, Let's Encrypt rate-limits new certificates.
+  caddy:
+    image: caddy:2.11.7-alpine
+    profiles:
+      - prod
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      # Checked by the deploy script; empty here so a local `docker compose config` passes.
+      SITE_DOMAIN: ${SITE_DOMAIN:-}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      edge:
+        ipv4_address: ${EDGE_NET:-172.30.250}.2
+    depends_on:
+      - frontend
     restart: unless-stopped
 
   # Monitoring agent (issue #70): ships host/container usage, app metrics and logs to
@@ -134,8 +188,25 @@ services:
     # See every container's cgroup, not only its own (cgroup v2 namespaces them).
     cgroup: host
     mem_limit: 300m
+    # edge: to scrape Caddy's metrics port.
+    networks:
+      - default
+      - edge
     restart: unless-stopped
+
+networks:
+  # Caddy and what it talks to. A fixed subnet gives Caddy a fixed address (.2) for
+  # nginx to trust; other containers get addresses from the upper half only, so they
+  # can never take Caddy's. A second stack on the same machine (another worktree, the
+  # monitoring test) needs its own EDGE_NET, e.g. 172.30.251.
+  edge:
+    ipam:
+      config:
+        - subnet: ${EDGE_NET:-172.30.250}.0/24
+          ip_range: ${EDGE_NET:-172.30.250}.128/25
 
 volumes:
   postgres_data:
   alloy_data:
+  caddy_data:
+  caddy_config:

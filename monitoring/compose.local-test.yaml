@@ -4,7 +4,8 @@
 # under its own project name and ports so it doesn't touch the normal local stack.
 # From the repository root (PowerShell):
 #
-#   $env:FRONTEND_PORT=13000; $env:API_PORT=18080; $env:DB_PORT=15432
+#   $env:FRONTEND_PORT=13000; $env:API_PORT=18080; $env:DB_PORT=15432; $env:EDGE_NET='172.30.251'
+#   $env:SITE_DOMAIN='localhost'
 #   docker compose -p whos-hot-nhl-montest -f compose.yaml -f monitoring/compose.local-test.yaml --profile prod up -d --build
 #
 # After a minute or two:
