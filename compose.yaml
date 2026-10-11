@@ -84,7 +84,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_FEEDBACK_EMAIL: ${VITE_FEEDBACK_EMAIL:-}
+        VITE_WEB3FORMS_ACCESS_KEY: ${VITE_WEB3FORMS_ACCESS_KEY:-}
         VITE_DONATION_URL: ${VITE_DONATION_URL:-}
     ports:
       - "127.0.0.1:${FRONTEND_PORT:-3000}:3000"
