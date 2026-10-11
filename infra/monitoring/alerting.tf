@@ -24,16 +24,23 @@ locals {
   prod = "environment=\"prod\""
   disk = "${local.prod}, fstype=~\"ext4|xfs|btrfs\""
 
-  # One absent_over_time per expected service, so a missing container is named.
-  services_missing_expr = join(" or ", [
+  # Absence rules return 1 when their data is gone, which no_data_state can't
+  # suppress. So every absence rule except "Server silent" only counts while the data
+  # it depends on still arrives: a dead server then sends "Server silent" alone
+  # instead of one alert per missing service.
+  agent_sending      = "count(up{${local.prod}, job=\"host\"})"
+  containers_scraped = "(max(up{${local.prod}, job=\"containers\"}) == 1)"
+
+  # One absent_over_time per expected service, so a missing container is named. Only
+  # while container metrics are being collected (else "Scrape target down" fires).
+  services_missing_expr = "(${join(" or ", [
     for service in var.expected_services :
     "absent_over_time(container_last_seen{${local.prod}, project=\"${var.compose_project}\", service=\"${service}\"}[5m])"
-  ])
+  ])}) and on() ${local.containers_scraped}"
 
   # Every rule: one query (A) and a threshold on its last value. Queries return the
-  # measured value; "absent" rules return 1 when data is missing and nothing
-  # otherwise, which no_data_state = OK treats as healthy. Missing data in general is
-  # covered by the explicit "Server silent" and "Data job silent" rules, not by NoData.
+  # measured value; absence rules return 1 when data is missing and nothing
+  # otherwise, which no_data_state = OK treats as healthy.
   base_rules = {
     # --- Critical: the site or a core part of it is down -----------------------------
 
@@ -70,11 +77,12 @@ locals {
     "Data job silent" = {
       severity   = "critical"
       datasource = "prometheus"
-      expr       = "absent_over_time(ingestion_last_success{${local.prod}}[15m])"
-      op         = "gt"
-      threshold  = 0
-      for        = "0s"
-      summary    = "The data job hasn't pushed metrics for 15 minutes: it is down, stuck or can't reach the agent. Stats stop updating."
+      # Only while the agent still sends: otherwise "Server silent" covers it.
+      expr      = "absent_over_time(ingestion_last_success{${local.prod}}[15m]) and on() ${local.agent_sending}"
+      op        = "gt"
+      threshold = 0
+      for       = "0s"
+      summary   = "The data job hasn't pushed metrics for 15 minutes: it is down, stuck or can't reach the agent. Stats stop updating."
     }
 
     # --- Warning: degraded, needs a look ---------------------------------------------
@@ -180,11 +188,13 @@ locals {
     "Site down" = {
       severity   = "critical"
       datasource = "prometheus"
-      expr       = "min by (job) (avg_over_time(probe_success{job=~\"whos-hot-nhl-(site|api)\"}[5m]))"
-      op         = "lt"
-      threshold  = 0.5
-      for        = "2m"
-      summary    = "{{ $labels.job }} fails from most probe locations: the site is down for visitors."
+      # Share of successful probes across all locations: one failing location alone
+      # (0, 1, 1 -> 0.67) doesn't fire, most locations failing (0, 0, 1 -> 0.33) does.
+      expr      = "avg by (job) (avg_over_time(probe_success{job=~\"whos-hot-nhl-(site|api)\"}[5m]))"
+      op        = "lt"
+      threshold = 0.5
+      for       = "2m"
+      summary   = "{{ $labels.job }} fails from most probe locations: the site is down for visitors."
     }
   } : name => rule if var.site_url != "" }
 

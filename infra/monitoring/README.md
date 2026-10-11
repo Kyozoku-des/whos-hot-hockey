@@ -31,8 +31,10 @@ provisioning planned in #21.
 | NHL API failing | warning | over 20% of NHL API requests fail for 10 min |
 | Error logs | warning | over 20 error log entries in 15 min |
 
-Missing data is handled by the explicit "silent" rules, so a dead server sends one
-"Server silent" alert instead of one per rule. Thresholds are in `alerting.tf`.
+A dead server sends one "Server silent" alert, not one per rule: threshold rules treat
+missing data as OK, and "Service missing" and "Data job silent" only count while the
+data they depend on still arrives. "Site down" needs most probe locations to fail, so
+one location's network trouble doesn't page. Thresholds are in `alerting.tf`.
 
 ## Setup
 
