@@ -95,10 +95,10 @@ Don't publish port 2019 in compose.
 
 ## Local testing
 
-The agent is not started by a plain `docker compose up`. To try it locally, run the `prod`
-profile with an override that points the `GRAFANA_CLOUD_*` URLs at a local Prometheus
-(`--web.enable-remote-write-receiver`) and Loki, and use another project name (`-p`) and
-ports so it doesn't touch your normal local stack.
+The agent is not started by a plain `docker compose up`. To try it locally without
+Grafana Cloud, `compose.local-test.yaml` runs the `prod` profile with a local Prometheus
+and Loki in their place, under its own project name and ports. The commands to start,
+inspect and clean up are at the top of that file.
 
 ## Resource use
 
