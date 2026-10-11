@@ -1,0 +1,223 @@
+# promtool unit tests for the alert rules in ../alerting.tf.
+# Run with run-alert-tests.sh, which renders the rules (rules.yml) from Terraform.
+#
+# Alert names are the rule names in CamelCase ("Server silent" -> ServerSilent).
+# Series values use promtool's notation: '1x40' is the value 1 for 41 samples one
+# minute apart, '_x30' is 31 missing samples, '0+60x420' counts up by 60 each sample.
+
+rule_files:
+  - rules.yml
+
+evaluation_interval: 1m
+
+tests:
+  # --- Site down: most probe locations must fail --------------------------------------
+
+  - name: one of three probe locations failing does not page
+    interval: 1m
+    input_series:
+      - series: 'probe_success{job="whos-hot-nhl-site", probe="Frankfurt"}'
+        values: '0x15'
+      - series: 'probe_success{job="whos-hot-nhl-site", probe="London"}'
+        values: '1x15'
+      - series: 'probe_success{job="whos-hot-nhl-site", probe="NorthVirginia"}'
+        values: '1x15'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: SiteDown
+        exp_alerts: []
+
+  - name: two of three probe locations failing pages
+    interval: 1m
+    input_series:
+      - series: 'probe_success{job="whos-hot-nhl-site", probe="Frankfurt"}'
+        values: '0x15'
+      - series: 'probe_success{job="whos-hot-nhl-site", probe="London"}'
+        values: '0x15'
+      - series: 'probe_success{job="whos-hot-nhl-site", probe="NorthVirginia"}'
+        values: '1x15'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: SiteDown
+        exp_alerts:
+          - exp_labels:
+              job: whos-hot-nhl-site
+
+  # --- Absence: one alert for a dead server, specific alerts otherwise ---------------
+
+  - name: healthy server fires nothing
+    interval: 1m
+    input_series:
+      - series: 'up{environment="prod", job="host"}'
+        values: '1x40'
+      - series: 'up{environment="prod", job="containers"}'
+        values: '1x40'
+      - series: 'ingestion_last_success{environment="prod", mode="players-full"}'
+        values: '0+60x40'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="caddy"}'
+        values: '1x40'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="frontend"}'
+        values: '1x40'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="backend-api"}'
+        values: '1x40'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="data-job"}'
+        values: '1x40'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="postgres"}'
+        values: '1x40'
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: ServerSilent
+        exp_alerts: []
+      - eval_time: 30m
+        alertname: ServiceMissing
+        exp_alerts: []
+      - eval_time: 30m
+        alertname: DataJobSilent
+        exp_alerts: []
+
+  - name: dead server sends only Server silent
+    interval: 1m
+    input_series:
+      - series: 'up{environment="prod", job="host"}'
+        values: '1x10 _x30'
+      - series: 'up{environment="prod", job="containers"}'
+        values: '1x10 _x30'
+      - series: 'ingestion_last_success{environment="prod", mode="players-full"}'
+        values: '0+60x10 _x30'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="caddy"}'
+        values: '1x10 _x30'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="frontend"}'
+        values: '1x10 _x30'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="backend-api"}'
+        values: '1x10 _x30'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="data-job"}'
+        values: '1x10 _x30'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="postgres"}'
+        values: '1x10 _x30'
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: ServerSilent
+        exp_alerts:
+          - exp_labels:
+              environment: prod
+              job: host
+      - eval_time: 30m
+        alertname: ServiceMissing
+        exp_alerts: []
+      - eval_time: 30m
+        alertname: DataJobSilent
+        exp_alerts: []
+
+  - name: a stopped container is named, nothing else fires
+    interval: 1m
+    input_series:
+      - series: 'up{environment="prod", job="host"}'
+        values: '1x40'
+      - series: 'up{environment="prod", job="containers"}'
+        values: '1x40'
+      - series: 'ingestion_last_success{environment="prod", mode="players-full"}'
+        values: '0+60x40'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="caddy"}'
+        values: '1x40'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="frontend"}'
+        values: '1x40'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="backend-api"}'
+        values: '1x40'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="data-job"}'
+        values: '1x40'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="postgres"}'
+        values: '1x5 _x35'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: ServiceMissing
+        exp_alerts:
+          - exp_labels:
+              environment: prod
+              project: whos-hot-nhl
+              service: postgres
+      - eval_time: 20m
+        alertname: ServerSilent
+        exp_alerts: []
+      - eval_time: 20m
+        alertname: DataJobSilent
+        exp_alerts: []
+
+  - name: data job stopping fires only Data job silent
+    interval: 1m
+    input_series:
+      - series: 'up{environment="prod", job="host"}'
+        values: '1x40'
+      - series: 'up{environment="prod", job="containers"}'
+        values: '1x40'
+      - series: 'ingestion_last_success{environment="prod", mode="players-full"}'
+        values: '0+60x5 _x35'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="caddy"}'
+        values: '1x40'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="frontend"}'
+        values: '1x40'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="backend-api"}'
+        values: '1x40'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="data-job"}'
+        values: '1x40'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="postgres"}'
+        values: '1x40'
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: DataJobSilent
+        exp_alerts:
+          - exp_labels:
+              environment: prod
+      - eval_time: 30m
+        alertname: ServerSilent
+        exp_alerts: []
+      - eval_time: 30m
+        alertname: ServiceMissing
+        exp_alerts: []
+
+  # --- Restarts: a deploy restarts each container once ------------------------------
+
+  - name: one restart from a deploy does not alert
+    interval: 1m
+    input_series:
+      - series: 'container_start_time_seconds{environment="prod", project="whos-hot-nhl", service="backend-api"}'
+        values: '100x5 400x20'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: ContainerRestarting
+        exp_alerts: []
+
+  - name: a crash loop alerts
+    interval: 1m
+    input_series:
+      - series: 'container_start_time_seconds{environment="prod", project="whos-hot-nhl", service="backend-api"}'
+        values: '100x3 300x3 500x3 700x20'
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: ContainerRestarting
+        exp_alerts:
+          - exp_labels:
+              service: backend-api
+
+  # --- Ingestion freshness: the gauge holds the epoch seconds of the last success ----
+
+  - name: ingestion that keeps succeeding is not stale
+    interval: 1m
+    input_series:
+      - series: 'ingestion_last_success{environment="prod", mode="players-full"}'
+        values: '0+60x420'
+    alert_rule_test:
+      - eval_time: 7h
+        alertname: IngestionStale
+        exp_alerts: []
+
+  - name: no complete run for seven hours is stale
+    interval: 1m
+    input_series:
+      - series: 'ingestion_last_success{environment="prod", mode="players-full"}'
+        values: '0x420'
+    alert_rule_test:
+      - eval_time: 7h
+        alertname: IngestionStale
+        exp_alerts:
+          - exp_labels:
+              mode: players-full

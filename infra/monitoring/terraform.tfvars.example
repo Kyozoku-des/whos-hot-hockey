@@ -1,0 +1,9 @@
+# Copy to terraform.tfvars (git-ignored) and fill in. See README.md.
+grafana_url   = "https://<stack>.grafana.net"
+grafana_token = "glsa_..."
+alert_email   = "you@example.com"
+
+# Uptime checks: leave site_url empty until the site has a domain.
+site_url        = ""
+sm_url          = "https://synthetic-monitoring-api-eu-west-2.grafana.net"
+sm_access_token = ""

@@ -3,7 +3,8 @@
 Production monitoring for issue #70: traffic, CPU and memory, failures, and alerts when the
 site is down. It runs on **Grafana Cloud** (free tier). One small agent on the server,
 [Grafana Alloy](https://grafana.com/docs/alloy/latest/), ships everything there; dashboards,
-alert rules and uptime checks live in Grafana Cloud.
+alert rules and uptime checks live in Grafana Cloud and are defined as Terraform in
+[`infra/monitoring`](../infra/monitoring/README.md).
 
 ```
                  ┌──────────── VPS (docker compose --profile prod) ────────────┐
