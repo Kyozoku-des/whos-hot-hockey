@@ -8,6 +8,17 @@
 	admin off
 	metrics
 
+	# Proxy failures use the default logger, independently of the access logger.
+	log default {
+		format filter {
+			wrap json
+			fields {
+				request delete
+				resp_headers delete
+			}
+		}
+	}
+
 	# Drop clients that send headers or bodies slowly to hold connections open.
 	servers {
 		timeouts {

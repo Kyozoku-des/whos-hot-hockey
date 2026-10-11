@@ -53,8 +53,9 @@ review the trusted-proxy configuration before accepting its forwarded addresses.
 
 ## Logs and diagnostic agents
 
-Caddy removes the request object and response headers before emitting access
-records. Status, timing and size fields remain available. nginx access logging is
+Caddy removes the request object and response headers from both access records
+and the default logger (including proxy failures). Status, timing and size fields
+remain available. nginx access logging is
 disabled and its server error log is restricted to critical failures, because its
 fixed log format includes raw request text. Use Caddy status metrics and service
 health for ordinary upstream failures; raw URI/header logging is intentionally not
