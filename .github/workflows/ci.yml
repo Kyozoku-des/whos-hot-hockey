@@ -74,3 +74,5 @@ jobs:
             "$image" caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
       - name: Test sanitized access logs
         run: python3 -m unittest discover -s caddy/tests -v
+      - name: Test deployment credential preflight
+        run: python3 -m unittest discover -s infra/server/tests -v

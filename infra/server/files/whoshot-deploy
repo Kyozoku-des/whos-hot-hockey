@@ -78,6 +78,15 @@ problems = [f"{service}: {key} is empty or the local default"
                                  ("backend-api", "SPRING_DATASOURCE_PASSWORD"),
                                  ("data-job", "SPRING_DATASOURCE_PASSWORD")]
             if value(service, key) in ("", "whoshot_local")]
+if "db-roles" in services:
+    admin = value("postgres", "POSTGRES_PASSWORD")
+    api = value("backend-api", "SPRING_DATASOURCE_PASSWORD")
+    ingest = value("data-job", "SPRING_DATASOURCE_PASSWORD")
+    defaults = {"whoshot_local", "whoshot_api_local", "whoshot_ingest_local"}
+    if len(api) < 20 or len(ingest) < 20 or {admin, api, ingest} & defaults:
+        problems.append("set API_DB_PASSWORD and INGEST_DB_PASSWORD to non-default passwords of at least 20 characters")
+    if len({admin, api, ingest}) != 3:
+        problems.append("DB_PASSWORD, API_DB_PASSWORD and INGEST_DB_PASSWORD must be distinct")
 if not value("caddy", "SITE_DOMAIN"):
     problems.append("caddy: SITE_DOMAIN is empty")
 for problem in problems:

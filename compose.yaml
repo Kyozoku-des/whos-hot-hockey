@@ -25,6 +25,41 @@ services:
       timeout: 5s
       retries: 12
 
+  # Administrative credentials exist only in short-lived provisioning services.
+  # Nothing changes the old whoshot owner/password, so older releases can roll back.
+  migrate:
+    image: ghcr.io/kyozoku-des/whos-hot-nhl-api:${IMAGE_TAG:-local}
+    build:
+      context: ./backend
+      target: api
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nhl_stats
+      SPRING_DATASOURCE_USERNAME: whoshot
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-whoshot_local}
+      SPRING_PROFILES_ACTIVE: ${APP_PROFILE:-local},migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  db-roles:
+    image: postgres:17
+    command: ["psql", "--no-psqlrc", "--set", "ON_ERROR_STOP=1", "--file", "/roles.sql"]
+    environment:
+      PGHOST: postgres
+      PGDATABASE: nhl_stats
+      PGUSER: whoshot
+      PGPASSWORD: ${DB_PASSWORD:-whoshot_local}
+      API_DB_PASSWORD: ${API_DB_PASSWORD:-whoshot_api_local}
+      INGEST_DB_PASSWORD: ${INGEST_DB_PASSWORD:-whoshot_ingest_local}
+      APP_PROFILE: ${APP_PROFILE:-local}
+    volumes:
+      - ./infra/database/roles.sql:/roles.sql:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
   backend-api:
     image: ghcr.io/kyozoku-des/whos-hot-nhl-api:${IMAGE_TAG:-local}
     build:
@@ -35,8 +70,10 @@ services:
       - "127.0.0.1:${API_PORT:-8080}:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nhl_stats
-      SPRING_DATASOURCE_USERNAME: whoshot
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-whoshot_local}
+      SPRING_DATASOURCE_USERNAME: whoshot_api
+      SPRING_DATASOURCE_PASSWORD: ${API_DB_PASSWORD:-whoshot_api_local}
+      SPRING_FLYWAY_ENABLED: "false"
+      SPRING_DATASOURCE_HIKARI_READ_ONLY: "true"
       SPRING_PROFILES_ACTIVE: ${APP_PROFILE:-local}
       LOG_DIRECTORY: /app/logs
     volumes:
@@ -50,8 +87,8 @@ services:
       retries: 6
       start_period: 90s
     depends_on:
-      postgres:
-        condition: service_healthy
+      db-roles:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   data-job:
@@ -62,15 +99,16 @@ services:
     user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nhl_stats
-      SPRING_DATASOURCE_USERNAME: whoshot
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-whoshot_local}
+      SPRING_DATASOURCE_USERNAME: whoshot_ingest
+      SPRING_DATASOURCE_PASSWORD: ${INGEST_DB_PASSWORD:-whoshot_ingest_local}
+      SPRING_FLYWAY_ENABLED: "false"
       SPRING_PROFILES_ACTIVE: ${DATA_JOB_PROFILE:-${APP_PROFILE:-local}}
       LOG_DIRECTORY: /app/logs
       # Push metrics to the alloy service (prod profile). Off locally.
       METRICS_PUSH_ENABLED: ${METRICS_PUSH_ENABLED:-false}
     volumes:
       - ./backend/logs:/app/logs
-    # Both applications run Flyway: let the API migrate first so they never race.
+    # The API only starts once the one-shot migration and grants have succeeded.
     depends_on:
       postgres:
         condition: service_healthy
@@ -90,16 +128,17 @@ services:
       - backfill
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nhl_stats
-      SPRING_DATASOURCE_USERNAME: whoshot
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-whoshot_local}
+      SPRING_DATASOURCE_USERNAME: whoshot_ingest
+      SPRING_DATASOURCE_PASSWORD: ${INGEST_DB_PASSWORD:-whoshot_ingest_local}
+      SPRING_FLYWAY_ENABLED: "false"
       SPRING_PROFILES_ACTIVE: ${APP_PROFILE:-local},backfill
       LOGGING_FILE_NAME: /app/logs/backfill.log
       BACKFILL_SEASON: ${BACKFILL_SEASON:-}
     volumes:
       - ./backend/logs:/app/logs
     depends_on:
-      postgres:
-        condition: service_healthy
+      db-roles:
+        condition: service_completed_successfully
     restart: "no"
 
   frontend:

@@ -6,3 +6,4 @@ FROM scratch
 COPY compose.yaml /bundle/compose.yaml
 COPY caddy/Caddyfile /bundle/caddy/Caddyfile
 COPY monitoring/alloy/config.alloy /bundle/monitoring/alloy/config.alloy
+COPY infra/database/roles.sql /bundle/infra/database/roles.sql

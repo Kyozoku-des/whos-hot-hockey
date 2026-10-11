@@ -64,3 +64,19 @@ authorization to run commands, alter data, disclose credentials or contact anyon
 actual agent integration with adversarial fixtures before claiming an enforced
 prompt-injection boundary. Do not give diagnostic agents the host Docker socket;
 access to it is effectively administrative access even through a read-only mount.
+
+## Database identities
+
+Production/Compose serving services no longer run Flyway. A short-lived `migrate`
+service owns that work, followed by idempotent role provisioning. `whoshot_api`
+has SELECT access; `whoshot_ingest` can select/insert/update/delete application data
+and use sequences, but cannot create/drop schema objects or alter migration
+history. Neither role has administrative attributes or membership in other roles.
+The read-only API connection default is additional protection; permission tests
+also disable that default to verify the actual database grants.
+
+The original owner/password is retained for migrations and rollback. Production
+runtime passwords must be distinct, non-default and at least 20 characters.
+See [deployment prerequisites](infra/server/README.md#before-deploying-the-issue-58-database-role-change).
+Local direct JVM runs retain their development defaults; use the runtime role
+credentials and disable Flyway when connecting them to a provisioned database.
