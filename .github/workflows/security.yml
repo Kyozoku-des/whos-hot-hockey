@@ -1,0 +1,53 @@
+name: security
+
+# Dependency and image vulnerability scans (issue #58). Fails on any medium or higher
+# finding that has a fix: npm packages, the backend's Java dependencies and the
+# application images. Runs on pull requests, before every deploy, and weekly so
+# advisories published after a merge still surface.
+
+on:
+  pull_request:
+  push:
+    branches: [dev]
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TRIVY_IMAGE: aquasec/trivy:0.69.3
+
+jobs:
+  npm:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: Audit frontend dependencies
+        working-directory: frontend
+        run: npm audit --audit-level=moderate
+
+  images:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      # Scans the built images: Alpine packages plus the Java dependencies inside the jars.
+      - name: Build images
+        run: |
+          docker build -q -t scan/api --target api backend
+          docker build -q -t scan/data-job --target data-job backend
+          docker build -q -t scan/frontend frontend
+      - name: Scan images
+        run: |
+          for image in scan/api scan/data-job scan/frontend; do
+            echo "::group::$image"
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock "$TRIVY_IMAGE" \
+              image --scanners vuln --severity MEDIUM,HIGH,CRITICAL --ignore-unfixed \
+              --exit-code 1 --no-progress "$image"
+            echo "::endgroup::"
+          done

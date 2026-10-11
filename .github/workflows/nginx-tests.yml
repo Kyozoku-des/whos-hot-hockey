@@ -17,6 +17,9 @@ on:
   # The deploy workflow runs the rate limiting tests before every deploy.
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
   rate-limit:
     runs-on: ubuntu-24.04
