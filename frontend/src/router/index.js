@@ -3,6 +3,7 @@ import HomePage from '../views/HomePage.vue'
 import PlayerPage from '../views/PlayerPage.vue'
 import TeamPage from '../views/TeamPage.vue'
 import SettingsPage from '../views/SettingsPage.vue'
+import FeedbackPage from '../views/FeedbackPage.vue'
 
 const routes = [
   {
@@ -24,6 +25,11 @@ const routes = [
     path: '/settings',
     name: 'Settings',
     component: SettingsPage
+  },
+  {
+    path: '/feedback',
+    name: 'Feedback',
+    component: FeedbackPage
   }
 ]
 

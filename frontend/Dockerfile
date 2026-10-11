@@ -15,6 +15,9 @@ COPY . .
 # Fix permissions on node_modules binaries
 RUN chmod -R +x node_modules/.bin || true
 
+# Optional public links baked into the bundle (Vite inlines them at build time)
+ARG VITE_WEB3FORMS_ACCESS_KEY=
+
 # Build the application
 RUN npm run build
 
