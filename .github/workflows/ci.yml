@@ -72,3 +72,5 @@ jobs:
           docker run --rm -e SITE_DOMAIN=example.com \
             -v "$PWD/caddy/Caddyfile:/etc/caddy/Caddyfile:ro" \
             "$image" caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+      - name: Test sanitized access logs
+        run: python3 -m unittest discover -s caddy/tests -v

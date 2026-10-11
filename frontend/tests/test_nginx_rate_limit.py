@@ -54,7 +54,7 @@ class MockApi(BaseHTTPRequestHandler):
 
 
 @contextlib.contextmanager
-def running_nginx(trusted_proxy):
+def running_nginx(trusted_proxy, logs=None):
     with tempfile.TemporaryDirectory(prefix="nhl-nginx-") as directory:
         root = Path(directory)
         (root / "index.html").write_text("SPA")
@@ -67,6 +67,7 @@ def running_nginx(trusted_proxy):
         config = (FRONTEND / "nginx.conf").read_text()
         config = config.replace("listen 3000;", f"listen 127.0.0.1:{port};")
         config = config.replace("/usr/share/nginx/html", str(root))
+        config = config.replace("/var/log/nginx/error.log", str(root / "error.log"))
         config = config.replace("backend-api:8080", f"127.0.0.1:{api.server_port}")
         config = config.replace("/etc/nginx/security-headers.conf",
                                 str(FRONTEND / "nginx/security-headers.conf"))
@@ -82,7 +83,7 @@ def running_nginx(trusted_proxy):
             user +
             f"daemon off; master_process off; pid {root}/nginx.pid;\n"
             f"error_log {root}/error.log warn; events {{}}\n"
-            f"http {{ access_log off; client_body_temp_path {root}/client; "
+            f"http {{ access_log {root}/access.log combined; client_body_temp_path {root}/client; "
             f"proxy_temp_path {root}/proxy; fastcgi_temp_path {root}/fastcgi; "
             f"uwsgi_temp_path {root}/uwsgi; scgi_temp_path {root}/scgi;\n"
             f"{realip}\n{config}\n}}\n"
@@ -110,6 +111,8 @@ def running_nginx(trusted_proxy):
         finally:
             process.terminate()
             process.communicate(timeout=5)
+            if logs is not None:
+                logs.append("\n".join(path.read_text() for path in root.glob("*.log")))
             api.shutdown()
             api.server_close()
             thread.join()
@@ -172,12 +175,43 @@ class RateLimitTest(unittest.TestCase):
             self.assertTrue(all(body == "127.0.0.2|127.0.0.2"
                                 for status, body in responses if status == 200))
 
-    def test_default_trust_ignores_headers_and_static_routes_are_unlimited(self):
+    def test_default_trust_ignores_headers_and_static_routes_are_limited(self):
         with running_nginx("unix:") as port:
             self.assertEqual(request(port), (200, "127.0.0.1|127.0.0.1"))
             self.assert_limited(self.burst(port))
             for path in ("/", "/players/123", "/app.js"):
-                self.assertTrue(all(status == 200 for status, _ in self.burst(port, path=path)))
+                time.sleep(0.2)
+                statuses = [status for status, _ in self.burst(port, path=path)]
+                self.assertIn(429, statuses)
+                self.assertLessEqual(set(statuses), {200, 429})
+
+    def test_ipv6_addresses_in_one_prefix_share_a_budget(self):
+        # Include compressed forms and a 0x0a byte: grouping must use address
+        # bytes, not the spelling of the forwarded IPv6 string or '.' regex rules.
+        for prefix in ("2001:db8::", "2001:db8:a00:1234:"):
+            with self.subTest(prefix=prefix), running_nginx("127.0.0.1") as port:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=20) as pool:
+                    responses = list(pool.map(
+                        lambda i: request(port, forwarded=prefix + (":" if prefix.endswith("1234:") else "") + format(i + 1, "x")),
+                        range(BURST_REQUESTS)))
+                self.assert_limited(responses)
+                self.assertEqual(request(port, forwarded="2001:db8:ffff::1")[0], 200)
+
+    def test_distributed_api_requests_share_an_aggregate_budget(self):
+        with running_nginx("127.0.0.1") as port:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=30) as pool:
+                responses = list(pool.map(
+                    lambda i: request(port, forwarded=f"198.18.{i // 250}.{i % 250 + 1}"),
+                    range(600)))
+            self.assert_limited(responses)
+
+    def test_request_text_is_absent_from_nginx_access_and_rejection_logs(self):
+        marker = "UNTRUSTED_REQUEST_LOG_MARKER"
+        logs = []
+        with running_nginx("unix:", logs=logs) as port:
+            self.assert_limited(self.burst(port, path=f"/api/{marker}?input={marker}"))
+        self.assertTrue(logs)
+        self.assertNotIn(marker, "\n".join(logs))
 
     def test_security_headers_on_every_route_and_no_version(self):
         with running_nginx("unix:") as port:

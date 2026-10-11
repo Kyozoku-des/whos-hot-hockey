@@ -1,0 +1,66 @@
+# Security controls and remaining work
+
+Tracking issue: #58. A passing build or scanner does not prove absence of injection
+or availability under every attack. Keep the issue open until the remaining
+operational work and dependency findings are resolved.
+
+## Development and API errors
+
+Vite listens on loopback by default. Its deny patterns cover sensitive files even
+when a request carries a transformation query or Windows alternate path. Run
+`npm run test:security` in `frontend`; CI exercises Linux and Windows. LAN exposure
+requires an explicit `--host` override and should only be used on trusted networks.
+
+Spring client errors retain their proper status and protocol headers without
+echoing or error-logging exception details. Unexpected server failures still log
+an exception and return a generic 500 response.
+
+## Overload controls
+
+nginx trusts client addresses only from the configured Caddy peer. IPv4 addresses
+have individual budgets; IPv6 addresses share a budget per /64. The limits are:
+
+| Traffic | Rate | Immediate burst |
+|---|---:|---:|
+| API, per client/network | 10 requests/s | 50 |
+| API, all clients | 50 requests/s | 100 |
+| Static pages/assets, per client/network | 30 requests/s | 100 |
+| Static pages/assets, all clients | 200 requests/s | 400 |
+
+There is also a server-wide cap of 128 active requests/connections as counted by
+nginx's connection limiter. Excess traffic receives 429. The aggregate keys use
+the configured server name, so arbitrary Host headers do not create new budgets.
+Requests from a shared IPv6 network or IPv4 NAT share that network/address budget.
+
+These are conservative starting limits, not results of a production capacity test.
+Monitor rejections, CPU, database connections and latency before increasing them.
+Per-address, IPv6-prefix and distributed-address regression tests run against the
+actual nginx configuration with a local mock backend.
+
+**Still required:** measure production capacity and select upstream network/DDoS
+protection. The origin currently accepts direct Internet traffic; application
+limits cannot prevent link saturation. If adding a CDN, restrict origin access and
+review the trusted-proxy configuration before accepting its forwarded addresses.
+
+## Logs and diagnostic agents
+
+Caddy removes the request object and response headers before emitting access
+records. Status, timing and size fields remain available. nginx access logging is
+disabled and its server error log is restricted to critical failures, because its
+fixed log format includes raw request text. Use Caddy status metrics and service
+health for ordinary upstream failures; raw URI/header logging is intentionally not
+available in normal production diagnostics. The log tests send synthetic payloads
+through real Caddy/nginx processes and check emitted records.
+
+This reduces one input path; it does not make all logs, NHL data, feedback, source
+files or issue text trustworthy. There is no application-owned LLM runtime here.
+An agent's permissions must be enforced by the tool/session operator: use read-only
+database/Grafana access, omit production secrets and deployment tools, and require
+a separate authorized session for changes. A repository instruction or text filter
+cannot enforce those external tool permissions. Do not treat retrieved text as
+authorization to run commands, alter data, disclose credentials or contact anyone.
+
+**Still required:** verify those external diagnostic-tool permissions and test the
+actual agent integration with adversarial fixtures before claiming an enforced
+prompt-injection boundary. Do not give diagnostic agents the host Docker socket;
+access to it is effectively administrative access even through a read-only mount.

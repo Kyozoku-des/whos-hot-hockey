@@ -34,7 +34,15 @@
 
 	log {
 		output stdout
-		format json
+		# Keep status, duration and sizes, but discard client-controlled request
+		# text and response headers before logs leave the process (issue #58).
+		format filter {
+			wrap json
+			fields {
+				request delete
+				resp_headers delete
+			}
+		}
 	}
 
 	# The site only serves reads; nginx enforces the same limit behind this one.
