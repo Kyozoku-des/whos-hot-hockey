@@ -123,3 +123,26 @@ the database role rollout. Review compatibility, migration/rollback and monitori
 before replacing either image. Upstream patches, replacement tools or documented
 reachability evidence are required for the remaining build-tool findings; deleting
 scanner results or unused binaries after executing them is not remediation.
+
+### Follow-up build-tool remediation (2026-10-11)
+
+Maven compiler 3.16.0 and targeted clean/resources/Boot plugin dependency overrides
+reduce each Java build stage from 15 findings to 3. Application dependency
+management does not patch a plugin's private dependency graph. The remaining two
+HIGH and one MEDIUM findings are Apache HTTP libraries shaded inside
+`docker-java-transport-zerodep` 3.7.1, the latest published release checked here;
+ordinary dependency overrides cannot replace classes inside that jar.
+
+Vite 8.3.4 with Vue plugin 6.0.10 replaces the old esbuild toolchain. Explicit build
+targets preserve the previous Chrome 87/Edge 88/Firefox 78/Safari 14 browser floor.
+The container also updates npm to 12.2.0. Its build-stage findings drop from 71 to
+11 (four HIGH, seven MEDIUM), all in npm's bundled dependencies; the critical
+esbuild finding is removed. The app lock-file audit remains clean. No scanner
+waivers, deleted evidence or runtime dependency changes are used for these fixes.
+
+Validation: 252 backend tests; Windows short-path and Linux file-boundary tests;
+frontend build; desktop/mobile-width headless browser smoke with mocked API data.
+This is not a real-device or production-load test. To roll back these build-tool
+changes, restore their POM/package/config/Dockerfile changes together and rebuild;
+they do not alter database schemas or stored data. PostgreSQL, Alloy, npm's bundled
+libraries and the shaded Docker test client still block the strict image gate.

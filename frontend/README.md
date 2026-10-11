@@ -55,7 +55,7 @@ frontend/
 ## Setup Instructions
 
 ### Prerequisites
-- Node.js 20 or higher
+- Node.js 24.15+ (Node 24 LTS recommended, matching the container build)
 - npm or yarn package manager
 
 ### Installation
