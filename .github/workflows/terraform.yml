@@ -1,0 +1,34 @@
+name: terraform
+
+# Format and validate every Terraform root module under infra/. Nothing is applied
+# from CI: state is local (see infra/monitoring/README.md).
+
+on:
+  pull_request:
+    paths:
+      - "infra/**"
+      - ".github/workflows/terraform.yml"
+  push:
+    branches: [dev, master]
+    paths:
+      - "infra/**"
+      - ".github/workflows/terraform.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.16.4"
+      - name: Check formatting
+        run: terraform fmt -check -recursive -diff infra
+      - name: Validate each module
+        run: |
+          for dir in $(find infra -name '*.tf' -printf '%h\n' | sort -u); do
+            echo "::group::$dir"
+            terraform -chdir="$dir" init -backend=false -input=false
+            terraform -chdir="$dir" validate
+            echo "::endgroup::"
+          done
