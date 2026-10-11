@@ -99,3 +99,27 @@ during the build. This replaces the upstream image's vulnerable compiled binary;
 updating OS packages alone cannot repair embedded Go dependencies. CI validates
 the Caddyfile and access-log filter using this exact image. Publish/retain the
 `whos-hot-nhl-caddy` package alongside the other release images for rollback.
+
+## Dependency gate and unresolved findings
+
+The security workflow derives the runtime inventory from **all** Compose profiles,
+deduplicates shared images, and also scans the API, ingestion, frontend and Caddy
+build stages. Trivy fails on MEDIUM/HIGH/CRITICAL findings, including unfixed ones;
+there is no ignore list or `--ignore-unfixed` exception. It finishes the remaining
+scans after a failure and uploads the inventory and JSON reports. npm audit checks
+the frontend lock file separately. Build stages include embedded tool binaries and
+plugin dependencies that a lock-file audit alone misses.
+
+The application runtime images (API, ingestion, frontend and rebuilt Caddy) had no
+medium-or-higher findings in the 2026-10-11 local scan. This is a dated scanner
+result, not a guarantee about future advisories or exploitability. PostgreSQL 17,
+Alloy 1.20.1 and some build tools still have findings, including ones without a
+published fix. The strict workflow therefore blocks deployment. Keep this work
+in draft until those dependencies are remediated or the issue's acceptance policy
+is explicitly changed; do not bypass the gate by hiding those images or findings.
+
+Resolve PostgreSQL/Alloy updates and their embedded dependencies separately from
+the database role rollout. Review compatibility, migration/rollback and monitoring
+before replacing either image. Upstream patches, replacement tools or documented
+reachability evidence are required for the remaining build-tool findings; deleting
+scanner results or unused binaries after executing them is not remediation.

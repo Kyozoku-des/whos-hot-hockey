@@ -1,9 +1,9 @@
 name: security
 
 # Dependency and image vulnerability scans (issue #58). Fails on any medium or higher
-# finding that has a fix: npm packages, the backend's Java dependencies and the
-# application images. Runs on pull requests, before every deploy, and weekly so
-# advisories published after a merge still surface.
+# finding, including those without a published fix. Scan every Compose runtime
+# image and the application build stages; do not silently waive upstream findings.
+# Runs before every deploy and weekly so newly published advisories surface.
 
 on:
   pull_request:
@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 env:
-  TRIVY_IMAGE: aquasec/trivy:0.69.3
+  TRIVY_IMAGE: aquasec/trivy:0.75.0
 
 jobs:
   npm:
@@ -36,18 +36,43 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      # Scans the built images: Alpine packages plus the Java dependencies inside the jars.
       - name: Build images
         run: |
-          docker build -q -t scan/api --target api backend
-          docker build -q -t scan/data-job --target data-job backend
-          docker build -q -t scan/frontend frontend
-      - name: Scan images
+          docker compose --profile prod build --pull backend-api data-job frontend caddy
+          docker build -q -t scan/api-build --target api-build backend
+          docker build -q -t scan/datajob-build --target datajob-build backend
+          docker build -q -t scan/frontend-build --target build frontend
+          docker build -q -t scan/caddy-build --target build caddy
+      - name: Inventory deployed and build images
         run: |
-          for image in scan/api scan/data-job scan/frontend; do
+          mkdir -p security-reports
+          {
+            docker compose --profile '*' config --images
+            printf '%s\n' scan/api-build scan/datajob-build scan/frontend-build scan/caddy-build
+          } | sort -u > security-reports/images.txt
+      - name: Scan every image, retaining all results even after a failure
+        run: |
+          status=0
+          while IFS= read -r image; do
+            report=$(printf '%s' "$image" | tr '/:' '__')
             echo "::group::$image"
-            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock "$TRIVY_IMAGE" \
-              image --scanners vuln --severity MEDIUM,HIGH,CRITICAL --ignore-unfixed \
-              --exit-code 1 --no-progress "$image"
+            if ! docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+              -v "$PWD/security-reports:/reports" -v trivy-cache:/root/.cache/trivy "$TRIVY_IMAGE" \
+              image --scanners vuln --severity MEDIUM,HIGH,CRITICAL \
+              --exit-code 1 --no-progress --format json --output "/reports/$report.json" "$image"; then
+              status=1
+            fi
+            if [[ -f "security-reports/$report.json" ]]; then
+              jq -r '.Results[]? | .Vulnerabilities[]? | [.Severity, .VulnerabilityID, .PkgName, .InstalledVersion, (.FixedVersion // "unfixed")] | @tsv' \
+                "security-reports/$report.json"
+            fi
             echo "::endgroup::"
-          done
+          done < security-reports/images.txt
+          exit "$status"
+      - name: Save image inventory and vulnerability reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: security-image-reports
+          path: security-reports/
+          if-no-files-found: error
