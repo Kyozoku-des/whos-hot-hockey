@@ -16,7 +16,7 @@ COPY . .
 RUN chmod -R +x node_modules/.bin || true
 
 # Optional public links baked into the bundle (Vite inlines them at build time)
-ARG VITE_FEEDBACK_EMAIL=
+ARG VITE_WEB3FORMS_ACCESS_KEY=
 
 # Build the application
 RUN npm run build
