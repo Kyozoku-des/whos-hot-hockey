@@ -17,7 +17,9 @@
         class="scroll-hint"
         aria-label="Scroll down to settings"
         @click="scrollToLinks"
-      >&#9660;</button>
+      >
+        <PixelIcon name="arrow-down" />
+      </button>
     </Transition>
 
     <footer class="app-footer">
@@ -33,6 +35,7 @@
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import NextGameTooltip from './components/NextGameTooltip.vue'
+import PixelIcon from './components/PixelIcon.vue'
 import { timeZoneOption } from './composables/useSettings'
 
 const loadedAt = new Date()
@@ -106,21 +109,16 @@ onUnmounted(() => observer?.disconnect())
   bottom: 4.5rem;
   transform: translateX(-50%);
   z-index: 100;
-  width: 2.5rem;
-  height: 2.5rem;
-  padding: 0;
-  font-size: 1.1rem;
-  line-height: 1;
+  padding: 0.25rem;
+  font-size: 1.75rem;
   color: var(--color-text-secondary);
-  background-color: var(--color-bg-card);
-  border: var(--color-border-thick) solid var(--color-text-secondary);
-  border-radius: 50%;
+  background: none;
+  border: none;
   animation: nudge 1.6s ease-in-out infinite;
 }
 
 .scroll-hint:hover {
   color: var(--color-text-primary);
-  border-color: var(--color-text-primary);
 }
 
 @keyframes nudge {
