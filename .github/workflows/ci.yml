@@ -42,6 +42,22 @@ jobs:
           npm ci
           npm run build
 
+  dev-server-security:
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: Test development file boundaries
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run test:security
+
   compose:
     runs-on: ubuntu-24.04
     steps:

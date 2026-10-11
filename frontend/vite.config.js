@@ -12,8 +12,13 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(version)
   },
   server: {
-    host: '0.0.0.0',
+    host: '127.0.0.1',
     port: 3000,
+    fs: {
+      // Vite 6 can match the query-bearing module ID. Cover ?raw/?url and
+      // Windows alternate paths as well as the plain sensitive filenames.
+      deny: ['.env*', '*.{crt,pem}*', '**/.git/**']
+    },
     // Mirrors the nginx /api proxy used in the container image so the relative
     // API base URL in useApi.js works identically in dev.
     proxy: {
