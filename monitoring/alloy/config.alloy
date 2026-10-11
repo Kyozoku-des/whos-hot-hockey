@@ -131,8 +131,15 @@ prometheus.relabel "containers" {
 		replacement  = "vps"
 	}
 
-	// Name series after the Compose service (postgres, backend-api, ...) and drop the
-	// per-container id and image labels that would multiply series on every deploy.
+	// Name series after the Compose project and service (postgres, backend-api, ...) and
+	// drop the per-container id and image labels that would multiply series on every
+	// deploy. The project keeps two stacks on one machine (e.g. a local test next to the
+	// normal stack) from writing to the same series.
+	rule {
+		source_labels = ["container_label_com_docker_compose_project"]
+		target_label  = "project"
+	}
+
 	rule {
 		source_labels = ["container_label_com_docker_compose_service"]
 		target_label  = "service"
@@ -214,6 +221,11 @@ discovery.docker "containers" {
 
 discovery.relabel "logs" {
 	targets = discovery.docker.containers.targets
+
+	rule {
+		source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+		target_label  = "project"
+	}
 
 	rule {
 		source_labels = ["__meta_docker_container_label_com_docker_compose_service"]

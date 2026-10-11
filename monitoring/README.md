@@ -20,14 +20,16 @@ alert rules and uptime checks live in Grafana Cloud.
 | Need (#70) | Source | Where to look |
 |---|---|---|
 | Traffic | Caddy request metrics (`caddy_http_requests_total`, status codes, latency) and Caddy access logs (paths, referrers) | Metrics and Loki |
-| CPU, memory, disk | Host: `node_*` (CPU, memory, swap, load, filesystem, disk IO, pressure). Containers: `container_*` per Compose `service` (CPU, memory, restarts, OOM) | Metrics |
+| CPU, memory, disk | Host: `node_*` (CPU, memory, swap, load, filesystem, disk IO, pressure). Containers: `container_*` per Compose `project` and `service` (CPU, memory, restarts, OOM) | Metrics |
 | App health | API: JVM memory, GC, HTTP requests by endpoint and status, DB pool (`/actuator/prometheus` on the unpublished management port 8081). Data job: ingestion metrics pushed over OTLP (`ingestion_*`, `nhl_api_*`, freshness via `ingestion_last_success`) | Metrics |
-| Failures | Every container's logs with `service` and `level` labels; Java stack traces kept as one entry. HTTP 5xx rates, NHL API errors, skipped/deferred ingestion records | Loki and metrics |
+| Failures | Every container's logs with `project`, `service` and `level` labels; Java stack traces kept as one entry. HTTP 5xx rates, NHL API errors, skipped/deferred ingestion records | Loki and metrics |
 | Down / crucial failures | Grafana Cloud uptime checks from outside the server, plus alert rules on the data above | Alerting |
 
 Uptime checks have to run outside the server: a server that is down can't report it.
 
-Everything is labelled `environment="prod"`. Host and container metrics are filtered in
+Everything is labelled `environment="prod"`; container metrics and logs also carry the
+Compose `project` (`whos-hot-nhl` in production), so a second stack on the same machine
+stays separate. Host and container metrics are filtered in
 `alloy/config.alloy` to what is used, to stay well inside the free tier (10k metric series,
 50 GB logs, 14-day retention).
 
