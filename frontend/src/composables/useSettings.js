@@ -52,14 +52,23 @@ const mobileCardOrder = ref([...DEFAULT_ORDER])
 const timeZone = ref('')
 const theme = ref('retro')
 
-// Like favorites, settings are only remembered between visits once storage
-// consent is given; otherwise they last for the current visit.
+// Same storage rules as favorites: localStorage once consent is given (kept
+// between visits), sessionStorage if declined (kept until the tab closes), and
+// memory only until the storage banner is answered.
 const { consentGiven, checkConsent } = useFavorites()
 
+const settingsStorage = () => {
+  if (consentGiven.value === true) return localStorage
+  if (consentGiven.value === false) return sessionStorage
+  return null
+}
+
 const load = () => {
-  if (checkConsent() !== true) return
+  checkConsent()
   try {
-    const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}')
+    const storage = settingsStorage()
+    if (!storage) return
+    const saved = JSON.parse(storage.getItem(SETTINGS_KEY) || '{}')
     mobileCardOrder.value = normalizeOrder(saved.mobileCardOrder)
     if (TIME_ZONES.some(zone => zone.value === saved.timeZone)) timeZone.value = saved.timeZone
     if (THEMES.some(option => option.value === saved.theme)) theme.value = saved.theme
@@ -69,9 +78,8 @@ const load = () => {
 }
 
 const save = () => {
-  if (consentGiven.value !== true) return
   try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+    settingsStorage()?.setItem(SETTINGS_KEY, JSON.stringify({
       mobileCardOrder: mobileCardOrder.value,
       timeZone: timeZone.value,
       theme: theme.value
@@ -83,8 +91,17 @@ const save = () => {
 
 load()
 watch([mobileCardOrder, timeZone, theme], save)
-// Accepting consent later keeps what was chosen this visit
-watch(consentGiven, (given) => { if (given === true) save() })
+// Answering the banner later keeps what was chosen so far, in the storage that
+// answer allows, and clears the copy from the other one
+watch(consentGiven, (given) => {
+  try {
+    if (given === true) sessionStorage.removeItem(SETTINGS_KEY)
+    if (given === false) localStorage.removeItem(SETTINGS_KEY)
+  } catch {
+    // Nothing to clear
+  }
+  save()
+})
 
 export function useSettings() {
   const resetMobileCardOrder = () => {

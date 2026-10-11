@@ -41,12 +41,16 @@
       </select>
     </section>
 
-    <p class="info-note storage-note">
-      <template v-if="consentGiven === true">Settings are saved in this browser.</template>
+    <div class="storage-note">
+      <p v-if="consentGiven === true" class="info-note">Your settings and favorites are saved in this browser.</p>
       <template v-else>
-        Settings last for this visit only. Enable favorites storage on the home page to remember them.
+        <p class="info-note">
+          Settings only last until you close this tab. Save them in this browser,
+          together with your favorites, to keep them for next time.
+        </p>
+        <button class="remember-button" @click="acceptConsent">Remember my settings</button>
       </template>
-    </p>
+    </div>
   </InfoPage>
 </template>
 
@@ -56,7 +60,7 @@ import InfoPage from '../components/InfoPage.vue'
 import { useFavorites } from '../composables/useFavorites'
 import { useSettings, HOME_CARDS, TIME_ZONES, THEMES } from '../composables/useSettings'
 
-const { consentGiven, checkConsent } = useFavorites()
+const { consentGiven, checkConsent, acceptConsent } = useFavorites()
 const { mobileCardOrder, timeZone, theme, resetMobileCardOrder } = useSettings()
 
 const labelFor = (key) => HOME_CARDS.find(card => card.key === key)?.label ?? key
@@ -105,6 +109,7 @@ onMounted(checkConsent)
 
 .move-button,
 .reset-button,
+.remember-button,
 .setting-select {
   font-family: var(--font-family);
   color: var(--color-text-primary);
@@ -126,7 +131,8 @@ onMounted(checkConsent)
 }
 
 .move-button:hover:not(:disabled),
-.reset-button:hover {
+.reset-button:hover,
+.remember-button:hover {
   color: var(--color-text-secondary);
   border-color: var(--color-text-secondary);
 }
@@ -147,5 +153,12 @@ onMounted(checkConsent)
 
 .storage-note {
   text-align: center;
+}
+
+.remember-button {
+  margin-top: 0.75rem;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
 }
 </style>

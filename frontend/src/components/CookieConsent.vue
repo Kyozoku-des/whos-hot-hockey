@@ -5,10 +5,10 @@
         <div class="banner-container">
           <div class="banner-content">
             <div class="banner-text">
-              <h3>Save Your Favorites</h3>
+              <h3>Remember Your Preferences</h3>
               <p>
-                We use browser storage to remember your favorite teams and players.
-                Would you like to enable this feature? Your favorites will be saved across sessions.
+                We can use browser storage to remember your favorite teams and players
+                and your settings, like time zone and card order, for your next visit.
               </p>
             </div>
           </div>
@@ -17,7 +17,7 @@
               No Thanks
             </button>
             <button @click="accept" class="btn-accept">
-              Enable Favorites
+              Remember Me
             </button>
           </div>
           <button @click="decline" class="btn-close" title="Close">
