@@ -41,7 +41,12 @@ const routes = [
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
+  // New pages open at the top (the footer links sit at the very bottom); back
+  // and forward return to where the page was left
+  scrollBehavior(to, from, savedPosition) {
+    return savedPosition || { top: 0 }
+  }
 })
 
 export default router
