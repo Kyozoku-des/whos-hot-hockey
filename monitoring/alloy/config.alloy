@@ -84,6 +84,13 @@ prometheus.relabel "host" {
 		replacement  = "host"
 	}
 
+	// The exporter sets instance to the agent container id, which changes on every
+	// deploy and would start new series each time. There is one server: name it.
+	rule {
+		target_label = "instance"
+		replacement  = "vps"
+	}
+
 	forward_to = [prometheus.remote_write.cloud.receiver]
 }
 
@@ -115,6 +122,13 @@ prometheus.relabel "containers" {
 	rule {
 		target_label = "job"
 		replacement  = "containers"
+	}
+
+	// The exporter sets instance to the agent container id, which changes on every
+	// deploy and would start new series each time. There is one server: name it.
+	rule {
+		target_label = "instance"
+		replacement  = "vps"
 	}
 
 	// Name series after the Compose service (postgres, backend-api, ...) and drop the
