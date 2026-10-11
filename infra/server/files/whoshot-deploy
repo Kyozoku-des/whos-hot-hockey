@@ -30,13 +30,9 @@ read -r action sha extra <<<"${SSH_ORIGINAL_COMMAND:-${*:-}}" || true
 exec 9>"$APP_DIR/deploy.lock"
 flock -n 9 || die "another deploy is running"
 
-# Secrets are placed by the maintainer (README); never deploy with local defaults.
+# Secrets are placed by the maintainer (README). Their values are checked below, once
+# Compose has resolved them.
 [[ -r "$SECRETS" ]] || die "$SECRETS is missing"
-env_value() { grep -E "^$1=" "$SECRETS" | tail -n 1 | cut -d= -f2- || true; }
-db_password="$(env_value DB_PASSWORD)"
-[[ -n "$db_password" && "$db_password" != whoshot_local ]] \
-  || die "DB_PASSWORD must be set in $SECRETS (and not the local default)"
-[[ -n "$(env_value SITE_DOMAIN)" ]] || die "SITE_DOMAIN must be set in $SECRETS"
 
 IFS= read -r token || true
 [[ -n "${token:-}" ]] || die "expected a GHCR token on stdin"
@@ -68,12 +64,31 @@ docker rm "$container" >/dev/null
 } >"$staging/.env"
 chmod 600 "$staging/.env"
 
+compose() { docker compose --profile prod "$@"; }
+
+# Check what Compose will actually use, after its own .env parsing and defaults: an
+# empty or quoted-empty DB_PASSWORD would otherwise fall back to the local password.
+(cd "$staging" && compose config --format json) | python3 -c '
+import json, sys
+services = json.load(sys.stdin)["services"]
+def value(service, key):
+    return (services[service].get("environment") or {}).get(key) or ""
+problems = [f"{service}: {key} is empty or the local default"
+            for service, key in [("postgres", "POSTGRES_PASSWORD"),
+                                 ("backend-api", "SPRING_DATASOURCE_PASSWORD"),
+                                 ("data-job", "SPRING_DATASOURCE_PASSWORD")]
+            if value(service, key) in ("", "whoshot_local")]
+if not value("caddy", "SITE_DOMAIN"):
+    problems.append("caddy: SITE_DOMAIN is empty")
+for problem in problems:
+    print(f"deploy: {problem}; fix it in the server secrets", file=sys.stderr)
+sys.exit(1 if problems else 0)
+' || die "refusing to deploy with these settings"
+
 rm -rf "$release"
 mv "$staging" "$release"
 staging=
 cd "$release"
-
-compose() { docker compose --profile prod "$@"; }
 
 log "pulling images"
 compose pull --quiet
