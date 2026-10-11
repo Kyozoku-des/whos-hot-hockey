@@ -89,8 +89,11 @@ Don't publish port 2019 in compose.
 - On the server: `docker compose --profile prod logs alloy` shows only warnings or errors;
   an empty log means it is shipping.
 - In Grafana Cloud **Explore**:
-  - Metrics: `up{environment="prod"}` lists `nhl-api`, `host`, `containers`, `caddy` with value 1.
-  - Data job: `ingestion_last_success_seconds` (pushed every minute when ingestion runs).
+  - Metrics: `up{environment="prod"}` lists the scraped jobs `nhl-api`, `host`, `containers`
+    and `caddy` with value 1.
+  - Data job: it pushes rather than being scraped, so it has no `up` series. Check
+    `{job="nhl-data-job"}`, or `time() - ingestion_last_success` for seconds since each
+    ingestion mode last succeeded.
   - Logs: `{environment="prod", service="backend-api"}`; errors only: add `level="error"`.
 
 ## Local testing

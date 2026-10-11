@@ -125,9 +125,10 @@ prometheus.relabel "containers" {
 	}
 
 	// The root cgroup and containers outside Compose; host metrics cover the machine.
+	// Only container_* series: the scrape's own up series has no service label.
 	rule {
-		source_labels = ["service"]
-		regex         = ""
+		source_labels = ["__name__", "service"]
+		regex         = "container_.*;"
 		action        = "drop"
 	}
 
