@@ -1,0 +1,46 @@
+# Local test of the monitoring agent, without Grafana Cloud.
+#
+# Runs the prod profile with a local Prometheus and Loki in place of Grafana Cloud,
+# under its own project name and ports so it doesn't touch the normal local stack.
+# From the repository root (PowerShell):
+#
+#   $env:FRONTEND_PORT=13000; $env:API_PORT=18080; $env:DB_PORT=15432
+#   docker compose -p whos-hot-nhl-montest -f compose.yaml -f monitoring/compose.local-test.yaml --profile prod up -d --build
+#
+# After a minute or two:
+#   Prometheus  http://localhost:19090   e.g. up, container_memory_working_set_bytes,
+#                                        time() - ingestion_last_success
+#   Loki        http://localhost:13100/loki/api/v1/label/service/values
+#
+# Clean up (removes only this test project's containers and volumes):
+#   docker compose -p whos-hot-nhl-montest -f compose.yaml -f monitoring/compose.local-test.yaml --profile prod down -v
+
+services:
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    profiles:
+      - prod
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-remote-write-receiver
+    ports:
+      - "127.0.0.1:19090:9090"
+
+  loki:
+    image: grafana/loki:3.5.3
+    profiles:
+      - prod
+    ports:
+      - "127.0.0.1:13100:3100"
+
+  alloy:
+    environment:
+      GRAFANA_CLOUD_PROMETHEUS_URL: http://prometheus:9090/api/v1/write
+      GRAFANA_CLOUD_PROMETHEUS_USER: test
+      GRAFANA_CLOUD_LOKI_URL: http://loki:3100/loki/api/v1/push
+      GRAFANA_CLOUD_LOKI_USER: test
+      GRAFANA_CLOUD_API_TOKEN: test
+
+  data-job:
+    environment:
+      METRICS_PUSH_ENABLED: "true"

@@ -45,6 +45,16 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+        <dependency>
+            <!-- Pushes the ingestion metrics to the Grafana Alloy agent (issue #70) -->
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-otlp</artifactId>
+        </dependency>
+        <dependency>
+            <!-- Boot 4's OTLP metrics auto-configuration reads its OpenTelemetry settings -->
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-opentelemetry</artifactId>
+        </dependency>
 
         <!-- Lombok -->
         <dependency>

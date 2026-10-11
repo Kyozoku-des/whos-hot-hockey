@@ -49,6 +49,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-whoshot_local}
       SPRING_PROFILES_ACTIVE: ${DATA_JOB_PROFILE:-local}
       LOG_DIRECTORY: /app/logs
+      # Push metrics to the alloy service (prod profile). Off locally.
+      METRICS_PUSH_ENABLED: ${METRICS_PUSH_ENABLED:-false}
     volumes:
       - ./backend/logs:/app/logs
     depends_on:
@@ -97,5 +99,43 @@ services:
       - backend-api
     restart: unless-stopped
 
+  # Monitoring agent (issue #70): ships host/container usage, app metrics and logs to
+  # Grafana Cloud. Production only: `docker compose --profile prod up -d`.
+  # See monitoring/README.md.
+  alloy:
+    image: grafana/alloy:v1.20.1
+    profiles:
+      - prod
+    command:
+      - run
+      - --storage.path=/var/lib/alloy/data
+      - --server.http.listen-addr=127.0.0.1:12345
+      - /etc/alloy/config.alloy
+    environment:
+      # Empty values let a local `docker compose config` pass; Alloy fails on start
+      # if they are missing in production.
+      GRAFANA_CLOUD_PROMETHEUS_URL: ${GRAFANA_CLOUD_PROMETHEUS_URL:-}
+      GRAFANA_CLOUD_PROMETHEUS_USER: ${GRAFANA_CLOUD_PROMETHEUS_USER:-}
+      GRAFANA_CLOUD_LOKI_URL: ${GRAFANA_CLOUD_LOKI_URL:-}
+      GRAFANA_CLOUD_LOKI_USER: ${GRAFANA_CLOUD_LOKI_USER:-}
+      GRAFANA_CLOUD_API_TOKEN: ${GRAFANA_CLOUD_API_TOKEN:-}
+    volumes:
+      - ./monitoring/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - alloy_data:/var/lib/alloy/data
+      # Host metrics
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host/root:ro
+      - /run/udev/data:/run/udev/data:ro
+      # Container metrics and logs
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /run/containerd/containerd.sock:/run/containerd/containerd.sock:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    # See every container's cgroup, not only its own (cgroup v2 namespaces them).
+    cgroup: host
+    mem_limit: 300m
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+  alloy_data:

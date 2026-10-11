@@ -1,0 +1,289 @@
+// Grafana Alloy agent for the production server (issue #70).
+//
+// Collects host and container resource usage, application metrics, Caddy traffic
+// metrics and every container's logs, and ships them to Grafana Cloud, where the
+// dashboards, alert rules and uptime checks live. See monitoring/README.md.
+//
+// Metric series count against the Grafana Cloud free tier, so host and container
+// metrics are filtered to what the dashboards and alerts use.
+
+logging {
+	level  = "warn"
+	format = "logfmt"
+}
+
+// ---------------------------------------------------------------------------
+// Destinations
+// ---------------------------------------------------------------------------
+
+prometheus.remote_write "cloud" {
+	endpoint {
+		url = sys.env("GRAFANA_CLOUD_PROMETHEUS_URL")
+
+		basic_auth {
+			username = sys.env("GRAFANA_CLOUD_PROMETHEUS_USER")
+			password = sys.env("GRAFANA_CLOUD_API_TOKEN")
+		}
+	}
+
+	external_labels = {
+		environment = "prod",
+	}
+}
+
+loki.write "cloud" {
+	endpoint {
+		url = sys.env("GRAFANA_CLOUD_LOKI_URL")
+
+		basic_auth {
+			username = sys.env("GRAFANA_CLOUD_LOKI_USER")
+			password = sys.env("GRAFANA_CLOUD_API_TOKEN")
+		}
+	}
+
+	external_labels = {
+		environment = "prod",
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Host: CPU, memory, disk and load of the VPS
+// ---------------------------------------------------------------------------
+
+prometheus.exporter.unix "host" {
+	procfs_path = "/host/proc"
+	sysfs_path  = "/host/sys"
+	rootfs_path = "/host/root"
+	// Network counters are left out: from inside a container they would only show the
+	// agent's own interface. Traffic comes from Caddy instead.
+	set_collectors = ["cpu", "meminfo", "loadavg", "filesystem", "diskstats", "pressure", "uname"]
+
+	filesystem {
+		mount_points_exclude = "^/(dev|proc|run|sys|var/lib/docker/.+)($|/)"
+		fs_types_exclude     = "^(autofs|binfmt_misc|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|mqueue|nsfs|overlay|proc|procfs|pstore|securityfs|squashfs|sysfs|tmpfs|tracefs)$"
+	}
+}
+
+prometheus.scrape "host" {
+	targets         = prometheus.exporter.unix.host.targets
+	job_name        = "host"
+	scrape_interval = "60s"
+	forward_to      = [prometheus.relabel.host.receiver]
+}
+
+prometheus.relabel "host" {
+	rule {
+		source_labels = ["__name__"]
+		regex         = "node_(cpu_seconds_total|load1|load5|load15|memory_(MemTotal|MemAvailable|SwapTotal|SwapFree)_bytes|filesystem_(avail|size)_bytes|disk_(read|written)_bytes_total|pressure_.*|uname_info)|up"
+		action        = "keep"
+	}
+
+	// The exporter sets job="integrations/...": use a plain name.
+	rule {
+		target_label = "job"
+		replacement  = "host"
+	}
+
+	// The exporter sets instance to the agent container id, which changes on every
+	// deploy and would start new series each time. There is one server: name it.
+	rule {
+		target_label = "instance"
+		replacement  = "vps"
+	}
+
+	forward_to = [prometheus.remote_write.cloud.receiver]
+}
+
+// ---------------------------------------------------------------------------
+// Containers: CPU, memory and restarts per Compose service
+// ---------------------------------------------------------------------------
+
+prometheus.exporter.cadvisor "containers" {
+	docker_host      = "unix:///var/run/docker.sock"
+	docker_only      = true
+	storage_duration = "5m"
+}
+
+prometheus.scrape "containers" {
+	targets         = prometheus.exporter.cadvisor.containers.targets
+	job_name        = "containers"
+	scrape_interval = "60s"
+	forward_to      = [prometheus.relabel.containers.receiver]
+}
+
+prometheus.relabel "containers" {
+	rule {
+		source_labels = ["__name__"]
+		regex         = "container_(cpu_usage_seconds_total|memory_working_set_bytes|spec_memory_limit_bytes|start_time_seconds|last_seen|oom_events_total)|up"
+		action        = "keep"
+	}
+
+	// The exporter sets job="integrations/...": use a plain name.
+	rule {
+		target_label = "job"
+		replacement  = "containers"
+	}
+
+	// The exporter sets instance to the agent container id, which changes on every
+	// deploy and would start new series each time. There is one server: name it.
+	rule {
+		target_label = "instance"
+		replacement  = "vps"
+	}
+
+	// Name series after the Compose project and service (postgres, backend-api, ...) and
+	// drop the per-container id and image labels that would multiply series on every
+	// deploy. The project keeps two stacks on one machine (e.g. a local test next to the
+	// normal stack) from writing to the same series.
+	rule {
+		source_labels = ["container_label_com_docker_compose_project"]
+		target_label  = "project"
+	}
+
+	rule {
+		source_labels = ["container_label_com_docker_compose_service"]
+		target_label  = "service"
+	}
+
+	// The root cgroup and containers outside Compose; host metrics cover the machine.
+	// Only container_* series: the scrape's own up series has no service label.
+	rule {
+		source_labels = ["__name__", "service"]
+		regex         = "container_.*;"
+		action        = "drop"
+	}
+
+	rule {
+		regex  = "id|image|name|container_label_.*"
+		action = "labeldrop"
+	}
+
+	forward_to = [prometheus.remote_write.cloud.receiver]
+}
+
+// ---------------------------------------------------------------------------
+// Applications
+// ---------------------------------------------------------------------------
+
+// API: Spring Boot Actuator on the management port, never published or proxied.
+prometheus.scrape "api" {
+	targets = [{
+		__address__ = "backend-api:8081",
+		service     = "backend-api",
+	}]
+	job_name        = "nhl-api"
+	metrics_path    = "/actuator/prometheus"
+	scrape_interval = "60s"
+	forward_to      = [prometheus.remote_write.cloud.receiver]
+}
+
+// Caddy: request counts, status codes and latency, served on its internal metrics
+// port (see the Caddyfile notes in monitoring/README.md).
+prometheus.scrape "caddy" {
+	targets = [{
+		__address__ = "caddy:2019",
+		service     = "caddy",
+	}]
+	job_name        = "caddy"
+	scrape_interval = "60s"
+	forward_to      = [prometheus.remote_write.cloud.receiver]
+}
+
+// Data job: no web server to scrape, so it pushes its metrics (including the
+// ingestion metrics) here over OTLP when METRICS_PUSH_ENABLED=true.
+otelcol.receiver.otlp "apps" {
+	http {
+		endpoint = "0.0.0.0:4318"
+	}
+
+	output {
+		metrics = [otelcol.processor.batch.apps.input]
+	}
+}
+
+otelcol.processor.batch "apps" {
+	output {
+		metrics = [otelcol.exporter.prometheus.apps.input]
+	}
+}
+
+otelcol.exporter.prometheus "apps" {
+	forward_to = [prometheus.remote_write.cloud.receiver]
+}
+
+// ---------------------------------------------------------------------------
+// Logs: every container's stdout/stderr, labelled by Compose service
+// ---------------------------------------------------------------------------
+
+discovery.docker "containers" {
+	host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "logs" {
+	targets = discovery.docker.containers.targets
+
+	rule {
+		source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+		target_label  = "project"
+	}
+
+	rule {
+		source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+		target_label  = "service"
+	}
+
+	// One-off containers (backfill runs, compose run) still get a service label;
+	// anything outside Compose is skipped.
+	rule {
+		source_labels = ["service"]
+		regex         = ""
+		action        = "drop"
+	}
+}
+
+loki.source.docker "containers" {
+	host          = "unix:///var/run/docker.sock"
+	targets       = discovery.docker.containers.targets
+	relabel_rules = discovery.relabel.logs.rules
+	forward_to    = [loki.process.logs.receiver]
+}
+
+loki.process "logs" {
+	// Keep a Java stack trace in one entry with the log line that threw it, so an
+	// exception is one searchable event instead of dozens of "at ..." lines.
+	stage.match {
+		selector = "{service=~\"backend-api|data-job|backfill\"}"
+
+		stage.multiline {
+			firstline     = `^\d{4}-\d{2}-\d{2}T`
+			max_wait_time = "3s"
+		}
+	}
+
+	// Spring Boot console lines carry the level after the timestamp; Caddy and other
+	// JSON logs carry a "level" field. Only the level becomes a label; everything else
+	// stays searchable in the line without adding streams.
+	stage.regex {
+		expression = `^\S+\s+(?P<level>TRACE|DEBUG|INFO|WARN|ERROR)\b`
+	}
+
+	stage.json {
+		expressions = {json_level = "level"}
+	}
+
+	stage.template {
+		source   = "level"
+		template = "{{ if .level }}{{ .level }}{{ else if .json_level }}{{ .json_level }}{{ end }}"
+	}
+
+	stage.template {
+		source   = "level"
+		template = "{{ ToLower .Value }}"
+	}
+
+	stage.labels {
+		values = {level = ""}
+	}
+
+	forward_to = [loki.write.cloud.receiver]
+}
