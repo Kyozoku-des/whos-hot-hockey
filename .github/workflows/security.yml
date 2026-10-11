@@ -1,10 +1,11 @@
 name: security
 
 # Dependency and image vulnerability scans (issue #58). Fails on any medium or higher
-# finding, including those without a published fix, unless .trivyignore.yaml accepts
-# that exact package version with a reason and an expiry date. Scan every Compose
-# runtime image and the application build stages. Runs before every deploy and
-# weekly, so new advisories and expired exceptions surface.
+# finding, including those without a published fix, unless the image's own policy in
+# security/trivyignore/ accepts that exact package version and location with a reason
+# and an expiry date. Images without a policy (the application runtime images) accept
+# nothing. Scan every Compose runtime image and the application build stages. Runs
+# before every deploy and weekly, so new advisories and expired exceptions surface.
 
 on:
   pull_request:
@@ -33,6 +34,40 @@ jobs:
         working-directory: frontend
         run: npm audit --audit-level=moderate
 
+  # The exception boundaries: the generator refuses findings outside its rules, and a
+  # vulnerable package placed anywhere else must still fail under every policy.
+  policy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Test the policy generator
+        run: python3 -m unittest discover -s .github/scripts -v
+      - name: Policies do not cover the same packages elsewhere
+        run: |
+          fixture=$(mktemp -d)
+          mkdir -p "$fixture/app/node_modules/undici"
+          echo '{"name": "undici", "version": "6.28.0"}' > "$fixture/app/node_modules/undici/package.json"
+          (cd "$fixture" && mkdir -p META-INF/maven/org.apache.httpcomponents.client5/httpclient5 \
+            && printf 'groupId=org.apache.httpcomponents.client5\nartifactId=httpclient5\nversion=5.5.1\n' \
+              > META-INF/maven/org.apache.httpcomponents.client5/httpclient5/pom.properties \
+            && zip -qr app/httpclient5-5.5.1.jar META-INF && rm -r META-INF)
+          printf 'FROM scratch\nCOPY . /\n' | docker build -q -t scan/policy-fixture -f - "$fixture"
+          scan() {
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD/security:/security:ro" \
+              -v trivy-cache:/root/.cache/trivy "$TRIVY_IMAGE" image --scanners vuln \
+              --severity MEDIUM,HIGH,CRITICAL --exit-code 1 --no-progress --quiet "$@" scan/policy-fixture
+          }
+          if scan --ignorefile "" >/dev/null; then
+            echo "::error::the fixture has no findings, so the check below would prove nothing"; exit 1
+          fi
+          for policy in security/trivyignore/*.yaml; do
+            if scan --ignorefile "/$policy" >/dev/null; then
+              echo "::error::$policy suppresses the fixture's findings outside their accepted location"
+              exit 1
+            fi
+            echo "$policy: fixture still fails"
+          done
+
   images:
     runs-on: ubuntu-24.04
     steps:
@@ -56,19 +91,21 @@ jobs:
           status=0
           while IFS= read -r image; do
             report=$(printf '%s' "$image" | tr '/:' '__')
-            echo "::group::$image"
+            policy="security/trivyignore/$report.yaml"
+            [[ -f "$policy" ]] && ignorefile="/$policy" || ignorefile=""
+            echo "::group::$image (policy: ${ignorefile:-none})"
             if ! docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-              -v "$PWD/security-reports:/reports" -v "$PWD/.trivyignore.yaml:/policy/.trivyignore.yaml:ro" \
+              -v "$PWD/security-reports:/reports" -v "$PWD/security:/security:ro" \
               -v trivy-cache:/root/.cache/trivy "$TRIVY_IMAGE" \
               image --scanners vuln --severity MEDIUM,HIGH,CRITICAL \
-              --ignorefile /policy/.trivyignore.yaml --show-suppressed \
+              --ignorefile "$ignorefile" --show-suppressed \
               --exit-code 1 --no-progress --format json --output "/reports/$report.json" "$image"; then
               status=1
             fi
             if [[ -f "security-reports/$report.json" ]]; then
               jq -r '.Results[]? | .Vulnerabilities[]? | [.Severity, .VulnerabilityID, .PkgName, .InstalledVersion, (.FixedVersion // "unfixed")] | @tsv' \
                 "security-reports/$report.json"
-              echo "accepted by .trivyignore.yaml: $(jq '[.Results[]? | .ExperimentalModifiedFindings[]?] | length' "security-reports/$report.json")"
+              echo "accepted by policy:$(jq '[.Results[]? | .ExperimentalModifiedFindings[]?] | length' "security-reports/$report.json")"
             fi
             echo "::endgroup::"
           done < security-reports/images.txt
