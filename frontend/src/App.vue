@@ -7,6 +7,7 @@
     <nav ref="siteLinks" class="site-links">
       <router-link to="/settings">Settings</router-link>
       <router-link to="/feedback">Feedback</router-link>
+      <router-link to="/donations">Donations</router-link>
     </nav>
 
     <!-- Hints that there is more below while the links are out of view.
