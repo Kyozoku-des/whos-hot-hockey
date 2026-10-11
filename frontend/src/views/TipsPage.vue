@@ -3,9 +3,9 @@
     <section class="info-section">
       <h2>Search and filter</h2>
       <p>
-        Typing in the search bar filters every table on the home page as you type. A player
-        name shows that player; a team name (like "Bruins" or "Toronto") shows that team and
-        all of its players.
+        Typing in the search bar filters the home page tables as you type (your Favorites card
+        always shows everything). A player name shows that player; a team name (like "Bruins"
+        or "Toronto") shows that team and all of its players.
       </p>
       <p>
         Press Enter, or tap "Press Enter to filter", to keep the filter and close the dropdown.
