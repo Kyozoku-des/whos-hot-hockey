@@ -1,9 +1,10 @@
 name: security
 
 # Dependency and image vulnerability scans (issue #58). Fails on any medium or higher
-# finding, including those without a published fix. Scan every Compose runtime
-# image and the application build stages; do not silently waive upstream findings.
-# Runs before every deploy and weekly so newly published advisories surface.
+# finding, including those without a published fix, unless .trivyignore.yaml accepts
+# that exact package version with a reason and an expiry date. Scan every Compose
+# runtime image and the application build stages. Runs before every deploy and
+# weekly, so new advisories and expired exceptions surface.
 
 on:
   pull_request:
@@ -57,14 +58,17 @@ jobs:
             report=$(printf '%s' "$image" | tr '/:' '__')
             echo "::group::$image"
             if ! docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-              -v "$PWD/security-reports:/reports" -v trivy-cache:/root/.cache/trivy "$TRIVY_IMAGE" \
+              -v "$PWD/security-reports:/reports" -v "$PWD/.trivyignore.yaml:/policy/.trivyignore.yaml:ro" \
+              -v trivy-cache:/root/.cache/trivy "$TRIVY_IMAGE" \
               image --scanners vuln --severity MEDIUM,HIGH,CRITICAL \
+              --ignorefile /policy/.trivyignore.yaml --show-suppressed \
               --exit-code 1 --no-progress --format json --output "/reports/$report.json" "$image"; then
               status=1
             fi
             if [[ -f "security-reports/$report.json" ]]; then
               jq -r '.Results[]? | .Vulnerabilities[]? | [.Severity, .VulnerabilityID, .PkgName, .InstalledVersion, (.FixedVersion // "unfixed")] | @tsv' \
                 "security-reports/$report.json"
+              echo "accepted by .trivyignore.yaml: $(jq '[.Results[]? | .ExperimentalModifiedFindings[]?] | length' "security-reports/$report.json")"
             fi
             echo "::endgroup::"
           done < security-reports/images.txt
