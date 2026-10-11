@@ -28,8 +28,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<Map<String, String>> handleBadRequest(MethodArgumentTypeMismatchException ex) {
+        // Name the parameter only: the exception message repeats the raw input and Java types.
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", "Invalid parameter", "detail", ex.getMessage()));
+                .body(Map.of("error", "Invalid parameter", "parameter", ex.getName()));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
