@@ -68,6 +68,8 @@ def running_nginx(trusted_proxy):
         config = config.replace("listen 3000;", f"listen 127.0.0.1:{port};")
         config = config.replace("/usr/share/nginx/html", str(root))
         config = config.replace("backend-api:8080", f"127.0.0.1:{api.server_port}")
+        config = config.replace("/etc/nginx/security-headers.conf",
+                                str(FRONTEND / "nginx/security-headers.conf"))
         realip = (FRONTEND / "nginx/realip.conf.template").read_text()
         realip = realip.replace("${CADDY_TRUSTED_PROXY}", trusted_proxy)
         # Single-process mode avoids privileged worker user changes in containers.
@@ -176,6 +178,23 @@ class RateLimitTest(unittest.TestCase):
             self.assert_limited(self.burst(port))
             for path in ("/", "/players/123", "/app.js"):
                 self.assertTrue(all(status == 200 for status, _ in self.burst(port, path=path)))
+
+    def test_security_headers_on_every_route_and_no_version(self):
+        with running_nginx("unix:") as port:
+            for path in ("/", "/players/123", "/app.js", "/missing.js", "/api/players"):
+                with self.subTest(path=path):
+                    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+                    try:
+                        connection.request("GET", path)
+                        response = connection.getresponse()
+                        body = response.read().decode()
+                    finally:
+                        connection.close()
+                    self.assertIn("frame-ancestors 'none'",
+                                  response.getheader("Content-Security-Policy", ""))
+                    self.assertEqual(response.getheader("X-Content-Type-Options"), "nosniff")
+                    self.assertEqual(response.getheader("Server"), "nginx")
+                    self.assertNotRegex(body, r"nginx/\d")
 
     def test_api_with_asset_extension_cannot_bypass_limit(self):
         for path in ("/api/players.json", "/api/players.js"):

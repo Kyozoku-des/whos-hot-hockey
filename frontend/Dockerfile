@@ -35,6 +35,7 @@ COPY --from=build /app/dist /usr/share/nginx/html
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx/security-headers.conf /etc/nginx/security-headers.conf
 
 # The official nginx entrypoint renders this before starting nginx. No TCP
 # peers are trusted by default; production must set Caddy's exact address.
