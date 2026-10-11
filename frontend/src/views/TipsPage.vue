@@ -54,6 +54,15 @@
         Stats refresh at least hourly, and more often while games are on.
       </p>
     </section>
+
+    <section class="info-section">
+      <h2>Something off?</h2>
+      <p>
+        <router-link :to="{ path: '/feedback', query: { type: 'bug' } }" class="inline-link">Report a bug</router-link>
+        or
+        <router-link :to="{ path: '/feedback', query: { type: 'feature' } }" class="inline-link">suggest a feature</router-link>.
+      </p>
+    </section>
   </InfoPage>
 </template>
 
