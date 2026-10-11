@@ -18,15 +18,26 @@ updates:
       maven:
         patterns: ["*"]
 
+  # node, maven, eclipse-temurin and postgres use floating major tags that already
+  # pick up patches on rebuild; a new major (non-LTS Node or JDK, a Postgres data
+  # format change) is a deliberate upgrade, not a weekly bump. maven's tag encodes
+  # the JDK in a suffix Dependabot does not read as a major, so skip it entirely.
   - package-ecosystem: docker
     directories: [/backend, /frontend]
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: maven
 
   - package-ecosystem: docker-compose
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
