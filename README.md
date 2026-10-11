@@ -18,7 +18,8 @@ A full-stack application for tracking NHL statistics with a focus on identifying
 ### Running with Podman Compose (Recommended)
 
 See [environment setup](backend/ENVIRONMENTS.md) for `.env` templates, local log
-retention, isolated worktrees, and production configuration. Compose is local-only.
+retention, isolated worktrees, and production configuration. Production runs the same
+Compose file on a Hetzner VPS; see [infra/server](infra/server/README.md).
 
 Start all services (PostgreSQL, backend API, data sync, and frontend):
 

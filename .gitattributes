@@ -1,2 +1,5 @@
 # Shell scripts must keep LF endings: bash fails on CRLF (core.autocrlf on Windows).
 *.sh text eol=lf
+# Files Terraform uploads to the Linux server as-is (the deploy script runs with bash).
+infra/server/files/** text eol=lf
+infra/server/*.tftpl text eol=lf
