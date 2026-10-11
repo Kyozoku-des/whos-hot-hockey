@@ -7,6 +7,16 @@
 	# below listens. Config changes take a container restart instead of a reload.
 	admin off
 	metrics
+
+	# Drop clients that send headers or bodies slowly to hold connections open.
+	servers {
+		timeouts {
+			read_header 10s
+			read_body 10s
+			write 30s
+			idle 2m
+		}
+	}
 }
 
 # Internal only: compose does not publish 2019; the monitoring agent scrapes caddy:2019.
@@ -25,6 +35,11 @@
 	log {
 		output stdout
 		format json
+	}
+
+	# The site only serves reads; nginx enforces the same limit behind this one.
+	request_body {
+		max_size 16KB
 	}
 
 	reverse_proxy frontend:3000
