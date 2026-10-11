@@ -1,5 +1,7 @@
-# Shared base: copy all POMs and download dependencies
-FROM maven:3.9-eclipse-temurin-25 AS base
+# Shared base: copy reactor metadata. Package downloads only the plugins and
+# dependencies this build uses; go-offline also fetched unused legacy site tools.
+FROM maven:3.9-eclipse-temurin-25-alpine AS base
+RUN apk upgrade --no-cache
 
 WORKDIR /app
 
@@ -14,14 +16,12 @@ COPY domain/src ./domain/src
 # ---- API build ----
 FROM base AS api-build
 
-RUN mvn dependency:go-offline -pl api -am
 COPY api/src ./api/src
 RUN mvn clean package -pl api -am -DskipTests
 
 # ---- Data-job build ----
 FROM base AS datajob-build
 
-RUN mvn dependency:go-offline -pl data-job -am
 COPY data-job/src ./data-job/src
 RUN mvn clean package -pl data-job -am -DskipTests
 
