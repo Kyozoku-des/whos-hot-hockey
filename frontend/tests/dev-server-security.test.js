@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
+import { mkdtemp, mkdir, writeFile, rm, realpath } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -7,7 +7,9 @@ import test from 'node:test'
 import { createServer } from 'vite'
 
 test('dev server rejects sensitive files with transform queries and Windows aliases', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'whoshot-vite-security-'))
+  // Long path: Windows runners use an 8.3 TEMP (RUNNER~1), which Vite resolves to a
+  // different real path and then refuses every file as outside its allow list.
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'whoshot-vite-security-')))
   const marker = 'SYNTHETIC_SECURITY_TEST_VALUE'
   let server
   try {
