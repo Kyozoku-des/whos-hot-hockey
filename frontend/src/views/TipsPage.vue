@@ -42,6 +42,17 @@
     </section>
 
     <section class="info-section">
+      <h2>Score ticker</h2>
+      <p>
+        The ticker under the search bar runs through the latest game day's scores and who scored
+        points. A player shows up in <span class="ticker-red">red</span> when they extended a point
+        streak (a point in their previous game too) or are on a hot run of
+        {{ HOT_POINTS_PER_GAME }}+ points per game over their last 10 games.
+      </p>
+      <p>Hover a red name on a computer to see which one it is.</p>
+    </section>
+
+    <section class="info-section">
       <h2>Stats explained</h2>
       <dl class="glossary">
         <template v-for="stat in STATS" :key="stat.abbr">
@@ -69,6 +80,9 @@
 <script setup>
 import InfoPage from '../components/InfoPage.vue'
 
+// Matches the backend's scoreboard.hot-points-per-game
+const HOT_POINTS_PER_GAME = 1.5
+
 const STATS = [
   { abbr: 'G', meaning: 'Goals' },
   { abbr: 'A', meaning: 'Assists' },
@@ -95,6 +109,11 @@ const STATS = [
 
 .glossary dt {
   color: var(--color-text-secondary);
+}
+
+/* The score ticker's highlight red */
+.ticker-red {
+  color: hsl(0, 85%, 62%);
 }
 
 .inline-link {
