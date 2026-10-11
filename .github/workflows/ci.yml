@@ -1,0 +1,58 @@
+name: ci
+
+# Pull request checks (issue #23): backend tests, frontend build and the production
+# compose and Caddy configuration. The deploy workflow runs the same checks before
+# building images for master.
+
+on:
+  pull_request:
+  push:
+    branches: [dev]
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+      # Repository tests use Testcontainers; the runner's Docker provides PostgreSQL.
+      - name: Test
+        run: mvn -B -ntp -f backend/pom.xml test
+
+  frontend:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Build
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+  compose:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate compose (local and prod profile)
+        run: |
+          docker compose config --quiet
+          docker compose --profile prod config --quiet
+      - name: Validate Caddyfile
+        run: |
+          image=$(docker compose --profile prod config --images | grep '^caddy:')
+          docker run --rm -e SITE_DOMAIN=example.com \
+            -v "$PWD/caddy/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            "$image" caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile

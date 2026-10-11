@@ -1,0 +1,167 @@
+name: deploy
+
+# Build and deploy master to the production server (issue #23).
+#
+#   push to master   checks -> build images (tagged with the commit SHA) -> deploy -> smoke test
+#   manual run       with a SHA: redeploy that build (rollback), no build
+#                    without:    build and deploy master's head
+#
+# Setup (secrets, variables, the production environment): infra/server/README.md.
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: "Full commit SHA of an earlier build to redeploy (rollback). Empty: build and deploy master"
+        required: false
+        default: ""
+
+# One deploy at a time, queued rather than cancelled: the data job must never run twice.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY: ghcr.io/kyozoku-des
+
+jobs:
+  checks:
+    if: ${{ !inputs.sha }}
+    uses: ./.github/workflows/ci.yml
+
+  rate-limit-tests:
+    if: ${{ !inputs.sha }}
+    uses: ./.github/workflows/nginx-tests.yml
+
+  build:
+    needs: [checks, rate-limit-tests]
+    if: ${{ !inputs.sha && github.ref == 'refs/heads/master' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - image: api
+            context: backend
+            file: backend/Dockerfile
+            target: api
+          - image: data-job
+            context: backend
+            file: backend/Dockerfile
+            target: data-job
+          - image: frontend
+            context: frontend
+            file: frontend/Dockerfile
+          - image: deploy
+            context: .
+            file: infra/server/bundle.Dockerfile
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          target: ${{ matrix.target }}
+          push: true
+          # No attestation manifests: they would show up as extra package versions.
+          provenance: false
+          tags: |
+            ${{ env.REGISTRY }}/whos-hot-nhl-${{ matrix.image }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/whos-hot-nhl-${{ matrix.image }}:latest
+          # Public values baked into the frontend bundle; ignored by the other images.
+          build-args: |
+            VITE_WEB3FORMS_ACCESS_KEY=${{ vars.VITE_WEB3FORMS_ACCESS_KEY }}
+            VITE_DONATION_URL_SEK=${{ vars.VITE_DONATION_URL_SEK }}
+            VITE_DONATION_URL_EUR=${{ vars.VITE_DONATION_URL_EUR }}
+            VITE_DONATION_URL_USD=${{ vars.VITE_DONATION_URL_USD }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+
+  deploy:
+    needs: build
+    # Runs after a build, or alone for a rollback (the build is then skipped).
+    if: >-
+      ${{ !cancelled() && github.ref == 'refs/heads/master' &&
+      (needs.build.result == 'success' || (inputs.sha && needs.build.result == 'skipped')) }}
+    runs-on: ubuntu-24.04
+    environment:
+      name: production
+      url: https://${{ vars.SITE_DOMAIN }}
+    permissions:
+      contents: read
+      packages: read
+    env:
+      SHA: ${{ inputs.sha || github.sha }}
+      SITE: https://${{ vars.SITE_DOMAIN }}
+    steps:
+      - name: Check inputs
+        run: |
+          [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::'$SHA' is not a full commit SHA"; exit 1; }
+          [[ -n "${{ vars.SITE_DOMAIN }}" ]] || { echo "::error::repository variable SITE_DOMAIN is not set"; exit 1; }
+
+      - name: Deploy
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy_key ~/.ssh/known_hosts
+          # The server's forced command reads the token from stdin to pull from GHCR.
+          printf '%s\n' "$GHCR_TOKEN" | ssh -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=yes -o BatchMode=yes -o ConnectTimeout=20 \
+            "deploy@$DEPLOY_HOST" "deploy $SHA"
+
+      - name: Smoke test
+        run: |
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --retry 5 --retry-all-errors --retry-delay 5 "$SITE/")
+          [[ "$code" == 200 ]] || { echo "::error::$SITE/ returned $code"; exit 1; }
+
+          body=$(curl -sS --fail --retry 5 --retry-all-errors --retry-delay 5 "$SITE/api/teams/standings")
+          count=$(jq 'length' <<<"$body")
+          echo "standings through the proxy: $count teams"
+          # A brand-new database is empty until the data job's first sync.
+          [[ "$count" -gt 0 ]] || echo "::warning::/api/teams/standings is empty; is the initial load done?"
+
+      - name: Rate limit check
+        run: |
+          # A burst well over nginx's allowance (10 r/s, burst 50) from this runner must
+          # be partly refused. Only this runner's address is limited.
+          codes=$(for _ in $(seq 150); do echo "url = \"$SITE/api/games/latest\""; echo "output = /dev/null"; done \
+            | curl -sS --parallel --parallel-max 50 -K - -w '%{http_code}\n')
+          echo "$codes" | sort | uniq -c
+          grep -qx 429 <<<"$codes" || { echo "::error::no 429 responses: rate limiting is not active"; exit 1; }
+
+  cleanup:
+    needs: deploy
+    if: ${{ !inputs.sha }}
+    runs-on: ubuntu-24.04
+    permissions:
+      packages: write
+    strategy:
+      matrix:
+        image: [api, data-job, frontend, deploy]
+    steps:
+      # Private packages count against the storage quota. Ten builds is plenty to roll
+      # back to.
+      - uses: actions/delete-package-versions@v5
+        with:
+          package-name: whos-hot-nhl-${{ matrix.image }}
+          package-type: container
+          min-versions-to-keep: 10
