@@ -1,6 +1,8 @@
 # Multi-stage build for NHL Stats Frontend
 FROM node:24-alpine AS build
 RUN apk upgrade --no-cache
+# Patch dependencies bundled in npm itself, separately from the app lock file.
+RUN npm install --global npm@12.2.0
 
 WORKDIR /app
 
