@@ -1,7 +1,8 @@
 name: terraform
 
-# Format and validate every Terraform root module under infra/. Nothing is applied
-# from CI: state is local (see infra/monitoring/README.md).
+# Format and validate every Terraform root module under infra/, and unit test the
+# monitoring alert rules. Nothing is applied from CI: state is local (see
+# infra/monitoring/README.md).
 
 on:
   pull_request:
@@ -32,3 +33,5 @@ jobs:
             terraform -chdir="$dir" validate
             echo "::endgroup::"
           done
+      - name: Test alert rules
+        run: bash infra/monitoring/tests/run-alert-tests.sh

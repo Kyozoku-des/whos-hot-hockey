@@ -76,5 +76,20 @@ resources are overwritten on the next apply. The dashboard is read-only in the U
 that reason; to rework it, edit it in Grafana, export the JSON and bring the changes back
 into `dashboards/overview.json.tftpl`.
 
-CI (`.github/workflows/terraform.yml`) checks formatting and validates the module on
-pull requests. Nothing is applied from CI.
+### Testing alert rules
+
+`tests/alerts.test.yml` holds promtool scenarios for the alerts: a dead server sends
+only "Server silent", one failing probe location doesn't page, a deploy's restart
+doesn't count as a crash loop, and so on. `tests/run-alert-tests.sh` renders the rules
+from Terraform exactly as they are applied and runs the scenarios (needs only Docker;
+on Windows run it from Git Bash):
+
+```bash
+infra/monitoring/tests/run-alert-tests.sh
+```
+
+When changing a rule or threshold, add or adjust a scenario. Loki rules (Error logs)
+are not covered: promtool only evaluates PromQL.
+
+CI (`.github/workflows/terraform.yml`) checks formatting, validates the module and runs
+the alert tests on pull requests. Nothing is applied from CI.
