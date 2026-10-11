@@ -31,6 +31,7 @@ class DatabaseRolesIT {
     @Container
     static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:17")
             .withUsername("whoshot").withPassword(ADMIN)
+            .withCommand("postgres", "-c", "log_statement=all", "-c", "log_min_duration_statement=0")
             .withEnv("PGPASSWORD", ADMIN).withEnv("API_DB_PASSWORD", API)
             .withEnv("INGEST_DB_PASSWORD", INGEST).withEnv("APP_PROFILE", "prod");
 
@@ -96,6 +97,7 @@ class DatabaseRolesIT {
         var result = POSTGRES.execInContainer("psql", "-X", "-U", "whoshot", "-d", database, "-f", "/roles.sql");
         assertThat(result.getExitCode()).withFailMessage(result.getStderr()).isZero();
         assertThat(result.getStdout() + result.getStderr()).doesNotContain(API, INGEST, ADMIN);
+        assertThat(POSTGRES.getLogs()).doesNotContain(API, INGEST, ADMIN);
     }
 
     private ConfigurableApplicationContext run(String url, String user, String password, String profile, boolean migrate) {

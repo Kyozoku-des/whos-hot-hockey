@@ -5,6 +5,12 @@
 \getenv admin_password PGPASSWORD
 \getenv profile APP_PROFILE
 
+-- Disable statement capture before even validating interpolated passwords.
+SET log_statement = 'none';
+SET log_min_duration_statement = -1;
+SET log_min_duration_sample = -1;
+SET log_min_error_statement = 'panic';
+
 SELECT length(:'api_password') > 0 AND length(:'ingest_password') > 0
        AND :'api_password' <> :'ingest_password'
        AND :'api_password' <> :'admin_password' AND :'ingest_password' <> :'admin_password'
@@ -41,10 +47,6 @@ ALTER ROLE whoshot_api NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPAS
 ALTER ROLE whoshot_ingest NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS NOINHERIT;
 -- format(%L) quotes even passwords containing SQL metacharacters. psql does not
 -- echo these statements; do not enable -a, -e or server statement logging here.
-SET log_statement = 'none';
-SET log_min_duration_statement = -1;
-SET log_min_duration_sample = -1;
-SET log_min_error_statement = 'panic';
 SELECT format('ALTER ROLE whoshot_api PASSWORD %L', :'api_password') \gexec
 SELECT format('ALTER ROLE whoshot_ingest PASSWORD %L', :'ingest_password') \gexec
 
