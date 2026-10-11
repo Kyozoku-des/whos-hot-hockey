@@ -46,6 +46,7 @@ Get-Content backend/logs/data-job.log -Tail 100 -Wait
 ```
 
 For a second worktree, set unused `DB_PORT`, `API_PORT`, and `FRONTEND_PORT` values
+and another `EDGE_NET` (e.g. `172.30.251`, the fixed subnet Caddy's network uses)
 in that worktree's root `.env` and use a separate project name on **every** command:
 
 ```powershell
@@ -124,11 +125,13 @@ origin. Vite embeds it at **build time**, so never put secrets in `VITE_*` value
 Separate-origin deployments also need a deliberate CORS policy; same-origin hosting
 avoids that requirement.
 
-## Production preparation
+## Production
 
-The root Compose file is for local development. Hosting, CI/CD, TLS termination,
-secret provisioning, database backups, and the log collector remain undecided.
-No cloud resources or production credentials are required for this preparation.
+Production runs the same root Compose file on one VPS with `--profile prod`, which adds
+Caddy (TLS) and the monitoring agent and uses images CI built instead of building.
+Provisioning, secrets, deploys and rollback: [infra/server/README.md](../infra/server/README.md).
+The server's `.env` sets `APP_PROFILE=prod`, so both applications run the `prod`
+profile; the rest of this section describes what that profile expects.
 
 Build the existing `api` and `data-job` targets from `backend/Dockerfile`. Configure
 each deployed process with the values shown in `backend/.env.prod.example`:

@@ -1,0 +1,11 @@
+# Local state holds secrets and resource ids: keep it out of git and back it up
+# privately (see README). The lock file is committed.
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+*.auto.tfvars
+crash.log
+
+# Filled-in server secrets, if you keep a copy here.
+app.env

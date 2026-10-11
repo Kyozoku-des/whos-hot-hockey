@@ -14,6 +14,8 @@ on:
       - "frontend/nginx/**"
       - "frontend/tests/**"
       - ".github/workflows/nginx-tests.yml"
+  # The deploy workflow runs the rate limiting tests before every deploy.
+  workflow_call:
 
 jobs:
   rate-limit:

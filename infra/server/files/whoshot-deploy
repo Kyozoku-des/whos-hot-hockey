@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+# Deploys one commit's images (issue #23). The CI deploy key is pinned to this script
+# in authorized_keys, so it is all that key can run:
+#
+#   printf '%s\n' "$GITHUB_TOKEN" | ssh deploy@server deploy <40-char commit SHA>
+#
+# The token (stdin) is only used to pull from GHCR and is logged out afterwards. Every
+# file the release runs with (compose.yaml, Caddyfile, Alloy config) comes from the
+# whos-hot-nhl-deploy image CI built for that commit, never from the caller, so a
+# leaked key can only redeploy a build CI already pushed.
+#
+# Installed by cloud-init from infra/server/files/whoshot-deploy. To update it on a
+# running server, see infra/server/README.md.
+set -euo pipefail
+umask 027
+
+readonly APP_DIR=/opt/whoshot
+readonly SECRETS="$APP_DIR/app.env"
+readonly REGISTRY=ghcr.io/kyozoku-des
+readonly KEEP_RELEASES=5
+
+die() { echo "deploy: $*" >&2; exit 1; }
+log() { echo "deploy: $*"; }
+
+read -r action sha extra <<<"${SSH_ORIGINAL_COMMAND:-${*:-}}" || true
+[[ "${action:-}" == deploy && -z "${extra:-}" ]] || die "usage: deploy <commit sha>"
+[[ "${sha:-}" =~ ^[0-9a-f]{40}$ ]] || die "not a full commit SHA: '${sha:-}'"
+
+# One deploy at a time: two data-job containers must never run at once.
+exec 9>"$APP_DIR/deploy.lock"
+flock -n 9 || die "another deploy is running"
+
+# Secrets are placed by the maintainer (README). Their values are checked below, once
+# Compose has resolved them.
+[[ -r "$SECRETS" ]] || die "$SECRETS is missing"
+
+IFS= read -r token || true
+[[ -n "${token:-}" ]] || die "expected a GHCR token on stdin"
+
+export DOCKER_CONFIG
+DOCKER_CONFIG="$(mktemp -d)"
+cleanup() { rm -rf "$DOCKER_CONFIG" "${staging:-}"; }
+trap cleanup EXIT
+printf '%s' "$token" | docker login ghcr.io -u deploy --password-stdin >/dev/null
+unset token
+
+release="$APP_DIR/releases/$sha"
+staging="$(mktemp -d "$APP_DIR/releases/.staging.XXXXXX")"
+
+log "fetching release files for $sha"
+bundle="$REGISTRY/whos-hot-nhl-deploy:$sha"
+docker pull --quiet "$bundle" >/dev/null
+container="$(docker create "$bundle" /none)"
+docker cp "$container:/bundle/." "$staging" >/dev/null
+mkdir -p "$staging/backend/logs"
+docker rm "$container" >/dev/null
+
+# Compose reads .env from the project directory: secrets plus this release's settings.
+{
+  cat "$SECRETS"
+  echo
+  echo "APP_PROFILE=prod"
+  echo "IMAGE_TAG=$sha"
+} >"$staging/.env"
+chmod 600 "$staging/.env"
+
+compose() { docker compose --profile prod "$@"; }
+
+# Check what Compose will actually use, after its own .env parsing and defaults: an
+# empty or quoted-empty DB_PASSWORD would otherwise fall back to the local password.
+(cd "$staging" && compose config --format json) | python3 -c '
+import json, sys
+services = json.load(sys.stdin)["services"]
+def value(service, key):
+    return (services[service].get("environment") or {}).get(key) or ""
+problems = [f"{service}: {key} is empty or the local default"
+            for service, key in [("postgres", "POSTGRES_PASSWORD"),
+                                 ("backend-api", "SPRING_DATASOURCE_PASSWORD"),
+                                 ("data-job", "SPRING_DATASOURCE_PASSWORD")]
+            if value(service, key) in ("", "whoshot_local")]
+if not value("caddy", "SITE_DOMAIN"):
+    problems.append("caddy: SITE_DOMAIN is empty")
+for problem in problems:
+    print(f"deploy: {problem}; fix it in the server secrets", file=sys.stderr)
+sys.exit(1 if problems else 0)
+' || die "refusing to deploy with these settings"
+
+rm -rf "$release"
+mv "$staging" "$release"
+staging=
+cd "$release"
+
+log "pulling images"
+compose pull --quiet
+
+log "starting"
+compose up -d --no-build --remove-orphans --wait --wait-timeout 300 \
+  || { compose ps; die "services did not become healthy; redeploy the previous SHA to roll back"; }
+
+ln -sfn "$release" "$APP_DIR/current"
+log "deployed $sha"
+
+# Keep a few releases (their files are tiny) and a week of images for quick rollbacks.
+find "$APP_DIR/releases" -mindepth 1 -maxdepth 1 -type d ! -name '.*' -printf '%T@ %p\n' \
+  | sort -rn | tail -n +$((KEEP_RELEASES + 1)) | cut -d' ' -f2- \
+  | while read -r old; do [[ "$old" == "$release" ]] || rm -rf "$old"; done
+docker image prune -af --filter "until=168h" >/dev/null

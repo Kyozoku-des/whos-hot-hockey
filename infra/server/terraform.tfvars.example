@@ -1,0 +1,16 @@
+# Copy to terraform.tfvars (git-ignored) and fill in.
+
+# Hetzner Console -> project -> Security -> API tokens, Read & Write.
+hcloud_token = ""
+
+# Your own key, e.g. the contents of ~/.ssh/id_ed25519.pub.
+admin_ssh_public_key = "ssh-ed25519 AAAA... you@laptop"
+
+# Public half of the CI deploy key (see README). The private half goes to GitHub.
+deploy_ssh_public_key = "ssh-ed25519 AAAA... whoshot-deploy"
+
+# Leave empty until the domain is bought.
+domain = ""
+
+# location = "nbg1"
+# admin_user = "ops"

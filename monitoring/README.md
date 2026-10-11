@@ -63,29 +63,9 @@ profile, so `docker compose --profile prod up -d` starts it with everything else
 
 ### 3. Caddy
 
-The Caddyfile (#21) needs to expose metrics on an internal port and log requests as JSON
-to stdout:
-
-```caddyfile
-{
-	metrics
-}
-
-# Internal only: not published by compose, scraped by alloy at caddy:2019.
-:2019 {
-	metrics /metrics
-}
-
-example.com {
-	log {
-		output stdout
-		format json
-	}
-	reverse_proxy frontend:3000
-}
-```
-
-Don't publish port 2019 in compose.
+`caddy/Caddyfile` (#21) serves metrics on the internal port 2019 (not published by
+compose; the admin API is off so it doesn't take that port) and logs requests as JSON
+to stdout.
 
 ## Checking it works
 
