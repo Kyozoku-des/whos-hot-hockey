@@ -38,8 +38,12 @@ jobs:
     if: ${{ !inputs.sha }}
     uses: ./.github/workflows/nginx-tests.yml
 
+  security:
+    if: ${{ !inputs.sha }}
+    uses: ./.github/workflows/security.yml
+
   build:
-    needs: [checks, rate-limit-tests]
+    needs: [checks, rate-limit-tests, security]
     if: ${{ !inputs.sha && github.ref == 'refs/heads/master' }}
     runs-on: ubuntu-24.04
     permissions:
