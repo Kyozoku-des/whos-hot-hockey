@@ -4,9 +4,21 @@
       <router-view />
     </main>
 
-    <nav class="site-links">
+    <nav ref="siteLinks" class="site-links">
       <router-link to="/settings">Settings</router-link>
     </nav>
+
+    <!-- Hints that there is more below while the links are out of view.
+         type="transition": the endless nudge animation would otherwise hold the leave -->
+    <Transition name="fade" type="transition">
+      <button
+        v-if="!linksVisible"
+        type="button"
+        class="scroll-hint"
+        aria-label="Scroll down to settings"
+        @click="scrollToLinks"
+      >&#9660;</button>
+    </Transition>
 
     <footer class="app-footer">
       <div class="container">
@@ -19,7 +31,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import NextGameTooltip from './components/NextGameTooltip.vue'
 import { timeZoneOption } from './composables/useSettings'
 
@@ -38,6 +50,26 @@ const lastUpdated = computed(() => {
   }
   return loadedAt.toLocaleString('en-US', options)
 })
+
+const siteLinks = ref(null)
+// Starts true so the arrow doesn't flash before the first check
+const linksVisible = ref(true)
+let observer = null
+
+const scrollToLinks = () => {
+  siteLinks.value?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+}
+
+onMounted(() => {
+  // The bottom margin leaves out the strip behind the fixed footer (rootMargin
+  // only takes px or %)
+  observer = new IntersectionObserver(([entry]) => {
+    linksVisible.value = entry.isIntersecting
+  }, { rootMargin: '0px 0px -64px 0px' })
+  observer.observe(siteLinks.value)
+})
+
+onUnmounted(() => observer?.disconnect())
 </script>
 
 <style scoped>
@@ -66,6 +98,50 @@ const lastUpdated = computed(() => {
   color: var(--color-text-secondary);
   text-decoration: underline;
   text-underline-offset: 4px;
+}
+
+.scroll-hint {
+  position: fixed;
+  left: 50%;
+  bottom: 4.5rem;
+  transform: translateX(-50%);
+  z-index: 100;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-card);
+  border: var(--color-border-thick) solid var(--color-text-secondary);
+  border-radius: 50%;
+  animation: nudge 1.6s ease-in-out infinite;
+}
+
+.scroll-hint:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-text-primary);
+}
+
+@keyframes nudge {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, 6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-hint {
+    animation: none;
+  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
 .site-links a:hover,

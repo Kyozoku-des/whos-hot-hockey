@@ -17,9 +17,19 @@ export const HOME_CARDS = [
 
 const DEFAULT_ORDER = HOME_CARDS.map(card => card.key)
 
+// The zone the browser reports from the device's settings, e.g. "Europe/Stockholm"
+const deviceTimeZone = () => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone?.replaceAll('_', ' ') || ''
+  } catch {
+    return ''
+  }
+}
+
 // '' follows the viewer's own time zone
+const deviceZone = deviceTimeZone()
 export const TIME_ZONES = [
-  { value: '', label: 'Your time zone' },
+  { value: '', label: deviceZone ? `Your time zone (${deviceZone})` : 'Your time zone' },
   { value: 'America/New_York', label: 'Eastern (ET)' },
   { value: 'America/Chicago', label: 'Central (CT)' },
   { value: 'America/Denver', label: 'Mountain (MT)' },
