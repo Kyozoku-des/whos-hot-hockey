@@ -5,6 +5,7 @@ import TeamPage from '../views/TeamPage.vue'
 import SettingsPage from '../views/SettingsPage.vue'
 import FeedbackPage from '../views/FeedbackPage.vue'
 import DonationsPage from '../views/DonationsPage.vue'
+import TipsPage from '../views/TipsPage.vue'
 
 const routes = [
   {
@@ -36,6 +37,11 @@ const routes = [
     path: '/donations',
     name: 'Donations',
     component: DonationsPage
+  },
+  {
+    path: '/tips',
+    name: 'Tips',
+    component: TipsPage
   }
 ]
 
