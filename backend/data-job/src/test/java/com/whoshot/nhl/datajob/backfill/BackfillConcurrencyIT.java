@@ -17,13 +17,16 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.locks.LockSupport;
 
 import static com.whoshot.nhl.datajob.backfill.BackfillFixtures.SEASON_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
@@ -94,8 +97,11 @@ class BackfillConcurrencyIT extends PostgresIntegrationTestBase {
         BackfillTestSupport.stubUpstream(nhlApiService);
         Connection crashedRun = openSession();
         assertTrue(tryAdvisoryLock(crashedRun));
+        int crashedPid = backendPid(crashedRun);
 
         crashedRun.close(); // the process died: Postgres drops its session-level locks
+        // close() returns before the server has ended the session and released its locks.
+        awaitSessionEnded(crashedPid);
 
         assertTrue(seasonBackfillService.run(request(), false).success());
     }
@@ -117,6 +123,35 @@ class BackfillConcurrencyIT extends PostgresIntegrationTestBase {
 
     private static Connection openSession() throws SQLException {
         return DriverManager.getConnection(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+    }
+
+    private static int backendPid(Connection connection) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("SELECT pg_backend_pid()");
+             ResultSet result = statement.executeQuery()) {
+            result.next();
+            return result.getInt(1);
+        }
+    }
+
+    private static void awaitSessionEnded(int pid) throws SQLException {
+        long deadline = System.nanoTime() + Duration.ofSeconds(10).toNanos();
+        try (Connection observer = openSession();
+             PreparedStatement statement = observer.prepareStatement(
+                     "SELECT count(*) FROM pg_stat_activity WHERE pid = ?")) {
+            statement.setInt(1, pid);
+            while (true) {
+                try (ResultSet result = statement.executeQuery()) {
+                    result.next();
+                    if (result.getInt(1) == 0) {
+                        return;
+                    }
+                }
+                if (System.nanoTime() > deadline) {
+                    fail("Postgres session " + pid + " did not end within 10 s of closing its connection");
+                }
+                LockSupport.parkNanos(Duration.ofMillis(20).toNanos());
+            }
+        }
     }
 
     private static boolean tryAdvisoryLock(Connection connection) throws SQLException {
