@@ -92,9 +92,10 @@ jobs:
 
   deploy:
     needs: build
-    # Runs after a build, or alone for a rollback (the build is then skipped).
+    # Runs after a build, or alone for a rollback (the build is then skipped). Skipped
+    # until the server is set up: setting the SITE_DOMAIN variable turns deploys on.
     if: >-
-      ${{ !cancelled() && github.ref == 'refs/heads/master' &&
+      ${{ !cancelled() && github.ref == 'refs/heads/master' && vars.SITE_DOMAIN != '' &&
       (needs.build.result == 'success' || (inputs.sha && needs.build.result == 'skipped')) }}
     runs-on: ubuntu-24.04
     environment:
@@ -110,7 +111,6 @@ jobs:
       - name: Check inputs
         run: |
           [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::'$SHA' is not a full commit SHA"; exit 1; }
-          [[ -n "${{ vars.SITE_DOMAIN }}" ]] || { echo "::error::repository variable SITE_DOMAIN is not set"; exit 1; }
 
       - name: Deploy
         env:
