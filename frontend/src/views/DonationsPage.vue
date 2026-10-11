@@ -141,9 +141,10 @@ const customInput = ref(null)
 const presets = computed(() => CURRENCIES[currency.value]?.presets ?? [])
 const limits = computed(() => CURRENCIES[currency.value] ?? { min: 0, max: 0 })
 
-// Preset amounts don't carry over between currencies, so start again from the middle
+// Amounts don't carry over between currencies, so start again from the middle preset
 watch(currency, () => {
   selectedIndex.value = DEFAULT_INDEX
+  isCustom.value = false
   customAmount.value = ''
 })
 
