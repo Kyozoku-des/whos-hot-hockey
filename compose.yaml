@@ -10,6 +10,10 @@ name: whos-hot-nhl
 services:
   postgres:
     image: postgres:17
+    mem_limit: 1g
+    memswap_limit: 1g
+    cpus: 1.0
+    pids_limit: 256
     restart: unless-stopped
     environment:
       POSTGRES_DB: nhl_stats
@@ -29,6 +33,10 @@ services:
   # Nothing changes the old whoshot owner/password, so older releases can roll back.
   migrate:
     image: ghcr.io/kyozoku-des/whos-hot-nhl-api:${IMAGE_TAG:-local}
+    mem_limit: 768m
+    memswap_limit: 768m
+    cpus: 1.0
+    pids_limit: 256
     build:
       context: ./backend
       target: api
@@ -44,6 +52,10 @@ services:
 
   db-roles:
     image: postgres:17
+    mem_limit: 128m
+    memswap_limit: 128m
+    cpus: 0.5
+    pids_limit: 64
     command: ["psql", "--no-psqlrc", "--set", "ON_ERROR_STOP=1", "--file", "/roles.sql"]
     environment:
       PGHOST: postgres
@@ -62,6 +74,10 @@ services:
 
   backend-api:
     image: ghcr.io/kyozoku-des/whos-hot-nhl-api:${IMAGE_TAG:-local}
+    mem_limit: 768m
+    memswap_limit: 768m
+    cpus: 1.0
+    pids_limit: 256
     build:
       context: ./backend
       target: api
@@ -93,6 +109,10 @@ services:
 
   data-job:
     image: ghcr.io/kyozoku-des/whos-hot-nhl-data-job:${IMAGE_TAG:-local}
+    mem_limit: 1g
+    memswap_limit: 1g
+    cpus: 1.0
+    pids_limit: 256
     build:
       context: ./backend
       target: data-job
@@ -120,6 +140,10 @@ services:
   #   podman-compose run --rm -e BACKFILL_SEASON=20242025 backfill
   backfill:
     image: ghcr.io/kyozoku-des/whos-hot-nhl-data-job:${IMAGE_TAG:-local}
+    mem_limit: 1g
+    memswap_limit: 1g
+    cpus: 1.0
+    pids_limit: 256
     build:
       context: ./backend
       target: data-job
@@ -143,6 +167,10 @@ services:
 
   frontend:
     image: ghcr.io/kyozoku-des/whos-hot-nhl-frontend:${IMAGE_TAG:-local}
+    mem_limit: 128m
+    memswap_limit: 128m
+    cpus: 0.5
+    pids_limit: 128
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -172,6 +200,10 @@ services:
   # the caddy_data volume; keep it, Let's Encrypt rate-limits new certificates.
   caddy:
     image: ghcr.io/kyozoku-des/whos-hot-nhl-caddy:${IMAGE_TAG:-local}
+    mem_limit: 256m
+    memswap_limit: 256m
+    cpus: 0.5
+    pids_limit: 128
     build:
       context: ./caddy
     profiles:
@@ -229,6 +261,9 @@ services:
     # See every container's cgroup, not only its own (cgroup v2 namespaces them).
     cgroup: host
     mem_limit: 300m
+    memswap_limit: 300m
+    cpus: 0.5
+    pids_limit: 256
     # edge: to scrape Caddy's metrics port.
     networks:
       - default

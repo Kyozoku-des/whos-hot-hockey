@@ -37,6 +37,15 @@ Monitor rejections, CPU, database connections and latency before increasing them
 Per-address, IPv6-prefix and distributed-address regression tests run against the
 actual nginx configuration with a local mock backend.
 
+Compose also caps CPU, memory (with no additional swap allowance) and process
+counts. API/migration containers have 768 MiB, PostgreSQL and ingestion/backfill
+1 GiB each, Caddy 256 MiB, frontend/provisioning 128 MiB, and Alloy 300 MiB.
+These are ceilings rather than reservations. The API and migration startup were
+smoke-tested under these limits; sustained ingestion/backfill and production load
+still need measurement. On the 4 GB host, schedule backfills with attention to
+concurrent service memory usage. Raise limits only after checking host headroom;
+an exhausted memory budget can terminate and restart a service.
+
 **Still required:** measure production capacity and select upstream network/DDoS
 protection. The origin currently accepts direct Internet traffic; application
 limits cannot prevent link saturation. If adding a CDN, restrict origin access and
