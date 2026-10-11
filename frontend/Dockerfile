@@ -27,6 +27,9 @@ RUN npm run build
 # Runtime stage with nginx
 FROM nginx:alpine
 
+# Take Alpine security fixes released since the base image was built.
+RUN apk upgrade --no-cache
+
 # Copy built assets from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
 
