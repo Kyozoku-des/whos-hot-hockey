@@ -13,6 +13,8 @@ PYTHON_IMAGE=python:3.13.13-alpine3.23
 module_dir="$(cd "$(dirname "$0")/.." && pwd)"
 work_dir="$(mktemp -d)"
 trap 'rm -rf "$work_dir"' EXIT
+# mktemp creates it owner-only; the Prometheus image runs as nobody and must read it.
+chmod 755 "$work_dir"
 
 # Docker on Windows (Git Bash) needs Windows paths and no MSYS path rewriting.
 host_path() { if command -v cygpath >/dev/null; then cygpath -w "$1"; else echo "$1"; fi; }
@@ -36,6 +38,7 @@ echo 'jsonencode({ for name, rule in local.rules : name => { expr = rule.expr, d
 
 docker run --rm -v "$(host_path "$module_dir/tests"):/scripts:ro" -v "$(host_path "$work_dir"):/tests"   "$PYTHON_IMAGE" python /scripts/render_rules.py /tests/rules.json >"$work_dir/rules.yml"
 cp "$module_dir/tests/alerts.test.yml" "$work_dir/"
+chmod 644 "$work_dir"/*
 
 docker run --rm --entrypoint promtool -v "$(host_path "$work_dir"):/tests" -w /tests "$PROM_IMAGE" \
   test rules alerts.test.yml
