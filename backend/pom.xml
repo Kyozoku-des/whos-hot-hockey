@@ -30,6 +30,8 @@
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.proc>full</maven.compiler.proc>
+        <!-- 3.16.0 updates the compiler's own Commons IO/Plexus dependencies. -->
+        <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
         <!-- Lombok, maven-compiler-plugin and Testcontainers versions are managed by the Boot parent.
              Boot 4.1.1 manages Testcontainers 2.0.5, which already negotiates a Docker API version
              accepted by Docker Engine 29+, so the former 1.21.4 override is no longer needed. -->
@@ -58,9 +60,50 @@
     <build>
         <pluginManagement>
             <plugins>
+                <!-- Project dependencyManagement does not govern Maven plugin realms.
+                     Keep these targeted overrides until the plugins ship patched versions. -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.codehaus.plexus</groupId>
+                            <artifactId>plexus-utils</artifactId>
+                            <version>4.0.3</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.codehaus.plexus</groupId>
+                            <artifactId>plexus-utils</artifactId>
+                            <version>3.6.1</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
                 <plugin>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
+                    <dependencies>
+                        <dependency>
+                            <groupId>tools.jackson.core</groupId>
+                            <artifactId>jackson-databind</artifactId>
+                            <version>${jackson-bom.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.codehaus.plexus</groupId>
+                            <artifactId>plexus-utils</artifactId>
+                            <version>3.6.1</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.commons</groupId>
+                            <artifactId>commons-lang3</artifactId>
+                            <version>${commons-lang3.version}</version>
+                        </dependency>
+                    </dependencies>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
