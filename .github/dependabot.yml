@@ -20,8 +20,9 @@ updates:
 
   # node uses a minor tag to enforce npm's Node floor; the other runtime tags
   # float on their major. Patches arrive on rebuild and Node minor bumps via PRs.
-  # A new major (non-LTS Node or JDK, a Postgres data format change) is a deliberate upgrade, not a weekly bump. maven's tag encodes
-  # the JDK in a suffix Dependabot does not read as a major, so skip it entirely.
+  # A new major (non-LTS Node or JDK, a Postgres data format change) is a
+  # deliberate upgrade, not a weekly bump. maven's tag encodes the JDK in a
+  # suffix Dependabot does not read as a major, so skip it entirely.
   - package-ecosystem: docker
     directories: [/backend, /frontend]
     schedule:
