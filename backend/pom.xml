@@ -30,9 +30,10 @@
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.proc>full</maven.compiler.proc>
-        <!-- 3.16.0 updates the compiler's own Commons IO/Plexus dependencies. -->
+        <!-- Security override over Boot 4.1.1's managed 3.15.0: 3.16.0 updates the compiler's own
+             Commons IO/Plexus dependencies. Remove once Boot manages 3.16.0 or newer. -->
         <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
-        <!-- Lombok, maven-compiler-plugin and Testcontainers versions are managed by the Boot parent.
+        <!-- Lombok and Testcontainers versions are managed by the Boot parent.
              Boot 4.1.1 manages Testcontainers 2.0.5, which already negotiates a Docker API version
              accepted by Docker Engine 29+, so the former 1.21.4 override is no longer needed. -->
         <!-- Security patch overrides on top of Boot 4.1.1's managed versions. Remove each one once
@@ -61,7 +62,11 @@
         <pluginManagement>
             <plugins>
                 <!-- Project dependencyManagement does not govern Maven plugin realms.
-                     Keep these targeted overrides until the plugins ship patched versions. -->
+                     Baselines: clean 3.5.0, resources 3.5.0, Boot plugin 4.1.1.
+                     Remove each override once that plugin resolves compatible patched dependencies:
+                     clean: Plexus Utils 4.0.3+; resources: Plexus Utils 3.6.1+; Boot: Jackson 3.1.7+,
+                     Plexus Utils 3.6.1+ and Commons Lang 3.18.0+ (currently Boot-managed 3.20.0).
+                     Check the plugin realm itself, not just application dependencyManagement. -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-clean-plugin</artifactId>
