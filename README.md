@@ -13,7 +13,7 @@ A full-stack application for tracking NHL statistics with a focus on identifying
 ### Prerequisites
 
 - Podman & podman-compose (or Docker & Docker Compose)
-- Optionally: JDK 25, Maven 3.9+, Node.js 24.15+ (for manual development; Node 24 LTS recommended)
+- Optionally: JDK 25, Maven 3.9+, Node.js 22.12+ (for manual development; Node 24 LTS recommended, matching CI and the container)
 
 ### Running with Podman Compose (Recommended)
 

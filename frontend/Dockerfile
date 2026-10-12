@@ -1,13 +1,13 @@
 # Multi-stage build for NHL Stats Frontend
-FROM node:24-alpine AS build
+FROM node:24.21-alpine AS build
 RUN apk upgrade --no-cache
-# Patch dependencies bundled in npm itself, separately from the app lock file.
-RUN npm install --global npm@12.2.0
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
+# Patch npm itself using the same version as CI.
+RUN npm install --global "$(node -p "require('./package.json').packageManager")"
 
 # Install dependencies
 RUN npm ci
@@ -25,7 +25,7 @@ ARG VITE_DONATION_URL_EUR=
 ARG VITE_DONATION_URL_USD=
 
 # Build the application
-RUN npm run build
+RUN npm run build && npm run check:targets
 
 # Runtime stage with nginx
 FROM nginx:alpine

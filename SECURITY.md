@@ -134,8 +134,12 @@ HIGH and one MEDIUM findings are Apache HTTP libraries shaded inside
 ordinary dependency overrides cannot replace classes inside that jar.
 
 Vite 8.3.4 with Vue plugin 6.0.10 replaces the old esbuild toolchain. Explicit build
-targets preserve the previous Chrome 87/Edge 88/Firefox 78/Safari 14 browser floor.
-The container also updates npm to 12.2.0. Its build-stage findings drop from 71 to
+targets retain the previous Chrome 87/Edge 88/Firefox 78/Safari 14 browser floor.
+CI and the container run `npm run check:targets`, parsing every built JavaScript
+module as ES2020 with Acorn. Regression tests reject newer syntax in nested chunks
+and empty builds. This checks syntax, not browser APIs or CSS; real browser
+compatibility still needs testing. The Node 24.21 container and CI install the npm
+version from `package.json` (`packageManager`), currently 12.2.0. Its build-stage findings drop from 71 to
 11 (four HIGH, seven MEDIUM), all in npm's bundled dependencies; the critical
 esbuild finding is removed. The app lock-file audit remains clean. No scanner
 waivers, deleted evidence or runtime dependency changes are used for these fixes.
