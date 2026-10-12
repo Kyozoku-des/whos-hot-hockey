@@ -117,8 +117,10 @@ medium-or-higher findings in the 2026-10-11 local scan. This is a dated scanner
 result, not a guarantee about future advisories or exploitability. PostgreSQL 17,
 Alloy 1.20.1-distroless and some build tools still have findings, including ones without a
 published fix. Master now carries expiring policies accepting specific upstream
-findings (PR #84). This follow-up adds no exceptions or policy changes. Any finding
-outside those exact policy entries still blocks deployment. Keep issue #58 open for
+findings (PR #84). This follow-up removes the obsolete esbuild rule and its 51
+exceptions, retaining only the 11 npm entries with corrected reasons and unchanged
+package versions, paths and expiry. It accepts no new findings. Any finding outside
+those exact policy entries still blocks deployment. Keep issue #58 open for
 the outstanding remediation and operational work; do not hide images or findings.
 
 Resolve PostgreSQL/Alloy updates and their embedded dependencies separately from
