@@ -1,4 +1,5 @@
 """Exercise the public HTTP redirect's slow-header boundary with the shipped Caddy image."""
+import http.client
 import json
 import os
 from pathlib import Path
@@ -64,12 +65,17 @@ class PublicHttpLimitTest(unittest.TestCase):
                 response = b""
             self.assertLess(time.monotonic() - started, 13)
             self.assertTrue(not response or b" 408 " in response, response)
-        with socket.create_connection(("127.0.0.1", self.port), timeout=3) as connection:
-            connection.sendall(b"GET /players?season=20262027 HTTP/1.1\r\n"
-                               b"Host: security58.test\r\nConnection: close\r\n\r\n")
-            response = connection.recv(4096)
-            self.assertIn(b" 308 ", response)
-            self.assertIn(b"Location: https://security58.test/players?season=20262027", response)
+        connection = http.client.HTTPConnection("127.0.0.1", self.port, timeout=3)
+        try:
+            connection.request("GET", "/players?season=20262027",
+                               headers={"Host": "security58.test", "Connection": "close"})
+            response = connection.getresponse()
+            self.assertEqual(response.status, 308)
+            self.assertEqual(response.getheader("Location"),
+                             "https://security58.test/players?season=20262027")
+            response.read()
+        finally:
+            connection.close()
 
 
 if __name__ == "__main__":
