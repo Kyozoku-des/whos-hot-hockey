@@ -30,6 +30,11 @@
 	}
 }
 
+# Declare HTTP during adaptation so the global server timeouts also cover the
+# HTTPS redirect and ACME challenge listener (automatic HTTPS adds their routes).
+http:// {
+}
+
 # Internal only: compose does not publish 2019; the monitoring agent scrapes caddy:2019.
 :2019 {
 	metrics /metrics

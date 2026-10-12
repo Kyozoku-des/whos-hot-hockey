@@ -35,7 +35,11 @@ Requests from a shared IPv6 network or IPv4 NAT share that network/address budge
 These are conservative starting limits, not results of a production capacity test.
 Monitor rejections, CPU, database connections and latency before increasing them.
 Per-address, IPv6-prefix and distributed-address regression tests run against the
-actual nginx configuration with a local mock backend.
+actual nginx configuration with a local mock backend. Caddy tests also send
+incomplete headers to the real HTTP redirect listener: it must close within the
+configured 10-second header deadline and then still redirect normal requests.
+The explicit HTTP site ensures that listener inherits the configured timeouts;
+automatically generated listeners do not inherit Caddyfile server options.
 
 Compose also caps CPU, memory (with no additional swap allowance) and process
 counts. API/migration containers have 768 MiB, PostgreSQL and ingestion/backfill
