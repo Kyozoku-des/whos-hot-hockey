@@ -35,7 +35,11 @@ Requests from a shared IPv6 network or IPv4 NAT share that network/address budge
 These are conservative starting limits, not results of a production capacity test.
 Monitor rejections, CPU, database connections and latency before increasing them.
 Per-address, IPv6-prefix and distributed-address regression tests run against the
-actual nginx configuration with a local mock backend.
+actual nginx configuration with a local mock backend. Caddy tests also send
+incomplete headers to the real HTTP redirect listener: it must close within the
+configured 10-second header deadline and then still redirect normal requests.
+The explicit HTTP site ensures that listener inherits the configured timeouts;
+automatically generated listeners do not inherit Caddyfile server options.
 
 Compose also caps CPU, memory (with no additional swap allowance) and process
 counts. API/migration containers have 768 MiB, PostgreSQL and ingestion/backfill
@@ -46,10 +50,16 @@ still need measurement. On the 4 GB host, schedule backfills with attention to
 concurrent service memory usage. Raise limits only after checking host headroom;
 an exhausted memory budget can terminate and restart a service.
 
-**Still required:** measure production capacity and select upstream network/DDoS
-protection. The origin currently accepts direct Internet traffic; application
-limits cannot prevent link saturation. If adding a CDN, restrict origin access and
-review the trusted-proxy configuration before accepting its forwarded addresses.
+No paid external security service is required or planned. The existing deployment
+uses Hetzner, whose [automated network DDoS protection](https://www.hetzner.com/unternehmen/ddos-schutz/)
+is provided without an additional charge (provider documentation checked 2026-10-12).
+Use that included protection alongside the local limits, timeouts and resource caps;
+no new provider, CDN or paid dependency is added. This is not a guarantee that all
+attacks will be stopped, and the application's limits cannot protect the Internet link.
+
+**Still required:** measure production capacity and validate the local controls on
+the deployed host. The origin still accepts direct Internet traffic. Any additional
+protection must be included in the existing hosting or free of charge.
 
 ## Logs and diagnostic agents
 
