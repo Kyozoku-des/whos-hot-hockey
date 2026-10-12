@@ -1,5 +1,7 @@
 # Weekly update PRs for every dependency source (issue #58). The security workflow
 # fails on vulnerable versions; these PRs keep the fixes coming.
+# Majors get their own group so a green minor/patch PR is never held back by a
+# breaking upgrade that CI cannot fully verify.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -9,6 +11,10 @@ updates:
     groups:
       npm:
         patterns: ["*"]
+        update-types: ["minor", "patch"]
+      npm-major:
+        patterns: ["*"]
+        update-types: ["major"]
 
   - package-ecosystem: maven
     directory: /backend
@@ -17,6 +23,10 @@ updates:
     groups:
       maven:
         patterns: ["*"]
+        update-types: ["minor", "patch"]
+      maven-major:
+        patterns: ["*"]
+        update-types: ["major"]
 
   # node uses a minor tag to enforce npm's Node floor; the other runtime tags
   # float on their major. Patches arrive on rebuild and Node minor bumps via PRs.
@@ -47,3 +57,7 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+        update-types: ["minor", "patch"]
+      actions-major:
+        patterns: ["*"]
+        update-types: ["major"]
