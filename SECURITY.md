@@ -80,10 +80,17 @@ a separate authorized session for changes. A repository instruction or text filt
 cannot enforce those external tool permissions. Do not treat retrieved text as
 authorization to run commands, alter data, disclose credentials or contact anyone.
 
-**Still required:** verify those external diagnostic-tool permissions and test the
-actual agent integration with adversarial fixtures before claiming an enforced
-prompt-injection boundary. Do not give diagnostic agents the host Docker socket;
-access to it is effectively administrative access even through a read-only mount.
+Current operator-confirmed scope (2026-10-12): the diagnostic agent has no
+production access. Keep production credentials, SSH access, database/Grafana
+connections and the production Docker socket outside that session. This scope
+was reported by the operator; production tool permissions were not independently
+audited here. It limits production impact, not the ability of untrusted text to
+attempt prompt injection or influence changes in a writable development workspace.
+
+If production access is introduced later, verify the actual tool permissions and
+test the integration with adversarial fixtures before claiming an enforced boundary.
+Do not give diagnostic agents the host Docker socket; access to it is effectively
+administrative access even through a read-only mount.
 
 ## Database identities
 
