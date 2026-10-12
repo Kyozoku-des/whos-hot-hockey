@@ -55,17 +55,26 @@ jobs:
           scan() {
             docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD/security:/security:ro" \
               -v trivy-cache:/root/.cache/trivy "$TRIVY_IMAGE" image --scanners vuln \
-              --severity MEDIUM,HIGH,CRITICAL --exit-code 1 --no-progress --quiet "$@" scan/policy-fixture
+              --severity MEDIUM,HIGH,CRITICAL --no-progress --quiet --show-suppressed --format json \
+              "$@" scan/policy-fixture
           }
-          if scan --ignorefile "" >/dev/null; then
-            echo "::error::the fixture has no findings, so the check below would prove nothing"; exit 1
-          fi
+          # Every finding, not just the exit code: a policy suppressing one of the two
+          # packages would otherwise be masked by the other still failing.
+          count() { jq "[.Results[]? | .$1[]?] | length"; }
+          baseline=$(scan --ignorefile "")
+          packages=$(jq -r '[.Results[]? | .Vulnerabilities[]? | .PkgName] | unique | join(" ")' <<<"$baseline")
+          [[ "$packages" == *httpclient5* && "$packages" == *undici* ]] \
+            || { echo "::error::the fixture lacks findings ($packages), so this check would prove nothing"; exit 1; }
+          expected=$(count Vulnerabilities <<<"$baseline")
           for policy in security/trivyignore/*.yaml; do
-            if scan --ignorefile "/$policy" >/dev/null; then
-              echo "::error::$policy suppresses the fixture's findings outside their accepted location"
+            result=$(scan --ignorefile "/$policy")
+            active=$(count Vulnerabilities <<<"$result")
+            suppressed=$(count ExperimentalModifiedFindings <<<"$result")
+            if [[ "$suppressed" != 0 || "$active" != "$expected" ]]; then
+              echo "::error::$policy suppresses $suppressed of the fixture's $expected findings outside their accepted location"
               exit 1
             fi
-            echo "$policy: fixture still fails"
+            echo "$policy: all $expected fixture findings still active"
           done
 
   images:
