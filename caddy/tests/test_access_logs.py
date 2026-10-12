@@ -20,11 +20,16 @@ class AccessLogTest(unittest.TestCase):
 
     def assert_sanitized(self, upstream, status):
         config = (Path(__file__).resolve().parents[1] / "Caddyfile").read_text()
-        config = config.replace("{\n\t# The admin", "{\n\tauto_https off\n\t# The admin")
-        config = config.replace("www.{$SITE_DOMAIN} {", "http://www.review.test:8080 {")
-        config = config.replace("{$SITE_DOMAIN} {", "http://review.test:8080 {")
-        config = config.replace("{$SITE_DOMAIN}", "review.test")
-        config = config.replace("reverse_proxy frontend:3000", upstream)
+        replacements = (
+            ("{\n\t# The admin", "{\n\tauto_https off\n\t# The admin"),
+            ("www.{$SITE_DOMAIN} {", "http://www.review.test:8080 {"),
+            ("{$SITE_DOMAIN} {", "http://review.test:8080 {"),
+            ("{$SITE_DOMAIN}", "review.test"),
+            ("reverse_proxy frontend:3000", upstream),
+        )
+        for original, replacement in replacements:
+            self.assertIn(original, config, f"Caddy fixture replacement did not match: {original!r}")
+            config = config.replace(original, replacement)
         name = "whoshot-access-test-" + uuid.uuid4().hex[:12]
         image = os.environ.get("CADDY_TEST_IMAGE", "ghcr.io/kyozoku-des/whos-hot-nhl-caddy:local")
         marker = "UNTRUSTED_ACCESS_LOG_MARKER"

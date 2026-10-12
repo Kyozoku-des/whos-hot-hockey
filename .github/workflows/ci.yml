@@ -80,7 +80,7 @@ jobs:
           docker run --rm -e SITE_DOMAIN=example.com \
             -v "$PWD/caddy/Caddyfile:/etc/caddy/Caddyfile:ro" \
             "$image" caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
-      - name: Test sanitized access logs
+      - name: Test Caddy
         run: |
           export CADDY_TEST_IMAGE=$(docker compose --profile prod config --format json | jq -r '.services.caddy.image')
           python3 -m unittest discover -s caddy/tests -v

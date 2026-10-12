@@ -20,9 +20,15 @@ class PublicHttpLimitTest(unittest.TestCase):
         cls.image = os.environ.get("CADDY_TEST_IMAGE", "ghcr.io/kyozoku-des/whos-hot-nhl-caddy:local")
         config = (Path(__file__).resolve().parents[1] / "Caddyfile").read_text()
         # Local CA only: no public DNS, ACME request, or host certificate installation.
-        config = config.replace("{\n\t# The admin", "{\n\tlocal_certs\n\tskip_install_trust\n\t# The admin")
-        config = config.replace("{$SITE_DOMAIN}", "security58.test")
-        config = config.replace("reverse_proxy frontend:3000", 'respond "fixture" 200')
+        replacements = (
+            ("{\n\t# The admin", "{\n\tlocal_certs\n\tskip_install_trust\n\t# The admin"),
+            ("{$SITE_DOMAIN}", "security58.test"),
+            ("reverse_proxy frontend:3000", 'respond "fixture" 200'),
+        )
+        for original, replacement in replacements:
+            if original not in config:
+                raise AssertionError(f"Caddy fixture replacement did not match: {original!r}")
+            config = config.replace(original, replacement)
         path = Path(cls.directory.name) / "Caddyfile"
         path.write_text(config)
         cls.addClassCleanup(lambda: subprocess.run(
@@ -32,9 +38,11 @@ class PublicHttpLimitTest(unittest.TestCase):
         cls.port = int(cls.docker("port", cls.name, "80/tcp").rsplit(":", 1)[1])
         for attempt in range(50):
             try:
-                with socket.create_connection(("127.0.0.1", cls.port), timeout=1):
-                    return
-            except OSError:
+                status, location = cls.http_redirect("security58.test")
+                if (status, location) != (308, "https://security58.test/players?season=20262027"):
+                    raise AssertionError(f"Caddy is not ready: {(status, location)!r}")
+                return
+            except (OSError, http.client.HTTPException):
                 if attempt == 49:
                     raise
                 time.sleep(0.1)
@@ -43,6 +51,19 @@ class PublicHttpLimitTest(unittest.TestCase):
     def docker(*args):
         return subprocess.run(["docker", *args], capture_output=True, text=True,
                               check=True).stdout.strip()
+
+    @classmethod
+    def http_redirect(cls, host):
+        connection = http.client.HTTPConnection("127.0.0.1", cls.port, timeout=1)
+        try:
+            connection.request("GET", "/players?season=20262027",
+                               headers={"Host": host, "Connection": "close"})
+            response = connection.getresponse()
+            result = response.status, response.getheader("Location")
+            response.read()
+            return result
+        finally:
+            connection.close()
 
     def test_http_redirect_has_the_configured_deadlines(self):
         adapted = json.loads(self.docker("exec", self.name, "caddy", "adapt",
@@ -57,25 +78,21 @@ class PublicHttpLimitTest(unittest.TestCase):
 
     def test_incomplete_http_headers_are_closed_and_redirect_recovers(self):
         with socket.create_connection(("127.0.0.1", self.port), timeout=13) as connection:
-            connection.sendall(b"GET / HTTP/1.1\r\nHost: security58.test\r\nX-Slow: ")
             started = time.monotonic()
+            connection.sendall(b"GET / HTTP/1.1\r\nHost: security58.test\r\nX-Slow: ")
             try:
                 response = connection.recv(4096)
             except ConnectionResetError:
                 response = b""
-            self.assertLess(time.monotonic() - started, 13)
+            elapsed = time.monotonic() - started
+            self.assertGreaterEqual(elapsed, 9, "an early close does not prove the 10-second deadline")
+            self.assertLess(elapsed, 13)
             self.assertTrue(not response or b" 408 " in response, response)
-        connection = http.client.HTTPConnection("127.0.0.1", self.port, timeout=3)
-        try:
-            connection.request("GET", "/players?season=20262027",
-                               headers={"Host": "security58.test", "Connection": "close"})
-            response = connection.getresponse()
-            self.assertEqual(response.status, 308)
-            self.assertEqual(response.getheader("Location"),
-                             "https://security58.test/players?season=20262027")
-            response.read()
-        finally:
-            connection.close()
+        for host in ("security58.test", "www.security58.test"):
+            with self.subTest(host=host):
+                status, location = self.http_redirect(host)
+                self.assertEqual(status, 308)
+                self.assertEqual(location, f"https://{host}/players?season=20262027")
 
 
 if __name__ == "__main__":

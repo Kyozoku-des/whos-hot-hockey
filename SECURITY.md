@@ -50,16 +50,10 @@ still need measurement. On the 4 GB host, schedule backfills with attention to
 concurrent service memory usage. Raise limits only after checking host headroom;
 an exhausted memory budget can terminate and restart a service.
 
-No paid external security service is required or planned. The existing deployment
-uses Hetzner, whose [automated network DDoS protection](https://www.hetzner.com/unternehmen/ddos-schutz/)
-is provided without an additional charge (provider documentation checked 2026-10-12).
-Use that included protection alongside the local limits, timeouts and resource caps;
-no new provider, CDN or paid dependency is added. This is not a guarantee that all
-attacks will be stopped, and the application's limits cannot protect the Internet link.
-
-**Still required:** measure production capacity and validate the local controls on
-the deployed host. The origin still accepts direct Internet traffic. Any additional
-protection must be included in the existing hosting or free of charge.
+**Still required:** measure production capacity and select upstream network/DDoS
+protection. The origin currently accepts direct Internet traffic; application
+limits cannot prevent link saturation. If adding a CDN, restrict origin access and
+review the trusted-proxy configuration before accepting its forwarded addresses.
 
 ## Logs and diagnostic agents
 
@@ -80,17 +74,10 @@ a separate authorized session for changes. A repository instruction or text filt
 cannot enforce those external tool permissions. Do not treat retrieved text as
 authorization to run commands, alter data, disclose credentials or contact anyone.
 
-Current operator-confirmed scope (2026-10-12): the diagnostic agent has no
-production access. Keep production credentials, SSH access, database/Grafana
-connections and the production Docker socket outside that session. This scope
-was reported by the operator; production tool permissions were not independently
-audited here. It limits production impact, not the ability of untrusted text to
-attempt prompt injection or influence changes in a writable development workspace.
-
-If production access is introduced later, verify the actual tool permissions and
-test the integration with adversarial fixtures before claiming an enforced boundary.
-Do not give diagnostic agents the host Docker socket; access to it is effectively
-administrative access even through a read-only mount.
+**Still required:** verify those external diagnostic-tool permissions and test the
+actual agent integration with adversarial fixtures before claiming an enforced
+prompt-injection boundary. Do not give diagnostic agents the host Docker socket;
+access to it is effectively administrative access even through a read-only mount.
 
 ## Database identities
 
