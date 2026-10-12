@@ -104,19 +104,22 @@ the Caddyfile and access-log filter using this exact image. Publish/retain the
 
 The security workflow derives the runtime inventory from **all** Compose profiles,
 deduplicates shared images, and also scans the API, ingestion, frontend and Caddy
-build stages. Trivy fails on MEDIUM/HIGH/CRITICAL findings, including unfixed ones;
-there is no ignore list or `--ignore-unfixed` exception. It finishes the remaining
-scans after a failure and uploads the inventory and JSON reports. npm audit checks
+build stages. Trivy fails on MEDIUM/HIGH/CRITICAL findings unless the inherited
+image-specific policy accepts that exact package version and location with a reason
+and expiry. Application runtime images have no exceptions. The workflow retains
+suppressed findings in its reports and tests the policy boundaries. It finishes the
+remaining scans after a failure and uploads the inventory and JSON reports. npm audit checks
 the frontend lock file separately. Build stages include embedded tool binaries and
 plugin dependencies that a lock-file audit alone misses.
 
 The application runtime images (API, ingestion, frontend and rebuilt Caddy) had no
 medium-or-higher findings in the 2026-10-11 local scan. This is a dated scanner
 result, not a guarantee about future advisories or exploitability. PostgreSQL 17,
-Alloy 1.20.1 and some build tools still have findings, including ones without a
-published fix. The strict workflow therefore blocks deployment. Keep this work
-in draft until those dependencies are remediated or the issue's acceptance policy
-is explicitly changed; do not bypass the gate by hiding those images or findings.
+Alloy 1.20.1-distroless and some build tools still have findings, including ones without a
+published fix. Master now carries expiring policies accepting specific upstream
+findings (PR #84). This follow-up adds no exceptions or policy changes. Any finding
+outside those exact policy entries still blocks deployment. Keep issue #58 open for
+the outstanding remediation and operational work; do not hide images or findings.
 
 Resolve PostgreSQL/Alloy updates and their embedded dependencies separately from
 the database role rollout. Review compatibility, migration/rollback and monitoring
@@ -141,12 +144,13 @@ and empty builds. This checks syntax, not browser APIs or CSS; real browser
 compatibility still needs testing. The Node 24.21 container and CI install the npm
 version from `package.json` (`packageManager`), currently 12.2.0. Its build-stage findings drop from 71 to
 11 (four HIGH, seven MEDIUM), all in npm's bundled dependencies; the critical
-esbuild finding is removed. The app lock-file audit remains clean. No scanner
-waivers, deleted evidence or runtime dependency changes are used for these fixes.
+esbuild finding is removed. The app lock-file audit remains clean. These build-tool
+fixes add no policy exceptions or runtime dependency changes.
 
 Validation: 252 backend tests; Windows short-path and Linux file-boundary tests;
 frontend build; desktop/mobile-width headless browser smoke with mocked API data.
 This is not a real-device or production-load test. To roll back these build-tool
 changes, restore their POM/package/config/Dockerfile changes together and rebuild;
 they do not alter database schemas or stored data. PostgreSQL, Alloy, npm's bundled
-libraries and the shaded Docker test client still block the strict image gate.
+libraries and the shaded Docker test client still have raw findings. The gate applies
+master's existing expiring policies; this branch does not extend their acceptance.

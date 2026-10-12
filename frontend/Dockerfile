@@ -7,7 +7,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 # Patch npm itself using the same version as CI.
-RUN npm install --global "$(node -p "require('./package.json').packageManager")"
+RUN npm install --global "$(node -p "require('./package.json').packageManager")" && npm cache clean --force
 
 # Install dependencies
 RUN npm ci

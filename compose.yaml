@@ -230,7 +230,9 @@ services:
   # Grafana Cloud. Production only: `docker compose --profile prod up -d`.
   # See monitoring/README.md.
   alloy:
-    image: grafana/alloy:v1.20.1
+    # Distroless: same binary, entrypoint and user as the Ubuntu variant, without the
+    # Ubuntu packages (and their advisories) or a shell (issue #58).
+    image: grafana/alloy:v1.20.1-distroless
     profiles:
       - prod
     command:
@@ -254,6 +256,8 @@ services:
       - /sys:/host/sys:ro
       - /:/host/root:ro
       - /run/udev/data:/run/udev/data:ro
+      # cAdvisor reads the machine ID; the distroless image has none of its own.
+      - /etc/machine-id:/etc/machine-id:ro
       # Container metrics and logs
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /run/containerd/containerd.sock:/run/containerd/containerd.sock:ro
