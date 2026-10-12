@@ -30,7 +30,10 @@
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.proc>full</maven.compiler.proc>
-        <!-- Lombok, maven-compiler-plugin and Testcontainers versions are managed by the Boot parent.
+        <!-- Security override over Boot 4.1.1's managed 3.15.0: 3.16.0 updates the compiler's own
+             Commons IO/Plexus dependencies. Remove once Boot manages 3.16.0 or newer. -->
+        <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
+        <!-- Lombok and Testcontainers versions are managed by the Boot parent.
              Boot 4.1.1 manages Testcontainers 2.0.5, which already negotiates a Docker API version
              accepted by Docker Engine 29+, so the former 1.21.4 override is no longer needed. -->
         <!-- Security patch overrides on top of Boot 4.1.1's managed versions. Remove each one once
@@ -45,7 +48,8 @@
         <!-- Build-time only: libraries the Maven plugins load, not shipped in the jars (issue #58).
              plexus-utils 3.5.1/3.6.0/4.0.2: CVE-2025-67030 (fixed in 3.6.1 / 4.0.3).
              commons-io 2.11.0: CVE-2024-47554. commons-lang3 3.16.0: CVE-2025-48924.
-             spring-boot-maven-plugin still pulls Jackson 3.1.5 through buildpack-platform. -->
+             spring-boot-maven-plugin still pulls Jackson 3.1.5 through buildpack-platform.
+             Remove each override once its plugin resolves an equal or newer compatible version. -->
         <plugin.plexus-utils-3.version>3.6.2</plugin.plexus-utils-3.version>
         <plugin.plexus-utils-4.version>4.0.3</plugin.plexus-utils-4.version>
         <plugin.commons-io.version>2.22.0</plugin.commons-io.version>
@@ -66,6 +70,9 @@
     <build>
         <pluginManagement>
             <plugins>
+                <!-- Project dependencyManagement does not govern Maven plugin realms.
+                     Baselines: clean 3.5.0, resources 3.5.0, Boot plugin 4.1.1, compiler 3.16.0.
+                     Check the plugin realm itself before removing its dependency overrides. -->
                 <plugin>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>

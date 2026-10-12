@@ -45,9 +45,6 @@ class AcceptedFindings(unittest.TestCase):
              lang_result("gobinary", "usr/bin/alloy", "stdlib"), "usr/bin/alloy"),
             ("scan_frontend-build", lang_result("node-pkg", "Node.js", "undici", NPM_UNDICI),
              NPM_UNDICI),
-            ("scan_frontend-build",
-             lang_result("gobinary", "app/node_modules/@esbuild/linux-x64/bin/esbuild", "stdlib"),
-             "app/node_modules/@esbuild/linux-x64/bin/esbuild"),
             ("scan_api-build", lang_result("jar", "Java", "org.apache.httpcomponents.core5:httpcore5",
                                            DOCKER_JAVA), DOCKER_JAVA),
         ]
@@ -65,12 +62,17 @@ class AcceptedFindings(unittest.TestCase):
         self.assertIn(f'paths:\n      - "{NPM_UNDICI}"', text)
         self.assertIn('purls:\n      - "pkg:generic/undici@1.0"', text)
         self.assertIn("expired_at: 2026-11-30", text)
+        self.assertIn("frontend/package.json's packageManager field", text)
 
 
 class RejectedFindings(unittest.TestCase):
     def assert_rejected(self, image, result):
         with self.assertRaises(ValueError):
             policies(image, result)
+
+    def test_esbuild_binary_in_frontend_build_stage(self):
+        self.assert_rejected("scan_frontend-build", lang_result(
+            "gobinary", "app/node_modules/@esbuild/linux-x64/bin/esbuild", "stdlib"))
 
     def test_application_package_in_frontend_build_stage(self):
         self.assert_rejected("scan_frontend-build", lang_result(

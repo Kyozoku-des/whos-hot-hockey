@@ -55,8 +55,12 @@ frontend/
 ## Setup Instructions
 
 ### Prerequisites
-- Node.js 20 or higher
-- npm or yarn package manager
+- Node.js 22.12+ (Node 24 LTS recommended, matching CI and the container build)
+- npm package manager
+
+CI and the container install the npm version in `package.json` (`packageManager`).
+That npm version needs Node 22.22.2+, 24.15+ or 26+. Local development can use
+an npm version supported by the installed Node release.
 
 ### Installation
 
@@ -87,12 +91,16 @@ The application will be available at `http://localhost:3000`
 Build for production:
 ```bash
 npm run build
+npm run check:targets
 ```
 
 Preview production build:
 ```bash
 npm run preview
 ```
+
+`check:targets` enforces ES2020 syntax in the built JavaScript. It does not check
+browser APIs or CSS compatibility; those still need browser testing.
 
 ## API Integration
 

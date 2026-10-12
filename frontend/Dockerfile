@@ -1,13 +1,13 @@
 # Multi-stage build for NHL Stats Frontend
-FROM node:24-alpine AS build
-# The image's bundled npm lags behind npm's own dependency fixes (issue #58); the
-# newest npm 11 carries the fixed ones it has. Remaining ones: .trivyignore.yaml.
-RUN apk upgrade --no-cache && npm install -g npm@11 && npm cache clean --force
+FROM node:24.21-alpine AS build
+RUN apk upgrade --no-cache
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
+# Patch npm itself using the same version as CI.
+RUN npm install --global "$(node -p "require('./package.json').packageManager")" && npm cache clean --force
 
 # Install dependencies
 RUN npm ci
@@ -25,7 +25,7 @@ ARG VITE_DONATION_URL_EUR=
 ARG VITE_DONATION_URL_USD=
 
 # Build the application
-RUN npm run build
+RUN npm run build && npm run check:targets
 
 # Runtime stage with nginx
 FROM nginx:alpine

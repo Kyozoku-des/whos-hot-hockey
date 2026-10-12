@@ -40,12 +40,9 @@ STATEMENTS = {
         "and the Compose networks only and pushes outbound to Grafana Cloud. Fixed in an "
         "upstream release."),
     "frontend-build-npm": (
-        "Build stage only, never deployed: npm's own bundled dependencies in node:24-alpine "
-        "after upgrading to the newest npm 11. They run once in CI on this repository's "
-        "lockfile."),
-    "frontend-build-esbuild": (
-        "Build stage only, never deployed: esbuild binary (Vite 6) built with an old Go. It "
-        "bundles this repository's sources; the Go network and TLS code it carries is unused."),
+        "Build stage only, never deployed: npm's own bundled dependencies, at the npm "
+        "version pinned by frontend/package.json's packageManager field. They run once "
+        "in CI on this repository's lockfile."),
     "backend-build-testcontainers": (
         "Build stage only, never deployed: HttpComponents shaded into Testcontainers 2.0.5's "
         "docker-java transport (newest release). Test scope; talks only to the local Docker "
@@ -97,7 +94,6 @@ RULES = {
     ],
     "scan_frontend-build": [
         _package("node-pkg", NPM_BUNDLED, "", "frontend-build-npm"),
-        _binary("app/node_modules/@esbuild/linux-x64/bin/esbuild", "frontend-build-esbuild"),
     ],
     "scan_api-build": [
         _package("jar", TESTCONTAINERS_SHADED, "org.apache.httpcomponents.",
