@@ -26,7 +26,7 @@ Follow-up Actions:
 - Update plan.md Technical Context if Spring Boot version changes
 -->
 
-# Who's Hot NHL Constitution
+# Who's Hot Hockey Constitution
 
 ## Core Principles
 

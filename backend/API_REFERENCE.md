@@ -1,4 +1,4 @@
-# Who's Hot NHL - API Reference
+# Who's Hot Hockey - API Reference
 
 Base URL: `http://localhost:8080`
 

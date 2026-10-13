@@ -75,7 +75,7 @@ Docker as described in `infra/monitoring/README.md`.
      - `DEPLOY_HOST`: the server's IPv4 address
      - `DEPLOY_SSH_KEY`: contents of `$HOME\.ssh\whoshot_deploy` (the private key)
      - `DEPLOY_KNOWN_HOSTS`: output of `ssh-keyscan -t ed25519 <ipv4>`
-   - **Variables** (repository): `SITE_DOMAIN` (e.g. `whoshotnhl.com`). Until it is set,
+   - **Variables** (repository): `SITE_DOMAIN` (e.g. `whoshothockey.com`). Until it is set,
      merges to `master` build and push images but skip the deploy. Optionally
      `VITE_WEB3FORMS_ACCESS_KEY` and `VITE_DONATION_URL_SEK|EUR|USD`. These end up in the
      public JS bundle, so they are variables, not secrets.

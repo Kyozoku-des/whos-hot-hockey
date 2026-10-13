@@ -35,8 +35,8 @@
 
     <section class="info-section">
       <h2>Theme</h2>
-      <p class="info-note">More themes coming later.</p>
-      <select v-model="theme" class="setting-select" aria-label="Theme" disabled>
+      <p class="info-note">The look of the site: fonts, borders and icons.</p>
+      <select v-model="theme" class="setting-select" aria-label="Theme">
         <option v-for="option in THEMES" :key="option.value" :value="option.value">{{ option.label }}</option>
       </select>
     </section>
@@ -133,7 +133,7 @@ onMounted(checkConsent)
   font-family: var(--font-family);
   color: var(--color-text-primary);
   background-color: var(--color-bg-primary);
-  border: var(--color-border-thick) solid var(--color-border);
+  border: var(--color-border-thick) solid var(--color-line);
   border-radius: 6px;
 }
 
@@ -146,7 +146,7 @@ onMounted(checkConsent)
 .reset-button {
   padding: 0.5rem 1rem;
   font-size: 0.85rem;
-  letter-spacing: 1px;
+  letter-spacing: calc(1 * var(--tracking));
 }
 
 .move-button:hover:not(:disabled),
@@ -167,7 +167,7 @@ onMounted(checkConsent)
   width: 100%;
   padding: 0.6rem 0.75rem;
   font-size: 0.9rem;
-  letter-spacing: 1px;
+  letter-spacing: calc(1 * var(--tracking));
 }
 
 .swatches {
@@ -191,6 +191,6 @@ onMounted(checkConsent)
   margin-top: 0.75rem;
   padding: 0.6rem 1.2rem;
   font-size: 0.85rem;
-  letter-spacing: 1px;
+  letter-spacing: calc(1 * var(--tracking));
 }
 </style>

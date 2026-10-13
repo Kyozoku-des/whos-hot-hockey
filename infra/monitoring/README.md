@@ -7,7 +7,7 @@ this module sets up what you see and get notified about there:
 - **Uptime checks** from outside the server (`uptime.tf`), once the site has a domain
 - **Overview dashboard** (`dashboards/overview.json.tftpl`): traffic, API, server,
   containers, data ingestion and error logs
-- All in a **Who's Hot NHL** folder
+- All in a **Who's Hot Hockey** folder
 
 It is its own Terraform root module with its own local state, separate from the server
 provisioning planned in #21.

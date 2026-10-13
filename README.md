@@ -1,4 +1,4 @@
-# Who's Hot NHL - NHL Statistics Tracker
+# Who's Hot Hockey - NHL Statistics Tracker
 
 A full-stack application for tracking NHL statistics with a focus on identifying "hot" and "cold" players and teams based on recent performance.
 

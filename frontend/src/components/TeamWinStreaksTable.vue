@@ -18,7 +18,7 @@
           <span class="team-name">{{ team.teamName }}</span>
         </div>
         <span class="team-stats">
-          <span class="stat-item stat-streak">Games: {{ team.currentWinStreak }}</span>
+          <span class="stat-item stat-streak stat-key">Games: {{ team.currentWinStreak }}</span>
           <span v-if="isExpanded" class="stat-item">W: {{ team.wins }}</span>
           <span v-if="isExpanded" class="stat-item">L: {{ team.losses }}</span>
           <span v-if="isExpanded" class="stat-item">GP: {{ team.gamesPlayed }}</span>
@@ -85,7 +85,7 @@ const goToTeam = (teamCode) => {
 .teams-grid {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--row-gap);
   padding-right: 1.5rem;
 }
 
@@ -93,9 +93,9 @@ const goToTeam = (teamCode) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1rem;
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 2px solid var(--color-border);
+  padding: var(--row-padding);
+  background-color: var(--row-bg);
+  border: var(--color-border-thick) solid var(--row-border);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
@@ -103,8 +103,8 @@ const goToTeam = (teamCode) => {
 }
 
 .team-item:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  transform: translateX(5px);
+  background-color: var(--row-hover-bg);
+  transform: translateX(var(--row-hover-shift));
   z-index: 10;
 }
 
@@ -124,7 +124,7 @@ const goToTeam = (teamCode) => {
 }
 
 .team-name {
-  color: var(--color-text-secondary);
+  color: var(--color-name);
   font-size: 1rem;
   font-weight: bold;
   flex: 1;
@@ -139,7 +139,7 @@ const goToTeam = (teamCode) => {
 }
 
 .stat-item {
-  color: var(--color-text-primary);
+  color: var(--color-stat);
   font-size: 0.9rem;
   font-weight: normal;
   white-space: nowrap;

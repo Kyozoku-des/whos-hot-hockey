@@ -1,5 +1,5 @@
 resource "grafana_folder" "whos_hot_nhl" {
-  title = "Who's Hot NHL"
+  title = "Who's Hot Hockey"
 }
 
 resource "grafana_dashboard" "overview" {

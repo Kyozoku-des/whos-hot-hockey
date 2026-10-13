@@ -12,8 +12,9 @@
   try {
     var settings = JSON.parse(saved) || {}
     var root = document.documentElement
-    if (typeof settings.theme === 'string' && /^[a-z]+$/.test(settings.theme)) {
-      root.setAttribute('data-theme', settings.theme)
+    // siteTheme, not the older theme field (see useSettings.js)
+    if (typeof settings.siteTheme === 'string' && /^[a-z]+$/.test(settings.siteTheme)) {
+      root.setAttribute('data-theme', settings.siteTheme)
     }
     // Team abbreviations; anything else has no stylesheet rule and keeps the default
     if (typeof settings.colorScheme === 'string' && /^[A-Z]{3}$/.test(settings.colorScheme)) {

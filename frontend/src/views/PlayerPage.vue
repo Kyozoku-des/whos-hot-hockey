@@ -262,7 +262,7 @@ onBeforeUnmount(() => {
 }
 
 .game-log-table tbody tr {
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-line);
 }
 
 .game-log-table td {
@@ -324,7 +324,7 @@ onBeforeUnmount(() => {
 
   .game-log-table {
     font-size: 0.8rem;
-    letter-spacing: 1px;
+    letter-spacing: calc(1 * var(--tracking));
   }
 
   .game-log-table th,

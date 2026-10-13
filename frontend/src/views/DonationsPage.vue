@@ -2,13 +2,13 @@
   <InfoPage title="Donations">
     <section v-if="thanked" class="info-section thanks" role="status">
       <h2>Thank you!</h2>
-      <p>Your donation went through. It really helps keep Whos Hot NHL running.</p>
+      <p>Your donation went through. It really helps keep Whos Hot Hockey running.</p>
     </section>
 
     <section class="info-section">
       <h2>Support the site</h2>
       <p>
-        Whos Hot NHL is free and ad-free. If you enjoy it, a one-time donation helps cover
+        Whos Hot Hockey is free and ad-free. If you enjoy it, a one-time donation helps cover
         hosting and keeps new features coming. No account needed.
       </p>
 
@@ -215,10 +215,10 @@ const selectCustom = async () => {
   padding: 0.5rem 0.9rem;
   font-family: var(--font-family);
   font-size: 0.9rem;
-  letter-spacing: 1px;
+  letter-spacing: calc(1 * var(--tracking));
   color: var(--color-text-primary);
   background-color: var(--color-bg-primary);
-  border: var(--color-border-thick) solid var(--color-border);
+  border: var(--color-border-thick) solid var(--color-line);
   border-radius: 8px;
   transition: color 0.2s ease, border-color 0.2s ease;
 }
@@ -262,10 +262,10 @@ const selectCustom = async () => {
   padding: 0.6rem 0.75rem;
   font-family: var(--font-family);
   font-size: 0.9rem;
-  letter-spacing: 1px;
+  letter-spacing: calc(1 * var(--tracking));
   color: var(--color-text-primary);
   background-color: var(--color-bg-primary);
-  border: var(--color-border-thick) solid var(--color-border);
+  border: var(--color-border-thick) solid var(--color-line);
   border-radius: 8px;
 }
 
@@ -289,13 +289,13 @@ const selectCustom = async () => {
   padding: 0.75rem 2rem;
   font-size: 1rem;
   color: #000;
-  background-color: #FFAA00;
+  background-color: var(--color-button);
   border-radius: 8px;
   transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 .donate-button:hover:not(.disabled) {
-  background-color: #FFB820;
+  background-color: var(--color-button-hover);
   transform: translateY(-2px);
 }
 

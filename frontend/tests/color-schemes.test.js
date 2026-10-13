@@ -82,16 +82,21 @@ const runThemeInit = async (stored) => {
 
 test('theme-init applies saved settings before the app loads', async () => {
   assert.deepEqual(
-    await runThemeInit(JSON.stringify({ theme: 'retro', colorScheme: 'EDM' })),
+    await runThemeInit(JSON.stringify({ siteTheme: 'retro', colorScheme: 'EDM' })),
     { 'data-theme': 'retro', 'data-color-scheme': 'EDM' }
   )
+})
+
+test('theme-init leaves the old theme field to the default theme', async () => {
+  // Saved before themes could be picked, so it always says retro
+  assert.deepEqual(await runThemeInit(JSON.stringify({ theme: 'retro' })), {})
 })
 
 test('theme-init ignores missing, broken and unexpected values', async () => {
   assert.deepEqual(await runThemeInit(null), {})
   assert.deepEqual(await runThemeInit('{not json'), {})
   assert.deepEqual(
-    await runThemeInit(JSON.stringify({ theme: '"><x', colorScheme: 'default' })),
+    await runThemeInit(JSON.stringify({ siteTheme: '"><x', colorScheme: 'default' })),
     {}
   )
 })

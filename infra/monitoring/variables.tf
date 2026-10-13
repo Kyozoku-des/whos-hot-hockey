@@ -1,5 +1,5 @@
 variable "grafana_url" {
-  description = "Grafana Cloud stack URL, e.g. https://whoshotnhl.grafana.net"
+  description = "Grafana Cloud stack URL, e.g. https://whoshothockey.grafana.net"
   type        = string
 }
 
@@ -47,7 +47,7 @@ variable "scrape_jobs" {
 # --- Uptime checks (optional until the site has a domain) ---------------------------
 
 variable "site_url" {
-  description = "Public site URL, e.g. https://whoshotnhl.com. Leave empty to skip the uptime checks"
+  description = "Public site URL, e.g. https://whoshothockey.com. Leave empty to skip the uptime checks"
   type        = string
   default     = ""
 
