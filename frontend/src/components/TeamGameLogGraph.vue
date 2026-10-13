@@ -12,7 +12,7 @@
 <script setup>
 import { computed } from 'vue'
 import GraphModeToggle from './GraphModeToggle.vue'
-import { useGraphMode, toCumulative, projectionMarker, tooltipColorBox, tooltipLabelColor, tapTooltipEvents, tapToggleTooltip, GRAPH_ORANGE, GRAPH_ORANGE_FILL } from '../composables/useGraphMode'
+import { useGraphMode, toCumulative, projectionMarker, tooltipColorBox, tooltipLabelColor, tapTooltipEvents, tapToggleTooltip, graphLineColors } from '../composables/useGraphMode'
 import { useIsMobile } from '../composables/useIsMobile'
 import { Line } from 'vue-chartjs'
 import {
@@ -154,8 +154,8 @@ const combinedChartData = computed(() => {
       label: `${currentSeasonLabel.value} (Current)`,
       data: isCumulative.value ? currentData.cumulativePoints : currentData.pointsPerGame,
       pointsPerGame: currentData.pointsPerGame, // Store for tooltip
-      borderColor: GRAPH_ORANGE,
-      backgroundColor: GRAPH_ORANGE_FILL,
+      borderColor: graphLineColors.value.line,
+      backgroundColor: graphLineColors.value.fill,
       borderWidth: 3,
       tension: 0.1,
       pointRadius: 0,

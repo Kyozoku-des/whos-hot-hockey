@@ -2,7 +2,7 @@
 
 ## R1 — Source of the 32 team palettes
 
-**Decision**: Keep the palettes in [`team-colors.json`](team-colors.json), keyed by NHL team abbreviation, with named colours (primary first).
+**Decision**: Keep the palettes in [`frontend/src/themes/teamColors.js`](../../frontend/src/themes/teamColors.js), keyed by NHL team abbreviation, with named colours (primary first).
 
 **How the values were gathered (2026-10-13)**:
 
@@ -12,7 +12,7 @@
   - Widely published club brand values (Pantone-derived hex codes as listed on team colour reference sites).
 - Where the two datasets disagreed, the newer brand identity was preferred. The old values were for BUF navy `#002654` (pre-2020) and ANA `#F47A38` (pre-2024).
 
-**Needs verification before release** (`"verify": true` in the JSON):
+**Needs verification against club brand material**:
 
 | Team | Why |
 |------|-----|

@@ -1,4 +1,6 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useSettings } from './useSettings'
+import { colorSchemeFor } from '../themes/colorSchemes.js'
 
 // How the game log graphs plot points: 'cumulative' (running season total) or
 // 'perGame' (points in each game). Module-level so the choice carries over
@@ -7,9 +9,18 @@ const graphMode = ref('cumulative')
 
 // Same colors as the home page: highlight text (--color-text-secondary) and
 // the score ticker's red (--color-ticker-highlight). Canvas can't read CSS vars.
-export const GRAPH_ORANGE = 'hsl(40, 100%, 75%)'
-export const GRAPH_ORANGE_FILL = 'hsla(40, 100%, 75%, 0.1)'
+const GRAPH_ORANGE = 'hsl(40, 100%, 75%)'
+const GRAPH_ORANGE_FILL = 'hsla(40, 100%, 75%, 0.1)'
 const GRAPH_RED = 'hsl(0, 85%, 62%)'
+
+// Current-season line: the color scheme's highlight color, or Retro's orange
+const { colorScheme } = useSettings()
+export const graphLineColors = computed(() => {
+  const highlight = colorSchemeFor(colorScheme.value).vars?.['--color-text-secondary']
+  return highlight
+    ? { line: highlight, fill: highlight + '1A' }
+    : { line: GRAPH_ORANGE, fill: GRAPH_ORANGE_FILL }
+})
 
 export function useGraphMode() {
   return { graphMode }

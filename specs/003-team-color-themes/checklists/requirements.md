@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain. Two remain: FR-014 (theme intensity) and US4 scenario 2 (several favorite teams).
+- [x] No [NEEDS CLARIFICATION] markers remain. FR-014 was resolved as full team colour, and US4 was dropped (see the spec's Clarifications).
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,5 +31,4 @@
 
 ## Notes
 
-- Resolve FR-014 with `/speckit.clarify` before `/speckit.plan`, because it decides how each palette maps to the UI colour tokens.
 - Five palettes (ANA, BUF, LAK, OTT, UTA) are flagged for verification against club brand material (research.md R1).
