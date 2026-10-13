@@ -91,13 +91,21 @@
   --color-title-hot: var(--color-text-secondary);
 
   --color-border-thick: 1px;         /* Border width, despite the name */
-  --color-line: rgba(255, 255, 255, 0.13);
+  --color-line: rgba(255, 255, 255, 0.13);   /* Decorative dividers only */
+  /* Inputs and outlined buttons. Team schemes set their own outline, kept 3:1
+     from page and card (controlOutline in themes/colorSchemes.js) */
+  --color-control-outline: #676B71;
+  --color-control-border: var(--color-control-outline);
   --color-card-border: var(--color-line);
   --color-muted: rgba(255, 255, 255, 0.6);
   --color-name: var(--color-text-primary);
   --color-stat: rgba(255, 255, 255, 0.8);
   --color-accent-soft: color-mix(in srgb, var(--color-text-secondary) 15%, transparent);
   --color-on-accent: #000;
+  /* Opaque, so row hover can't change it. Accents read 4.5:1 on the dark card,
+     which makes them light enough for black text at 4.5:1 too */
+  --color-chip-bg: var(--color-text-secondary);
+  --color-chip-fg: var(--color-on-accent);
   --color-button: var(--color-text-secondary);
   --color-button-hover: color-mix(in srgb, var(--color-text-secondary) 85%, white);
   --color-favorite: #ffc247;
@@ -138,6 +146,7 @@
 
   --color-border-thick: 2px;
   --color-line: var(--color-border);
+  --color-control-border: var(--color-border);
   --color-card-border: hsl(0, 0%, 75%);
   --color-muted: rgba(255, 255, 255, 0.6);
   --color-name: var(--color-text-secondary);
@@ -213,8 +222,8 @@ html:root:not([data-theme="retro"]) .stat-key {
   padding: 0.1rem 0.45rem;
   border-radius: 6px;
   font-weight: 700;
-  color: var(--color-text-secondary);
-  background-color: var(--color-accent-soft);
+  color: var(--color-chip-fg);
+  background-color: var(--color-chip-bg);
 }
 
 .stat-item {

@@ -46,7 +46,7 @@ onMounted(initializeFavorites)
   font-size: 0.9rem;
   color: var(--color-text-primary);
   background: transparent;
-  border: var(--color-border-thick) solid var(--color-line);
+  border: var(--color-border-thick) solid var(--color-control-border);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;

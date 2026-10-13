@@ -12,6 +12,7 @@ import {
   colorSchemeCss,
   colorSchemeFor,
   contrastRatio,
+  controlOutline,
   isColorScheme
 } from '../src/themes/colorSchemes.js'
 
@@ -99,4 +100,37 @@ test('theme-init ignores missing, broken and unexpected values', async () => {
     await runThemeInit(JSON.stringify({ siteTheme: '"><x', colorScheme: 'default' })),
     {}
   )
+})
+
+// Modern's stat chip: black text on an opaque accent, the same at rest and on row hover
+const CHIP_TEXT = '#000000'
+
+test('stat chips read in every team color scheme', () => {
+  for (const { value, vars } of teamSchemes) {
+    const ratio = contrastRatio(CHIP_TEXT, vars['--color-text-secondary'])
+    assert.ok(ratio >= TEXT_CONTRAST, `${value}: chip text ${ratio.toFixed(2)}:1`)
+  }
+})
+
+test('control outlines stand out from page and card in every team color scheme', () => {
+  for (const { value, vars } of teamSchemes) {
+    for (const background of ['--color-bg-primary', '--color-bg-card']) {
+      const ratio = contrastRatio(vars['--color-control-outline'], vars[background])
+      assert.ok(ratio >= UI_CONTRAST, `${value}: outline on ${background} ${ratio.toFixed(2)}:1`)
+    }
+  }
+})
+
+test('Modern theme defaults meet the same contrast', async () => {
+  const css = await readFile(new URL('../src/style.css', import.meta.url), 'utf8')
+  const root = css.match(/^:root \{([\s\S]*?)^\}/m)[1]
+  const value = name => root.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`))[1]
+  const [page, card] = [value('--color-bg-primary'), value('--color-bg-card')]
+  const outline = value('--color-control-outline')
+  assert.equal(outline.toUpperCase(), controlOutline(page, card), 'outline should be controlOutline(page, card)')
+  for (const background of [page, card]) {
+    assert.ok(contrastRatio(outline, background) >= UI_CONTRAST)
+    assert.ok(contrastRatio(value('--color-text-secondary'), background) >= TEXT_CONTRAST)
+  }
+  assert.ok(contrastRatio(CHIP_TEXT, value('--color-text-secondary')) >= TEXT_CONTRAST)
 })

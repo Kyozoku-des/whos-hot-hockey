@@ -137,7 +137,7 @@ onMounted(() => {
 .btn-decline {
   background-color: transparent;
   color: var(--color-text-secondary);
-  border: var(--color-border-thick) solid var(--color-line);
+  border: var(--color-border-thick) solid var(--color-control-border);
 }
 
 .btn-decline:hover {

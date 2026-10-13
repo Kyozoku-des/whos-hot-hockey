@@ -6,6 +6,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #FC4C02;
   --color-border: #FC4C02;
+  --color-control-outline: #666666;
   --color-positive: #4ADE80;
   --color-negative: #F87171;
   --color-success: #7DFF7D;
@@ -19,6 +20,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #FFB81C;
   --color-border: #FFB81C;
+  --color-control-outline: #666666;
   --color-positive: #4ADE80;
   --color-negative: #F87171;
   --color-success: #7DFF7D;
@@ -32,6 +34,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #FFB81C;
   --color-border: #FFB81C;
+  --color-control-outline: #7384A3;
   --color-positive: #4ADE80;
   --color-negative: #F97F7F;
   --color-success: #7DFF7D;
@@ -45,6 +48,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #F8DFA4;
   --color-border: #F8DFA4;
+  --color-control-outline: #DAB6BC;
   --color-positive: #AEF0C6;
   --color-negative: #FDDCDC;
   --color-success: #7DFF7D;
@@ -58,6 +62,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #FAE7E9;
   --color-border: #FAE7E9;
+  --color-control-outline: #DBB6BA;
   --color-positive: #C0F3D3;
   --color-negative: #FEE3E3;
   --color-success: #91FF91;
@@ -71,6 +76,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #FFE673;
   --color-border: #FFE673;
+  --color-control-outline: #DBB5BB;
   --color-positive: #C0F3D3;
   --color-negative: #FEE3E3;
   --color-success: #91FF91;
@@ -84,6 +90,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #91B0C9;
   --color-border: #91B0C9;
+  --color-control-outline: #A48C94;
   --color-positive: #4ADE80;
   --color-negative: #F98D8D;
   --color-success: #7DFF7D;
@@ -97,6 +104,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #E2707D;
   --color-border: #E2707D;
+  --color-control-outline: #667587;
   --color-positive: #4ADE80;
   --color-negative: #F87171;
   --color-success: #7DFF7D;
@@ -110,6 +118,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #BFD9D1;
   --color-border: #BFD9D1;
+  --color-control-outline: #99B4AB;
   --color-positive: #80E8A6;
   --color-negative: #FCC6C6;
   --color-success: #7DFF7D;
@@ -123,6 +132,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #FAE7E9;
   --color-border: #FAE7E9;
+  --color-control-outline: #DBB6BA;
   --color-positive: #C0F3D3;
   --color-negative: #FEE3E3;
   --color-success: #91FF91;
@@ -136,6 +146,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #FF4C00;
   --color-border: #FF4C00;
+  --color-control-outline: #687280;
   --color-positive: #4ADE80;
   --color-negative: #F87171;
   --color-success: #7DFF7D;
@@ -149,6 +160,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #F7DBE0;
   --color-border: #F7DBE0;
+  --color-control-outline: #DAB6BC;
   --color-positive: #AEF0C6;
   --color-negative: #FDDCDC;
   --color-success: #7DFF7D;
@@ -162,6 +174,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #A2AAAD;
   --color-border: #A2AAAD;
+  --color-control-outline: #717171;
   --color-positive: #4ADE80;
   --color-negative: #F87171;
   --color-success: #7DFF7D;
@@ -175,6 +188,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #EAAA00;
   --color-border: #EAAA00;
+  --color-control-outline: #879791;
   --color-positive: #4ADE80;
   --color-negative: #F98D8D;
   --color-success: #7DFF7D;
@@ -188,6 +202,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #EFD2D5;
   --color-border: #EFD2D5;
+  --color-control-outline: #CEADB0;
   --color-positive: #80E8A6;
   --color-negative: #FCC6C6;
   --color-success: #7DFF7D;
@@ -201,6 +216,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #FFB81C;
   --color-border: #FFB81C;
+  --color-control-outline: #687280;
   --color-positive: #4ADE80;
   --color-negative: #F87171;
   --color-success: #7DFF7D;
@@ -214,6 +230,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #FAE7E9;
   --color-border: #FAE7E9;
+  --color-control-outline: #DBB6BA;
   --color-positive: #C0F3D3;
   --color-negative: #FEE3E3;
   --color-success: #91FF91;
@@ -227,6 +244,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #F9B88D;
   --color-border: #F9B88D;
+  --color-control-outline: #8CA5BA;
   --color-positive: #53E086;
   --color-negative: #FCB8B8;
   --color-success: #7DFF7D;
@@ -240,6 +258,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #A6B9E1;
   --color-border: #A6B9E1;
+  --color-control-outline: #8092B6;
   --color-positive: #4ADE80;
   --color-negative: #FA9595;
   --color-success: #7DFF7D;
@@ -253,6 +272,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #F6DEE0;
   --color-border: #F6DEE0;
+  --color-control-outline: #D9B9BC;
   --color-positive: #B7F2CC;
   --color-negative: #FDDCDC;
   --color-success: #7DFF7D;
@@ -266,6 +286,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #F74902;
   --color-border: #F74902;
+  --color-control-outline: #666666;
   --color-positive: #4ADE80;
   --color-negative: #F87171;
   --color-success: #7DFF7D;
@@ -279,6 +300,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #FCB514;
   --color-border: #FCB514;
+  --color-control-outline: #666666;
   --color-positive: #4ADE80;
   --color-negative: #F87171;
   --color-success: #7DFF7D;
@@ -292,6 +314,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #CCE2E3;
   --color-border: #CCE2E3;
+  --color-control-outline: #A6BFC0;
   --color-positive: #A5EFC0;
   --color-negative: #FDD4D4;
   --color-success: #7DFF7D;
@@ -305,6 +328,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #99D9D9;
   --color-border: #99D9D9;
+  --color-control-outline: #66747E;
   --color-positive: #4ADE80;
   --color-negative: #F87171;
   --color-success: #7DFF7D;
@@ -318,6 +342,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #FCB514;
   --color-border: #FCB514;
+  --color-control-outline: #7384A3;
   --color-positive: #4ADE80;
   --color-negative: #F87878;
   --color-success: #7DFF7D;
@@ -331,6 +356,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #8094B4;
   --color-border: #8094B4;
+  --color-control-outline: #66768F;
   --color-positive: #4ADE80;
   --color-negative: #F87171;
   --color-success: #7DFF7D;
@@ -344,6 +370,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #8090AD;
   --color-border: #8090AD;
+  --color-control-outline: #667389;
   --color-positive: #4ADE80;
   --color-negative: #F87171;
   --color-success: #7DFF7D;
@@ -357,6 +384,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #6CACE4;
   --color-border: #6CACE4;
+  --color-control-outline: #666666;
   --color-positive: #4ADE80;
   --color-negative: #F87171;
   --color-success: #7DFF7D;
@@ -370,6 +398,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #339D64;
   --color-border: #339D64;
+  --color-control-outline: #667389;
   --color-positive: #4ADE80;
   --color-negative: #F87171;
   --color-success: #7DFF7D;
@@ -383,6 +412,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #BFA773;
   --color-border: #BFA773;
+  --color-control-outline: #85898A;
   --color-positive: #4ADE80;
   --color-negative: #F98686;
   --color-success: #7DFF7D;
@@ -396,6 +426,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #F7DBE0;
   --color-border: #F7DBE0;
+  --color-control-outline: #DAB6BC;
   --color-positive: #AEF0C6;
   --color-negative: #FDDCDC;
   --color-success: #7DFF7D;
@@ -409,6 +440,7 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #598BBB;
   --color-border: #598BBB;
+  --color-control-outline: #687280;
   --color-positive: #4ADE80;
   --color-negative: #F87171;
   --color-success: #7DFF7D;

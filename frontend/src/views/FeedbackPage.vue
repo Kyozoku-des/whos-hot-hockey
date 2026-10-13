@@ -222,7 +222,7 @@ const reset = () => {
   letter-spacing: calc(1 * var(--tracking));
   color: var(--color-text-primary);
   background-color: var(--color-bg-primary);
-  border: var(--color-border-thick) solid var(--color-line);
+  border: var(--color-border-thick) solid var(--color-control-border);
   border-radius: 8px;
 }
 

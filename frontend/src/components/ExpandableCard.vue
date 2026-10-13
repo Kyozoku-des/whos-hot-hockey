@@ -251,7 +251,7 @@ onUnmounted(() => {
   width: 24px;
   height: 24px;
   background-color: transparent;
-  border: var(--color-border-thick) solid var(--color-line);
+  border: var(--color-border-thick) solid var(--color-control-border);
   border-radius: var(--radius-control);
   color: var(--color-text-primary);
   font-size: 0.875rem;

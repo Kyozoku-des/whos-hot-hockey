@@ -213,7 +213,7 @@ onUnmounted(() => {
   font-family: var(--font-family);
   color: var(--color-text-primary);
   background-color: var(--color-bg-card);
-  border: var(--color-border-thick) solid var(--color-line);
+  border: var(--color-border-thick) solid var(--color-control-border);
   border-radius: 8px;
   outline: none;
   transition: all 0.2s ease;

@@ -218,7 +218,7 @@ const selectCustom = async () => {
   letter-spacing: calc(1 * var(--tracking));
   color: var(--color-text-primary);
   background-color: var(--color-bg-primary);
-  border: var(--color-border-thick) solid var(--color-line);
+  border: var(--color-border-thick) solid var(--color-control-border);
   border-radius: 8px;
   transition: color 0.2s ease, border-color 0.2s ease;
 }
@@ -265,7 +265,7 @@ const selectCustom = async () => {
   letter-spacing: calc(1 * var(--tracking));
   color: var(--color-text-primary);
   background-color: var(--color-bg-primary);
-  border: var(--color-border-thick) solid var(--color-line);
+  border: var(--color-border-thick) solid var(--color-control-border);
   border-radius: 8px;
 }
 
