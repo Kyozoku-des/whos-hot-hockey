@@ -14,6 +14,7 @@ import { computed } from 'vue'
 import GraphModeToggle from './GraphModeToggle.vue'
 import { useGraphMode, toCumulative, projectionMarker, tooltipColorBox, tooltipLabelColor, tapTooltipEvents, tapToggleTooltip, graphLineColors } from '../composables/useGraphMode'
 import { useIsMobile } from '../composables/useIsMobile'
+import { useSettings, themeFontFamily } from '../composables/useSettings'
 import { Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -77,6 +78,8 @@ const isCumulative = computed(() => graphMode.value === 'cumulative')
 
 // Phones get a compact chart: no axis titles, smaller text, left-aligned legend
 const { isMobile } = useIsMobile()
+const { theme } = useSettings()
+const fontFamily = computed(() => themeFontFamily(theme.value))
 const tickFontSize = computed(() => (isMobile.value ? 9 : 12))
 
 const graphTitle = computed(() =>
@@ -202,7 +205,7 @@ const chartOptions = computed(() => ({
           })),
         padding: isMobile.value ? 8 : 15,
         font: {
-          family: 'Minecraft, sans-serif',
+          family: fontFamily.value,
           size: isMobile.value ? 10 : 12
         }
       }
@@ -211,11 +214,11 @@ const chartOptions = computed(() => ({
       mode: 'index',
       intersect: false,
       titleFont: {
-        family: 'Minecraft, sans-serif',
+        family: fontFamily.value,
         size: 13
       },
       bodyFont: {
-        family: 'Minecraft, sans-serif',
+        family: fontFamily.value,
         size: 12
       },
       ...tooltipColorBox,
@@ -247,7 +250,7 @@ const chartOptions = computed(() => ({
         text: 'Game Number',
         color: '#ffffff',
         font: {
-          family: 'Minecraft, sans-serif',
+          family: fontFamily.value,
           size: 14,
           weight: 'bold'
         }
@@ -256,7 +259,7 @@ const chartOptions = computed(() => ({
         color: '#ffffff',
         maxTicksLimit: isMobile.value ? 8 : 20,
         font: {
-          family: 'Minecraft, sans-serif',
+          family: fontFamily.value,
           size: tickFontSize.value
         }
       },
@@ -270,7 +273,7 @@ const chartOptions = computed(() => ({
         text: isCumulative.value ? 'Total Points' : 'Points (0, 1, 2)',
         color: '#ffffff',
         font: {
-          family: 'Minecraft, sans-serif',
+          family: fontFamily.value,
           size: 14,
           weight: 'bold'
         }
@@ -281,7 +284,7 @@ const chartOptions = computed(() => ({
         precision: 0,
         callback: (value) => (Number.isInteger(value) ? value : ''),
         font: {
-          family: 'Minecraft, sans-serif',
+          family: fontFamily.value,
           size: tickFontSize.value
         }
       },

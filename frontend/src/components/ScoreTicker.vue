@@ -269,7 +269,7 @@ onUnmounted(() => {
   --color-ticker-highlight: var(--color-negative, hsl(0, 85%, 62%));
   display: flex;
   align-items: stretch;
-  border-bottom: var(--color-border-thick) solid var(--color-border);
+  border-bottom: var(--color-border-thick) solid var(--color-line);
   background-color: var(--color-bg-card);
   font-size: 0.85rem;
   overflow: hidden;
@@ -280,8 +280,9 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   padding: 0.5rem 1rem;
-  border-right: var(--color-border-thick) solid var(--color-border);
+  border-right: var(--color-border-thick) solid var(--color-line);
   color: var(--color-text-secondary);
+  background-color: var(--ticker-label-bg);
 }
 
 .ticker-viewport {
@@ -330,7 +331,7 @@ onUnmounted(() => {
 .ticker-game::after {
   content: '|';
   padding: 0 1.5rem;
-  color: var(--color-border);
+  color: var(--color-line);
 }
 
 .game-score {

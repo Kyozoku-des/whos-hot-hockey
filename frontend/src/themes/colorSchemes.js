@@ -72,6 +72,13 @@ const DARK_PAGE_LUMINANCE = 0.01
 // text reads on. Highlights and borders take the first other brand color that
 // reads on both page and card, lightened a little if needed; teams with no
 // such color get a light tint of their background.
+// Outline for controls that share their surroundings' background (inputs,
+// outlined buttons): the faintest white tint of the card that still stands
+// out 3:1 from both page and card. Used by the Modern theme; dividers there
+// stay fainter, as decoration.
+export const controlOutline = (page, card) =>
+  mix(card, WHITE, tintNeeded(card, [page, card], UI_CONTRAST) ?? 1)
+
 export const buildColorScheme = (palette) => {
   const hexes = palette.map(([, hex]) => hex)
   const page = hexes.find(hex => contrastRatio(hex, WHITE) >= TEXT_CONTRAST) ??
@@ -95,6 +102,7 @@ export const buildColorScheme = (palette) => {
     '--color-text-primary': WHITE,
     '--color-text-secondary': accent,
     '--color-border': accent,
+    '--color-control-outline': controlOutline(page, card),
     ...Object.fromEntries(Object.entries(STATUS_COLORS).map(([name, { retro, ratio }]) =>
       [name, mix(retro, WHITE, tintNeeded(retro, backgrounds, ratio))]
     ))

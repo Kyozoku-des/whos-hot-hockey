@@ -99,7 +99,7 @@ onMounted(() => {
   color: var(--color-text-primary);
   white-space: nowrap;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: calc(1 * var(--tracking));
 }
 
 .season-dropdown {
@@ -109,7 +109,7 @@ onMounted(() => {
   font-family: var(--font-family);
   color: var(--color-text-primary);
   background-color: transparent;
-  border: 2px solid var(--color-border);
+  border: var(--color-border-thick) solid var(--color-control-border);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -125,7 +125,7 @@ onMounted(() => {
 .season-dropdown:focus {
   outline: none;
   border-color: var(--color-text-secondary);
-  box-shadow: 0 0 0 2px rgba(255, 170, 0, 0.2);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-text-secondary) 20%, transparent);
 }
 
 .season-dropdown option {

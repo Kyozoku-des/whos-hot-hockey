@@ -41,7 +41,15 @@ export const TIME_ZONES = [
 ]
 
 // A theme sets the look (font, borders); a color scheme recolors any theme
-export const THEMES = [{ value: 'retro', label: 'Retro' }]
+export const THEMES = [
+  { value: 'modern', label: 'Modern' },
+  { value: 'retro', label: 'Retro' }
+]
+export const DEFAULT_THEME = 'modern'
+
+// For canvas text (graphs), which can't read the CSS font variables
+export const themeFontFamily = (value) =>
+  value === 'retro' ? 'Minecraft, sans-serif' : 'Figtree, system-ui, sans-serif'
 export { COLOR_SCHEMES }
 
 // Saved card orders are kept to known keys, with cards added since appended
@@ -53,7 +61,7 @@ export const normalizeOrder = (order) => {
 // Module-level so every page shares one copy
 const mobileCardOrder = ref([...DEFAULT_ORDER])
 const timeZone = ref('')
-const theme = ref('retro')
+const theme = ref(DEFAULT_THEME)
 const colorScheme = ref(DEFAULT_COLOR_SCHEME)
 
 // Same storage rules as favorites: localStorage once consent is given (kept
@@ -75,7 +83,9 @@ const load = () => {
     const saved = JSON.parse(storage.getItem(SETTINGS_KEY) || '{}')
     mobileCardOrder.value = normalizeOrder(saved.mobileCardOrder)
     if (TIME_ZONES.some(zone => zone.value === saved.timeZone)) timeZone.value = saved.timeZone
-    if (THEMES.some(option => option.value === saved.theme)) theme.value = saved.theme
+    // Saved as siteTheme: the old `theme` field always held 'retro', from before
+    // themes could be picked, and shouldn't keep those visitors off the new default
+    if (THEMES.some(option => option.value === saved.siteTheme)) theme.value = saved.siteTheme
     if (isColorScheme(saved.colorScheme)) colorScheme.value = saved.colorScheme
   } catch {
     // Keep the defaults
@@ -87,7 +97,7 @@ const save = () => {
     settingsStorage()?.setItem(SETTINGS_KEY, JSON.stringify({
       mobileCardOrder: mobileCardOrder.value,
       timeZone: timeZone.value,
-      theme: theme.value,
+      siteTheme: theme.value,
       colorScheme: colorScheme.value
     }))
   } catch {

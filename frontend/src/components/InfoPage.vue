@@ -31,7 +31,7 @@ defineProps({
 
 .info-title {
   font-size: 2rem;
-  letter-spacing: 3px;
+  letter-spacing: calc(3 * var(--tracking));
   text-transform: uppercase;
   text-align: center;
   margin: 1.5rem 0 2rem;
@@ -39,7 +39,7 @@ defineProps({
 
 .info-page :deep(.info-section) {
   background-color: var(--color-bg-card);
-  border: var(--color-border-thick) solid var(--color-border);
+  border: var(--color-border-thick) solid var(--color-line);
   border-radius: 12px;
   padding: 1.25rem;
   margin-bottom: 1.5rem;

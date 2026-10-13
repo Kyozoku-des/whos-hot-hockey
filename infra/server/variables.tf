@@ -51,7 +51,7 @@ variable "ssh_allowed_cidrs" {
 }
 
 variable "domain" {
-  description = "Site domain, e.g. whoshotnhl.com, managed as a Hetzner DNS zone. Leave empty to skip DNS"
+  description = "Site domain, e.g. whoshothockey.com, managed as a Hetzner DNS zone. Leave empty to skip DNS"
   type        = string
   default     = ""
 }

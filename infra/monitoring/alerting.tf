@@ -1,7 +1,7 @@
 # Where alerts go: one email contact point for everything.
 
 resource "grafana_contact_point" "email" {
-  name = "Who's Hot NHL email"
+  name = "Who's Hot Hockey email"
 
   email {
     addresses               = [var.alert_email]

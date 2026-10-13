@@ -1,5 +1,27 @@
 <template>
+  <!-- Retro: pixel grids to match the blocky font. Other themes: smooth line icons -->
   <svg
+    v-if="!pixelated"
+    class="pixel-icon"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2.2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path
+      v-for="(d, index) in smoothPaths"
+      :key="index"
+      :d="d"
+      :class="{ 'pixel-icon-fill': name === 'star' }"
+      :style="name === 'star' && filled ? { fillOpacity: 1 } : null"
+      :fill="name === 'star' ? 'currentColor' : 'none'"
+    />
+  </svg>
+  <svg
+    v-else
     class="pixel-icon"
     :viewBox="`0 0 ${width} ${height}`"
     shape-rendering="crispEdges"
@@ -18,6 +40,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useSettings } from '../composables/useSettings'
 
 // Icons drawn as pixel grids so they match the blocky Minecraft font.
 // For outlined icons, interior pixels go in a separate path whose opacity is
@@ -93,6 +116,18 @@ const ICONS = {
   }
 }
 
+// Same names as ICONS, on a 24x24 grid
+const SMOOTH_ICONS = {
+  search: ['M11 4a7 7 0 1 0 0 14a7 7 0 1 0 0-14z', 'm20 20-3.5-3.5'],
+  close: ['M6 6l12 12', 'M18 6 6 18'],
+  expand: ['M15 3h6v6', 'M9 21H3v-6', 'M21 3l-7 7', 'M3 21l7-7'],
+  'arrow-down': ['M12 4v15', 'm19 12-7 7-7-7'],
+  star: ['M12 2.8l2.85 5.8 6.4.93-4.63 4.5 1.1 6.37L12 17.4l-5.72 3 1.1-6.37-4.63-4.5 6.4-.93z']
+}
+
+const { theme } = useSettings()
+const pixelated = computed(() => theme.value === 'retro')
+
 const props = defineProps({
   name: {
     type: String,
@@ -104,6 +139,7 @@ const props = defineProps({
   }
 })
 
+const smoothPaths = computed(() => SMOOTH_ICONS[props.name])
 const icon = computed(() => ICONS[props.name])
 const height = computed(() => icon.value.rows.length)
 const width = computed(() => icon.value.rows[0].length)

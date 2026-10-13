@@ -156,7 +156,7 @@ onUnmounted(() => observer?.disconnect())
   left: 0;
   right: 0;
   background-color: var(--color-bg-card);
-  border-top: var(--color-border-thick) solid var(--color-border);
+  border-top: var(--color-border-thick) solid var(--color-line);
   color: var(--color-text-primary);
   padding: 1rem 0;
   text-align: center;
@@ -166,7 +166,7 @@ onUnmounted(() => observer?.disconnect())
 .app-footer p {
   margin: 0;
   font-size: 0.9rem;
-  letter-spacing: 1px;
+  letter-spacing: calc(1 * var(--tracking));
   color: var(--color-success, #7dff7d);
 }
 

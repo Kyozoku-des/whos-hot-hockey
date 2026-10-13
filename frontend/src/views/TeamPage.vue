@@ -234,7 +234,7 @@ onMounted(async () => {
 }
 
 .roster-player {
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-line);
   cursor: pointer;
 }
 
@@ -325,7 +325,7 @@ onMounted(async () => {
 
   .roster-row {
     font-size: 0.8rem;
-    letter-spacing: 1px;
+    letter-spacing: calc(1 * var(--tracking));
     padding: 0.5rem 0.35rem;
   }
 }

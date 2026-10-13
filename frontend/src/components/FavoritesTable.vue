@@ -202,7 +202,7 @@ const goToTeam = (teamCode) => {
 .favorites-grid {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--row-gap);
   padding-right: 1.5rem;
 }
 
@@ -211,9 +211,9 @@ const goToTeam = (teamCode) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1rem;
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 2px solid var(--color-border);
+  padding: var(--row-padding);
+  background-color: var(--row-bg);
+  border: var(--color-border-thick) solid var(--row-border);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
@@ -221,8 +221,8 @@ const goToTeam = (teamCode) => {
 }
 
 .player-item:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  transform: translateX(5px);
+  background-color: var(--row-hover-bg);
+  transform: translateX(var(--row-hover-shift));
   z-index: 10;
 }
 
@@ -239,11 +239,11 @@ const goToTeam = (teamCode) => {
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid var(--color-border);
+  border: var(--color-border-thick) solid var(--color-line);
 }
 
 .player-name {
-  color: var(--color-text-secondary);
+  color: var(--color-name);
   font-size: 1rem;
   font-weight: bold;
   flex: 1;
@@ -260,9 +260,9 @@ const goToTeam = (teamCode) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1rem;
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 2px solid var(--color-border);
+  padding: var(--row-padding);
+  background-color: var(--row-bg);
+  border: var(--color-border-thick) solid var(--row-border);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
@@ -270,8 +270,8 @@ const goToTeam = (teamCode) => {
 }
 
 .team-item:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  transform: translateX(5px);
+  background-color: var(--row-hover-bg);
+  transform: translateX(var(--row-hover-shift));
   z-index: 10;
 }
 
@@ -284,7 +284,7 @@ const goToTeam = (teamCode) => {
 }
 
 .team-name {
-  color: var(--color-text-secondary);
+  color: var(--color-name);
   font-size: 1rem;
   font-weight: bold;
   flex: 1;
@@ -298,7 +298,7 @@ const goToTeam = (teamCode) => {
 
 /* Shared Styles */
 .stat-item {
-  color: var(--color-text-primary);
+  color: var(--color-stat);
   font-size: 0.9rem;
   font-weight: normal;
   white-space: nowrap;

@@ -213,7 +213,7 @@ onUnmounted(() => {
   font-family: var(--font-family);
   color: var(--color-text-primary);
   background-color: var(--color-bg-card);
-  border: 2px solid var(--color-border);
+  border: var(--color-border-thick) solid var(--color-control-border);
   border-radius: 8px;
   outline: none;
   transition: all 0.2s ease;
@@ -221,7 +221,7 @@ onUnmounted(() => {
 
 .search-input:focus {
   border-color: var(--color-text-secondary);
-  box-shadow: 0 0 0 3px rgba(255, 170, 0, 0.1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-text-secondary) 10%, transparent);
 }
 
 .search-input::placeholder {
@@ -244,7 +244,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   background-color: var(--color-bg-card);
-  border: 2px solid var(--color-border);
+  border: var(--color-border-thick) solid var(--color-line);
   border-radius: 8px;
   max-height: 400px;
   overflow-y: auto;
@@ -267,7 +267,7 @@ onUnmounted(() => {
   padding: 0.75rem 1rem;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-line);
 }
 
 .dropdown-item:last-child,
@@ -277,7 +277,7 @@ onUnmounted(() => {
 
 .dropdown-item:hover,
 .dropdown-item-selected {
-  background-color: rgba(255, 170, 0, 0.1);
+  background-color: color-mix(in srgb, var(--color-text-secondary) 10%, transparent);
 }
 
 .item-image {
@@ -339,7 +339,7 @@ onUnmounted(() => {
   font-size: 0.85rem;
   color: var(--color-text-secondary);
   background-color: var(--color-bg-card);
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-line);
   cursor: pointer;
 }
 
@@ -368,12 +368,12 @@ onUnmounted(() => {
 }
 
 .search-dropdown::-webkit-scrollbar-thumb {
-  background: rgba(255, 170, 0, 0.3);
+  background: color-mix(in srgb, var(--color-text-secondary) 30%, transparent);
   border-radius: 4px;
 }
 
 .search-dropdown::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 170, 0, 0.5);
+  background: color-mix(in srgb, var(--color-text-secondary) 50%, transparent);
 }
 
 @media (max-width: 768px) {

@@ -1,4 +1,4 @@
-# NHL Tracker Frontend
+# Who's Hot Hockey Frontend
 
 A Vue.js 3 application for tracking NHL statistics with a focus on identifying "hot" players and teams.
 

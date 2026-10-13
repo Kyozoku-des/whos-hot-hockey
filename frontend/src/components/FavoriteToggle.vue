@@ -178,7 +178,7 @@ onUnmounted(() => {
 .favorite-toggle.favorited {
   color: var(--color-text-primary);
   background-color: var(--color-bg-card);
-  border-color: var(--color-border);
+  border-color: var(--color-control-border);
 }
 
 .favorite-toggle:disabled {

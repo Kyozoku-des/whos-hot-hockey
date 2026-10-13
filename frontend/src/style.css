@@ -5,21 +5,173 @@
   font-style: normal;
 }
 
+/* Modern theme fonts, self-hosted (the CSP only allows fonts from this site).
+   Licenses: assets/fonts/OFL-*.txt */
+@font-face {
+  font-family: 'Figtree';
+  src: url('./assets/fonts/figtree-latin.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Figtree';
+  src: url('./assets/fonts/figtree-latin-ext.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Barlow Condensed';
+  src: url('./assets/fonts/barlow-condensed-700-latin.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Barlow Condensed';
+  src: url('./assets/fonts/barlow-condensed-700-latin-ext.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Barlow Condensed';
+  src: url('./assets/fonts/barlow-condensed-700-italic-latin.woff2') format('woff2');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Barlow Condensed';
+  src: url('./assets/fonts/barlow-condensed-700-italic-latin-ext.woff2') format('woff2');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/* Two layers of variables:
+   - Colors (--color-bg-*, --color-text-*, --color-border and the status
+     colors) are what a team color scheme replaces (themes/color-schemes.css).
+   - Everything else is the theme's look: fonts, border widths, row and card
+     styling. Its colors are translucent white or mixed from the scheme colors
+     (every scheme keeps white text), so every scheme works with every theme.
+   Modern is the default; Retro overrides it below. */
 :root {
-  /* Retro black & white theme inspired by mockup */
-  --color-bg-primary: hsl(180, 5%, 8%);        /* Pure black background */
-  --color-bg-card: hsl(166, 5%, 5%);           /* Black cards */
-  --color-text-primary: #ffffff;      /* White text */
-  --color-text-secondary: hsl(40, 100%, 75%);    /* Gold/orange text for highlights */
-  --color-border: #ffffff;            /* White borders */
-  --color-border-thick: 2px;          /* Thick retro borders */
+  --color-bg-primary: #0d1117;
+  --color-bg-card: #151b24;
+  --color-text-primary: #e8edf4;
+  --color-text-secondary: #ff6b3d;   /* Highlights: hot stats, active states */
+  --color-border: #ff6b3d;
+  --color-bg-dark: color-mix(in srgb, var(--color-bg-card) 70%, black);
+
+  --font-family: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --tracking: 0.3px;                 /* Multiplied for letter-spacing */
+  --body-tracking: normal;
+  --title-style: italic;
+  --site-title-size: 2.3rem;
+  --color-title-hot: var(--color-text-secondary);
+
+  --color-border-thick: 1px;         /* Border width, despite the name */
+  --color-line: rgba(255, 255, 255, 0.13);   /* Decorative dividers only */
+  /* Inputs and outlined buttons. Team schemes set their own outline, kept 3:1
+     from page and card (controlOutline in themes/colorSchemes.js) */
+  --color-control-outline: #676B71;
+  --color-control-border: var(--color-control-outline);
+  --color-card-border: var(--color-line);
+  --color-muted: rgba(255, 255, 255, 0.6);
+  --color-name: var(--color-text-primary);
+  --color-stat: rgba(255, 255, 255, 0.8);
+  --color-accent-soft: color-mix(in srgb, var(--color-text-secondary) 15%, transparent);
+  --color-on-accent: #000;
+  /* Opaque, so row hover can't change it. Accents read 4.5:1 on the dark card,
+     which makes them light enough for black text at 4.5:1 too */
+  --color-chip-bg: var(--color-text-secondary);
+  --color-chip-fg: var(--color-on-accent);
+  --color-button: var(--color-text-secondary);
+  --color-button-hover: color-mix(in srgb, var(--color-text-secondary) 85%, white);
+  --color-favorite: #ffc247;
+  --ticker-label-bg: var(--color-accent-soft);
+
+  --row-bg: transparent;
+  --row-border: transparent;
+  --row-hover-bg: rgba(255, 255, 255, 0.07);
+  --row-hover-shift: 0px;
+  --row-gap: 0.1rem;
+  --row-padding: 0.55rem 0.75rem;
+
+  --radius-card: 14px;
+  --radius-control: 8px;
+  --color-icon: var(--color-muted);
+  --card-title-padding: 0 1.75rem 0 0;
+  --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --card-hover-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+  --card-expanded-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  --card-title-align: left;
+  --card-title-size: 1.45rem;
+}
+
+:root[data-theme="retro"] {
+  --color-bg-primary: hsl(180, 5%, 8%);
+  --color-bg-card: hsl(166, 5%, 5%);
+  --color-text-primary: #ffffff;
+  --color-text-secondary: hsl(40, 100%, 75%);  /* Gold highlights */
+  --color-border: #ffffff;
+
   --font-family: 'Minecraft', monospace, system-ui;
+  --font-display: var(--font-family);
+  --tracking: 1px;
+  --body-tracking: 2px;
+  --title-style: normal;
+  --site-title-size: 2rem;
+  --color-title-hot: var(--color-text-primary);
+
+  --color-border-thick: 2px;
+  --color-line: var(--color-border);
+  --color-control-border: var(--color-border);
+  --color-card-border: hsl(0, 0%, 75%);
+  --color-muted: rgba(255, 255, 255, 0.6);
+  --color-name: var(--color-text-secondary);
+  --color-stat: var(--color-text-primary);
+  --color-button: #FFAA00;
+  --color-button-hover: #FFB820;
+  --color-favorite: #FFAA00;
+  --ticker-label-bg: transparent;
+
+  --row-bg: rgba(255, 255, 255, 0.05);
+  --row-border: var(--color-border);
+  --row-hover-bg: rgba(255, 255, 255, 0.1);
+  --row-hover-shift: 5px;
+  --row-gap: 0.75rem;
+  --row-padding: 0.75rem 1rem;
+
+  --radius-card: 12px;
+  --radius-control: 0;
+  --color-icon: var(--color-border);
+  --card-title-padding: 0 1.75rem;
+  --card-shadow: none;
+  --card-hover-shadow: 0 0 20px color-mix(in srgb, var(--color-text-secondary) 40%, transparent);
+  --card-expanded-shadow: 0 0 60px rgba(255, 255, 255, 0.6);
+  --card-title-align: center;
+  --card-title-size: 1.25rem;
 }
 
 body {
@@ -27,7 +179,8 @@ body {
   font-family: var(--font-family);
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
-  letter-spacing: 2px; /* Add spacing between characters */
+  letter-spacing: var(--body-tracking);
+  -webkit-font-smoothing: antialiased;
 }
 
 #app {
@@ -38,6 +191,10 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
 }
 
 a {
@@ -57,4 +214,18 @@ input {
 table {
   width: 100%;
   border-collapse: collapse;
+}
+
+/* The headline stat of a table row, as a chip. Retro leaves it as it was.
+   html:root outranks the tables' own scoped .stat-item rules. */
+html:root:not([data-theme="retro"]) .stat-key {
+  padding: 0.1rem 0.45rem;
+  border-radius: 6px;
+  font-weight: 700;
+  color: var(--color-chip-fg);
+  background-color: var(--color-chip-bg);
+}
+
+.stat-item {
+  font-variant-numeric: tabular-nums;
 }

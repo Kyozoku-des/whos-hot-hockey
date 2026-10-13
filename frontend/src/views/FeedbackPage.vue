@@ -137,8 +137,8 @@ const submit = async () => {
   const typeLabel = TYPES.find(option => option.value === type.value).label
   const payload = {
     access_key: ACCESS_KEY,
-    subject: `Whos Hot NHL: ${typeLabel}`,
-    from_name: 'Whos Hot NHL feedback',
+    subject: `Whos Hot Hockey: ${typeLabel}`,
+    from_name: 'Whos Hot Hockey feedback',
     type: typeLabel,
     message: message.value.trim(),
     page_url: sourcePageUrl(),
@@ -219,10 +219,10 @@ const reset = () => {
   padding: 0.6rem 0.75rem;
   font-family: var(--font-family);
   font-size: 0.9rem;
-  letter-spacing: 1px;
+  letter-spacing: calc(1 * var(--tracking));
   color: var(--color-text-primary);
   background-color: var(--color-bg-primary);
-  border: var(--color-border-thick) solid var(--color-border);
+  border: var(--color-border-thick) solid var(--color-control-border);
   border-radius: 8px;
 }
 
@@ -279,14 +279,14 @@ textarea.field-input {
   font-family: var(--font-family);
   font-size: 0.9rem;
   color: #000;
-  background-color: #FFAA00;
+  background-color: var(--color-button);
   border: none;
   border-radius: 8px;
   transition: background-color 0.2s ease;
 }
 
 .submit-button:hover:not(:disabled) {
-  background-color: #FFB820;
+  background-color: var(--color-button-hover);
 }
 
 .submit-button:disabled {

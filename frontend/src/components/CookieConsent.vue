@@ -69,7 +69,7 @@ onMounted(() => {
   padding: 1rem;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.9));
   backdrop-filter: blur(10px);
-  border-top: 2px solid var(--color-border);
+  border-top: var(--color-border-thick) solid var(--color-line);
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
 }
 
@@ -124,20 +124,20 @@ onMounted(() => {
 }
 
 .btn-accept {
-  background-color: #FFAA00;
+  background-color: var(--color-button);
   color: #000;
 }
 
 .btn-accept:hover {
-  background-color: #FFB820;
+  background-color: var(--color-button-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 170, 0, 0.3);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-text-secondary) 30%, transparent);
 }
 
 .btn-decline {
   background-color: transparent;
   color: var(--color-text-secondary);
-  border: 2px solid var(--color-border);
+  border: var(--color-border-thick) solid var(--color-control-border);
 }
 
 .btn-decline:hover {

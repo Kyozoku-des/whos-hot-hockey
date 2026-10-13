@@ -2,7 +2,7 @@
   <div class="home-page">
     <!-- Desktop header -->
     <div class="header desktop-header">
-      <h1 class="title">WHOS HOT NHL</h1>
+      <h1 class="title">Whos <span class="title-hot">Hot</span> Hockey</h1>
       <div class="search-container">
         <SearchBar />
       </div>
@@ -10,7 +10,7 @@
 
     <!-- Mobile header: title above search bar, both centered -->
     <div class="header mobile-header">
-      <h1 class="title mobile-title">WHOS HOT NHL</h1>
+      <h1 class="title mobile-title">Whos <span class="title-hot">Hot</span> Hockey</h1>
       <div class="search-container">
         <SearchBar />
       </div>
@@ -291,7 +291,7 @@ onUnmounted(() => {
 
 /* Header base styles */
 .header {
-  border-bottom: var(--color-border-thick) solid var(--color-border);
+  border-bottom: var(--color-border-thick) solid var(--color-line);
   background-color: var(--color-bg-card);
 }
 
@@ -311,19 +311,25 @@ onUnmounted(() => {
 }
 
 .title {
-  font-size: 2rem;
+  font-size: var(--site-title-size);
   font-weight: bold;
+  font-style: var(--title-style);
+  line-height: 1.1;
   color: var(--color-text-primary);
-  letter-spacing: 3px;
+  letter-spacing: calc(3 * var(--tracking));
   text-transform: uppercase;
   margin: 0;
   padding-right: 3rem;
-  border-right: var(--color-border-thick) solid var(--color-border);
+  border-right: var(--color-border-thick) solid var(--color-line);
   flex-shrink: 0;
 }
 
+.title-hot {
+  color: var(--color-title-hot);
+}
+
 .mobile-title {
-  font-size: 1.75rem;
+  font-size: calc(var(--site-title-size) * 0.875);
   padding-right: 0;
   border-right: none;
 }
@@ -354,8 +360,8 @@ onUnmounted(() => {
 }
 
 .favorites-card {
-  border: 2px solid #FFAA00;
-  box-shadow: 0 4px 12px rgba(255, 170, 0, 0.2);
+  border: var(--color-border-thick) solid var(--color-favorite);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-favorite) 20%, transparent);
 }
 
 .cards-grid {

@@ -122,8 +122,9 @@ onUnmounted(() => {
 
 .expandable-card {
   background-color: var(--color-bg-card);
-  border: var(--color-border-thick) solid hsl(0, 0%, 75%);
-  border-radius: 12px;
+  border: var(--color-border-thick) solid var(--color-card-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--card-shadow);
   padding: 1rem 1.25rem;
   cursor: pointer;
   transition: none;
@@ -136,7 +137,7 @@ onUnmounted(() => {
 
 .expandable-card:not(.expanded):hover {
   border-color: var(--color-text-secondary);
-  box-shadow: 0 0 20px rgba(255, 170, 0, 0.4);
+  box-shadow: var(--card-hover-shadow);
 }
 
 .expandable-card.expanded {
@@ -148,7 +149,7 @@ onUnmounted(() => {
   max-width: 1400px;
   height: 85vh;
   z-index: 1000;
-  box-shadow: 0 0 60px rgba(255, 255, 255, 0.6);
+  box-shadow: var(--card-expanded-shadow);
   cursor: default;
   animation: expandCard 0.3s ease;
 }
@@ -182,12 +183,15 @@ onUnmounted(() => {
 }
 
 .card-title {
-  font-size: 1.25rem;
+  font-size: var(--card-title-size);
+  line-height: 1.1;
   margin-bottom: 0.75rem;
-  text-align: center;
+  /* Clear of the expand icon in the corner */
+  padding: var(--card-title-padding);
+  text-align: var(--card-title-align);
   color: var(--color-text-primary);
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: calc(2 * var(--tracking));
   flex-shrink: 0;
 }
 
@@ -216,13 +220,13 @@ onUnmounted(() => {
 }
 
 .card-content.scrollable::-webkit-scrollbar-track {
-  background: #000;
-  border: 2px solid var(--color-border);
+  background: var(--color-bg-primary);
+  border: var(--color-border-thick) solid var(--color-line);
   margin-right: 8px;
 }
 
 .card-content.scrollable::-webkit-scrollbar-thumb {
-  background: var(--color-border);
+  background: var(--color-line);
   border-radius: 6px;
 }
 
@@ -247,7 +251,8 @@ onUnmounted(() => {
   width: 24px;
   height: 24px;
   background-color: transparent;
-  border: 2px solid var(--color-border);
+  border: var(--color-border-thick) solid var(--color-control-border);
+  border-radius: var(--radius-control);
   color: var(--color-text-primary);
   font-size: 0.875rem;
   line-height: 1;
@@ -263,7 +268,7 @@ onUnmounted(() => {
 .close-button:hover {
   background-color: var(--color-text-secondary);
   border-color: var(--color-text-secondary);
-  color: #000;
+  color: var(--color-on-accent);
   transform: scale(1.1);
 }
 
@@ -272,7 +277,7 @@ onUnmounted(() => {
   top: 0.75rem;
   right: 0.75rem;
   font-size: 1.1rem;
-  color: var(--color-border);
+  color: var(--color-icon);
   pointer-events: none;
   opacity: 0.7;
   transition: all 0.2s ease;
