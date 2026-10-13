@@ -8,6 +8,7 @@ import {
   DEFAULT_COLOR_SCHEME,
   TEXT_CONTRAST,
   UI_CONTRAST,
+  STATUS_COLORS,
   colorSchemeCss,
   colorSchemeFor,
   contrastRatio,
@@ -43,6 +44,11 @@ for (const scheme of teamSchemes) {
       assert.ok(contrastRatio(vars['--color-text-secondary'], background) >= TEXT_CONTRAST, 'highlight on ' + background)
       assert.ok(contrastRatio(vars['--color-border'], background) >= UI_CONTRAST, 'border on ' + background)
     }
+    for (const [name, { ratio }] of Object.entries(STATUS_COLORS)) {
+      for (const background of backgrounds) {
+        assert.ok(contrastRatio(vars[name], background) >= ratio, `${name} on ${background}`)
+      }
+    }
     // Buttons that fill with the highlight color use black text
     assert.ok(contrastRatio('#000000', vars['--color-text-secondary']) >= TEXT_CONTRAST, 'black on highlight')
   })
@@ -56,7 +62,8 @@ test('unknown or stale values fall back to the theme default', () => {
 })
 
 test('color-schemes.css matches the palettes', async () => {
-  const css = await readFile(new URL('../src/themes/color-schemes.css', import.meta.url), 'utf8')
+  // Windows checkouts may turn LF into CRLF
+  const css = (await readFile(new URL('../src/themes/color-schemes.css', import.meta.url), 'utf8')).replace(/\r\n/g, '\n')
   assert.equal(css, colorSchemeCss(), 'run: node scripts/build-color-schemes.js')
   assert.doesNotMatch(css, new RegExp(`data-color-scheme="${DEFAULT_COLOR_SCHEME}"`))
 })

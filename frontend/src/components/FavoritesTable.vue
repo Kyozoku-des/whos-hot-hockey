@@ -344,7 +344,7 @@ const goToTeam = (teamCode) => {
   height: 32px;
   border: none;
   background: transparent;
-  color: #ff6b6b;
+  color: var(--color-negative, #ff6b6b);
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -356,7 +356,7 @@ const goToTeam = (teamCode) => {
 }
 
 .remove-btn:hover {
-  color: #ff5252;
+  color: var(--color-negative, #ff5252);
   filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.8));
 }
 

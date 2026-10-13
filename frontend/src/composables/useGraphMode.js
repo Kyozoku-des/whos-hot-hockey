@@ -12,14 +12,24 @@ const graphMode = ref('cumulative')
 const GRAPH_ORANGE = 'hsl(40, 100%, 75%)'
 const GRAPH_ORANGE_FILL = 'hsla(40, 100%, 75%, 0.1)'
 const GRAPH_RED = 'hsl(0, 85%, 62%)'
+const GRAPH_GREY = '#6B7280'
 
-// Current-season line: the color scheme's highlight color, or Retro's orange
+// Graph colors for the active color scheme, or Retro's. Current season: the
+// highlight color; previous season and the on-pace marker: the scheme's
+// lightened grey and red, so they still show on its cards.
 const { colorScheme } = useSettings()
 export const graphLineColors = computed(() => {
-  const highlight = colorSchemeFor(colorScheme.value).vars?.['--color-text-secondary']
-  return highlight
-    ? { line: highlight, fill: highlight + '1A' }
-    : { line: GRAPH_ORANGE, fill: GRAPH_ORANGE_FILL }
+  const vars = colorSchemeFor(colorScheme.value).vars
+  if (!vars) {
+    return { line: GRAPH_ORANGE, fill: GRAPH_ORANGE_FILL, previous: GRAPH_GREY, previousFill: 'rgba(107, 114, 128, 0.1)', projection: GRAPH_RED }
+  }
+  return {
+    line: vars['--color-text-secondary'],
+    fill: vars['--color-text-secondary'] + '1A',
+    previous: vars['--color-graph-previous'],
+    previousFill: vars['--color-graph-previous'] + '1A',
+    projection: vars['--color-graph-projection']
+  }
 })
 
 export function useGraphMode() {
@@ -42,8 +52,8 @@ export function projectionMarker(projectedPoints, seasonGames) {
     data,
     projected: true,
     showLine: false,
-    borderColor: GRAPH_RED,
-    backgroundColor: GRAPH_RED,
+    borderColor: graphLineColors.value.projection,
+    backgroundColor: graphLineColors.value.projection,
     pointStyle: 'crossRot',
     // Spans 8px, the size of the legend and tooltip squares
     pointRadius: 4,

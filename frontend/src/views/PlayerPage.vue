@@ -277,7 +277,7 @@ onBeforeUnmount(() => {
 }
 
 .error {
-  color: #d32f2f;
+  color: var(--color-negative, #d32f2f);
 }
 
 @media (max-width: 768px) {

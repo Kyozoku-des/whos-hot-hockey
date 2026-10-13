@@ -195,11 +195,11 @@ const selectCustom = async () => {
 
 <style scoped>
 .thanks {
-  border-color: #7dff7d;
+  border-color: var(--color-success, #7dff7d);
 }
 
 .thanks h2 {
-  color: #7dff7d;
+  color: var(--color-success, #7dff7d);
 }
 
 .currency-switch,
@@ -275,12 +275,12 @@ const selectCustom = async () => {
 }
 
 .custom-input.invalid {
-  border-color: hsl(0, 85%, 62%);
+  border-color: var(--color-negative, hsl(0, 85%, 62%));
 }
 
 .custom-error {
   font-size: 0.75rem;
-  color: hsl(0, 85%, 62%);
+  color: var(--color-negative, hsl(0, 85%, 62%));
 }
 
 .donate-button {

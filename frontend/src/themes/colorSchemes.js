@@ -35,16 +35,29 @@ export const mix = (hex, other, amount) => {
   return toHex(from.map((value, i) => value + (to[i] - value) * amount))
 }
 
-const readableOn = (color, backgrounds) =>
-  backgrounds.every(background => contrastRatio(color, background) >= TEXT_CONTRAST)
+const readableOn = (color, backgrounds, ratio = TEXT_CONTRAST) =>
+  backgrounds.every(background => contrastRatio(color, background) >= ratio)
 
 // How far a color must be lightened to read on the backgrounds, or null when
 // even white-ish tints don't
-const tintNeeded = (color, backgrounds) => {
+const tintNeeded = (color, backgrounds, ratio = TEXT_CONTRAST) => {
   for (let step = 0; step <= 20; step++) {
-    if (readableOn(mix(color, WHITE, step * 0.05), backgrounds)) return step * 0.05
+    if (readableOn(mix(color, WHITE, step * 0.05), backgrounds, ratio)) return step * 0.05
   }
   return null
+}
+
+// Colors that carry a meaning rather than the brand: Retro's value (also the
+// CSS fallback where it is used) and the contrast it needs. Each scheme
+// lightens them just enough to stand out on its page and cards, e.g. the
+// negative red turns pink on a red team's cards.
+export const STATUS_COLORS = {
+  '--color-positive': { retro: '#4ADE80', ratio: TEXT_CONTRAST },
+  '--color-negative': { retro: '#F87171', ratio: TEXT_CONTRAST },
+  '--color-success': { retro: '#7DFF7D', ratio: TEXT_CONTRAST },
+  // Graph lines and markers are graphics, so 3:1
+  '--color-graph-previous': { retro: '#6B7280', ratio: UI_CONTRAST },
+  '--color-graph-projection': { retro: '#F04C4C', ratio: UI_CONTRAST }
 }
 
 // Brand blacks and navies are too dark to lighten into a recognisable accent
@@ -81,7 +94,10 @@ export const buildColorScheme = (palette) => {
     '--color-bg-card': card,
     '--color-text-primary': WHITE,
     '--color-text-secondary': accent,
-    '--color-border': accent
+    '--color-border': accent,
+    ...Object.fromEntries(Object.entries(STATUS_COLORS).map(([name, { retro, ratio }]) =>
+      [name, mix(retro, WHITE, tintNeeded(retro, backgrounds, ratio))]
+    ))
   }
 }
 

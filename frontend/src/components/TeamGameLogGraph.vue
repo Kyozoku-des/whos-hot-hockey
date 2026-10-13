@@ -136,8 +136,8 @@ const combinedChartData = computed(() => {
       label: `${previousSeasonLabel.value} (Previous)`,
       data: isCumulative.value ? previousData.cumulativePoints : previousData.pointsPerGame,
       pointsPerGame: previousData.pointsPerGame, // Store for tooltip
-      borderColor: '#6B7280',
-      backgroundColor: 'rgba(107, 114, 128, 0.1)',
+      borderColor: graphLineColors.value.previous,
+      backgroundColor: graphLineColors.value.previousFill,
       borderWidth: 2,
       tension: 0.1,
       pointRadius: 0,

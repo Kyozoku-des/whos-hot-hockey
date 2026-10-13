@@ -167,7 +167,7 @@ onUnmounted(() => observer?.disconnect())
   margin: 0;
   font-size: 0.9rem;
   letter-spacing: 1px;
-  color: #7dff7d;
+  color: var(--color-success, #7dff7d);
 }
 
 .container {
