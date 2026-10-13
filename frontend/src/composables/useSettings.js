@@ -1,5 +1,6 @@
 import { ref, watch } from 'vue'
 import { useFavorites } from './useFavorites'
+import { COLOR_SCHEMES, DEFAULT_COLOR_SCHEME, isColorScheme } from '../themes/colorSchemes.js'
 
 const SETTINGS_KEY = 'nhl_settings'
 
@@ -39,7 +40,9 @@ export const TIME_ZONES = [
   { value: 'Pacific/Honolulu', label: 'Hawaii (HT)' }
 ]
 
+// A theme sets the look (font, borders); a color scheme recolors any theme
 export const THEMES = [{ value: 'retro', label: 'Retro' }]
+export { COLOR_SCHEMES }
 
 // Saved card orders are kept to known keys, with cards added since appended
 export const normalizeOrder = (order) => {
@@ -51,6 +54,7 @@ export const normalizeOrder = (order) => {
 const mobileCardOrder = ref([...DEFAULT_ORDER])
 const timeZone = ref('')
 const theme = ref('retro')
+const colorScheme = ref(DEFAULT_COLOR_SCHEME)
 
 // Same storage rules as favorites: localStorage once consent is given (kept
 // between visits), sessionStorage if declined (kept until the tab closes), and
@@ -72,6 +76,7 @@ const load = () => {
     mobileCardOrder.value = normalizeOrder(saved.mobileCardOrder)
     if (TIME_ZONES.some(zone => zone.value === saved.timeZone)) timeZone.value = saved.timeZone
     if (THEMES.some(option => option.value === saved.theme)) theme.value = saved.theme
+    if (isColorScheme(saved.colorScheme)) colorScheme.value = saved.colorScheme
   } catch {
     // Keep the defaults
   }
@@ -82,15 +87,28 @@ const save = () => {
     settingsStorage()?.setItem(SETTINGS_KEY, JSON.stringify({
       mobileCardOrder: mobileCardOrder.value,
       timeZone: timeZone.value,
-      theme: theme.value
+      theme: theme.value,
+      colorScheme: colorScheme.value
     }))
   } catch {
     // Settings still apply for this visit
   }
 }
 
+// The stylesheet keys off these attributes (see themes/color-schemes.css). They
+// may already be set by public/theme-init.js; this keeps them in step with the
+// checked values, e.g. dropping a saved scheme that no longer exists.
+const applyToPage = () => {
+  const root = document.documentElement
+  root.dataset.theme = theme.value
+  if (colorScheme.value === DEFAULT_COLOR_SCHEME) delete root.dataset.colorScheme
+  else root.dataset.colorScheme = colorScheme.value
+}
+
 load()
-watch([mobileCardOrder, timeZone, theme], save)
+applyToPage()
+watch([mobileCardOrder, timeZone, theme, colorScheme], save)
+watch([theme, colorScheme], applyToPage)
 // Answering the banner later keeps what was chosen so far, in the storage that
 // answer allows, and clears the copy from the other one
 watch(consentGiven, (given) => {
@@ -108,7 +126,7 @@ export function useSettings() {
     mobileCardOrder.value = [...DEFAULT_ORDER]
   }
 
-  return { mobileCardOrder, timeZone, theme, resetMobileCardOrder }
+  return { mobileCardOrder, timeZone, theme, colorScheme, resetMobileCardOrder }
 }
 
 // Time zone option for Intl/toLocale* calls; undefined means the viewer's own

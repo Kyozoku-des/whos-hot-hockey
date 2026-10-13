@@ -41,6 +41,22 @@
       </select>
     </section>
 
+    <section class="info-section">
+      <h2>Color scheme</h2>
+      <p class="info-note">Recolor the theme in your team's colors.</p>
+      <select v-model="colorScheme" class="setting-select" aria-label="Color scheme">
+        <option v-for="option in COLOR_SCHEMES" :key="option.value" :value="option.value">{{ option.label }}</option>
+      </select>
+      <div v-if="selectedScheme.swatches.length" class="swatches" aria-hidden="true">
+        <span
+          v-for="hex in selectedScheme.swatches"
+          :key="hex"
+          class="swatch"
+          :style="{ backgroundColor: hex }"
+        ></span>
+      </div>
+    </section>
+
     <div class="storage-note">
       <p v-if="consentGiven === true" class="info-note">Your settings and favorites are saved in this browser.</p>
       <template v-else>
@@ -55,13 +71,16 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import InfoPage from '../components/InfoPage.vue'
 import { useFavorites } from '../composables/useFavorites'
-import { useSettings, HOME_CARDS, TIME_ZONES, THEMES } from '../composables/useSettings'
+import { useSettings, HOME_CARDS, TIME_ZONES, THEMES, COLOR_SCHEMES } from '../composables/useSettings'
+import { colorSchemeFor } from '../themes/colorSchemes.js'
 
 const { consentGiven, checkConsent, acceptConsent } = useFavorites()
-const { mobileCardOrder, timeZone, theme, resetMobileCardOrder } = useSettings()
+const { mobileCardOrder, timeZone, theme, colorScheme, resetMobileCardOrder } = useSettings()
+
+const selectedScheme = computed(() => colorSchemeFor(colorScheme.value))
 
 const labelFor = (key) => HOME_CARDS.find(card => card.key === key)?.label ?? key
 
@@ -149,6 +168,19 @@ onMounted(checkConsent)
   padding: 0.6rem 0.75rem;
   font-size: 0.9rem;
   letter-spacing: 1px;
+}
+
+.swatches {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.swatch {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid var(--color-text-primary);
+  border-radius: 4px;
 }
 
 .storage-note {

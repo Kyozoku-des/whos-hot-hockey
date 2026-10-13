@@ -113,7 +113,7 @@ const STATS = [
 
 /* The score ticker's highlight red */
 .ticker-red {
-  color: hsl(0, 85%, 62%);
+  color: var(--color-negative, hsl(0, 85%, 62%));
 }
 
 .inline-link {

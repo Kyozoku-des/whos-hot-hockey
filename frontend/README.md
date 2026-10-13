@@ -198,11 +198,24 @@ tests change. They are skipped on Windows.
 
 ## Design
 
-The application follows the reference designs provided:
-- Green color scheme (primary: #c8e6c9, cards: #9cb89f)
-- Dark header and table headers (#3d3d3d, #4a4a4a)
-- Responsive layout with grid-based component arrangement
-- Clickable table rows for navigation to detail pages
+The site uses a retro look: pixel font, thick borders, light text on dark backgrounds.
+
+### Themes and color schemes
+
+Settings has two separate choices:
+
+- **Theme**: the overall look (font, borders, shapes). `Retro` is the only theme so far and is the default.
+- **Color scheme**: recolors whichever theme is active. `Theme default` keeps the theme's own colors (Retro's are the `:root` variables in `src/style.css`). The other 32 options are one per NHL club.
+
+How it fits together:
+
+- `src/themes/teamColors.js` holds each club's brand colors, keyed by NHL team abbreviation.
+- `src/themes/colorSchemes.js` turns a palette into the page color variables. The page background is the club's first brand color that white text reads on. Highlights and borders take another brand color, lightened just enough to reach WCAG AA contrast (4.5:1) on both the page and the cards.
+- Each scheme also sets `--color-positive`, `--color-negative`, `--color-success` and the graph's previous-season and on-pace colors, lightened until they read on that scheme's page and cards. Components use them with Retro's own value as the CSS fallback (e.g. `var(--color-negative, #f87171)`), so Retro looks unchanged.
+- `src/themes/color-schemes.css` is generated from those two files with `node scripts/build-color-schemes.js`. A test fails if it is out of date.
+- The chosen scheme is set as `data-color-scheme` on `<html>`. `public/theme-init.js` sets it from saved settings before first paint, so returning visitors don't see Retro colors flash. Nginx serves that file with `no-cache`.
+
+To change a club's colors, edit `teamColors.js`, run the build script, and run `npm run test:security`.
 
 ## Key Features
 
@@ -245,7 +258,6 @@ The application follows the reference designs provided:
 - Real-time data updates
 - Player and team image integration
 - Advanced filtering and sorting
-- Dark mode toggle
 
 ## Browser Support
 

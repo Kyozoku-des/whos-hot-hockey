@@ -151,11 +151,11 @@ const goToTeam = (teamCode) => {
 }
 
 .stat-positive {
-  color: #4ade80;
+  color: var(--color-positive, #4ade80);
 }
 
 .stat-negative {
-  color: #f87171;
+  color: var(--color-negative, #f87171);
 }
 
 .loading,

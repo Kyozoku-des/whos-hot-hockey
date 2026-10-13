@@ -266,7 +266,7 @@ onUnmounted(() => {
 
 <style scoped>
 .score-ticker {
-  --color-ticker-highlight: hsl(0, 85%, 62%);
+  --color-ticker-highlight: var(--color-negative, hsl(0, 85%, 62%));
   display: flex;
   align-items: stretch;
   border-bottom: var(--color-border-thick) solid var(--color-border);

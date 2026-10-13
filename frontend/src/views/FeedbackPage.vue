@@ -236,7 +236,7 @@ textarea.field-input {
 }
 
 .field-input.invalid {
-  border-color: hsl(0, 85%, 62%);
+  border-color: var(--color-negative, hsl(0, 85%, 62%));
 }
 
 .field-hint {
@@ -253,7 +253,7 @@ textarea.field-input {
 
 .field-error,
 .form-error {
-  color: hsl(0, 85%, 62%);
+  color: var(--color-negative, hsl(0, 85%, 62%));
 }
 
 .honeypot {
@@ -270,7 +270,7 @@ textarea.field-input {
   flex-direction: column;
   align-items: flex-start;
   gap: 1rem;
-  color: #7dff7d;
+  color: var(--color-success, #7dff7d);
 }
 
 .submit-button {
