@@ -5,16 +5,20 @@
     :class="{ 'reduced-motion': reducedMotion, held }"
     :aria-label="ariaLabel"
     role="marquee"
-    @pointerdown="held = true"
-    @pointerup="held = false"
-    @pointercancel="held = false"
-    @pointerleave="held = false"
+    @pointerenter="onPointerEnter"
+    @pointerleave="hovered = false"
+    @pointerdown="onPointerDown"
+    @pointermove="onPointerMove"
+    @pointerup="onPointerUp"
+    @pointercancel="onPointerUp"
+    @focusin="focused = true"
+    @focusout="focused = false"
   >
     <div class="ticker-label">{{ live ? 'LIVE' : dayLabel }}</div>
     <div class="ticker-viewport" :ref="setViewport">
       <!-- Two equal halves, each wide enough to fill the line, so the loop scrolls seamlessly;
            only the first copy is read by screen readers -->
-      <div class="ticker-track" :style="{ animationDuration: `${duration}s` }">
+      <div class="ticker-track" :ref="setTrack">
         <div
           v-for="copy in copies"
           :key="copy"
@@ -50,29 +54,53 @@ const LIVE_REFRESH_MS = 60 * 1000
 const IDLE_REFRESH_MS = 10 * 60 * 1000
 // Scroll speed in pixels per second
 const SPEED = 60
+// After a drag the line glides at the release speed and eases back to SPEED over about this long
+const EASE_SECONDS = 0.8
+// Fastest fling, in pixels per second
+const MAX_FLING = 4000
+// A release this long after the last movement is a stop, not a fling
+const FLING_WINDOW_MS = 100
 
 const { getLatestScoreboard } = useGameScores()
 
 const games = ref([])
 const live = ref(false)
 const gameDate = ref(null)
-const duration = ref(60)
 // Copies of the content in each half of the track
 const repeats = ref(1)
 const reducedMotion = ref(false)
-// Paused only while pressed; touch screens keep :hover after a tap, which
-// would leave the ticker stopped
+// Dragged by hand while pressed
 const held = ref(false)
+// Paused while a mouse is over the line or it has keyboard focus. Only mouse hover
+// counts: touch screens keep hover after a tap, which would leave the ticker stopped
+const hovered = ref(false)
+const focused = ref(false)
 
-// Measured to fill the line and set the scroll duration
+// Measured to fill the line and loop the scroll
 let content = null
 let viewport = null
+let track = null
 const setContent = (el) => {
   content = el
 }
 const setViewport = (el) => {
   viewport = el
 }
+const setTrack = (el) => {
+  track = el
+}
+
+// How far the line has scrolled left, in pixels, within one half of the track
+let offset = 0
+// Current speed in pixels per second; positive scrolls left
+let velocity = SPEED
+// Width of one half of the track, after which the scroll loops
+let loopWidth = 0
+let frame = null
+let lastFrame = null
+// Pointer position and time at the last drag movement
+let dragX = 0
+let dragTime = 0
 let refreshTimer = null
 let motionQuery = null
 // Set on unmount so a request still in flight cannot start a new refresh loop
@@ -111,12 +139,80 @@ const pointTitle = (point) => {
   return reasons.length ? reasons.join(' · ') : undefined
 }
 
-// Repeat short content so no gap shows, and keep the scroll speed constant however much there is
+// Repeat short content so no gap shows
 const updateLayout = () => {
   const width = content?.offsetWidth
   if (!width) return
   repeats.value = Math.max(1, Math.ceil((viewport?.clientWidth ?? 0) / width))
-  duration.value = Math.max(20, (repeats.value * width) / SPEED)
+  loopWidth = repeats.value * width
+}
+
+const render = () => {
+  if (!track) return
+  if (loopWidth) offset = ((offset % loopWidth) + loopWidth) % loopWidth
+  track.style.transform = `translate3d(${-offset}px, 0, 0)`
+}
+
+// Move the line each frame; after a drag, ease from the release speed back to the
+// normal speed, or to a stop while paused
+const step = (time) => {
+  frame = requestAnimationFrame(step)
+  // A long gap (a background tab) would otherwise jump the line
+  const seconds = lastFrame === null ? 0 : Math.min(time - lastFrame, 100) / 1000
+  lastFrame = time
+  if (held.value) return
+  const target = hovered.value || focused.value ? 0 : SPEED
+  velocity += (target - velocity) * (1 - Math.exp(-seconds / (EASE_SECONDS / 3)))
+  offset += velocity * seconds
+  render()
+}
+
+const startMotion = () => {
+  if (frame !== null || reducedMotion.value) return
+  lastFrame = null
+  frame = requestAnimationFrame(step)
+}
+
+const stopMotion = () => {
+  if (frame !== null) cancelAnimationFrame(frame)
+  frame = null
+  if (track) track.style.transform = ''
+}
+
+const onPointerEnter = (event) => {
+  if (event.pointerType === 'mouse') hovered.value = true
+}
+
+// Holding the line lets it be dragged sideways; letting go flings it
+const onPointerDown = (event) => {
+  if (reducedMotion.value || (event.pointerType === 'mouse' && event.button !== 0)) return
+  held.value = true
+  velocity = 0
+  dragX = event.clientX
+  dragTime = event.timeStamp
+  event.currentTarget.setPointerCapture?.(event.pointerId)
+}
+
+const onPointerMove = (event) => {
+  if (!held.value) return
+  const moved = dragX - event.clientX
+  const elapsed = event.timeStamp - dragTime
+  offset += moved
+  render()
+  if (elapsed > 0) {
+    // Smooth over the last few movements so one jittery event doesn't set the fling
+    velocity = 0.8 * ((moved / elapsed) * 1000) + 0.2 * velocity
+  }
+  dragX = event.clientX
+  dragTime = event.timeStamp
+}
+
+const onPointerUp = (event) => {
+  if (!held.value) return
+  held.value = false
+  velocity = event.timeStamp - dragTime > FLING_WINDOW_MS
+    ? 0
+    : Math.max(-MAX_FLING, Math.min(MAX_FLING, velocity))
 }
 
 const load = async () => {
@@ -128,6 +224,8 @@ const load = async () => {
   await nextTick()
   if (disposed) return
   updateLayout()
+  render()
+  startMotion()
   scheduleRefresh()
 }
 
@@ -137,8 +235,16 @@ const scheduleRefresh = () => {
   refreshTimer = setTimeout(load, live.value ? LIVE_REFRESH_MS : IDLE_REFRESH_MS)
 }
 
-const onMotionChange = (event) => {
+const onMotionChange = async (event) => {
   reducedMotion.value = event.matches
+  if (event.matches) {
+    stopMotion()
+  } else {
+    // The extra copies are rendered again before the loop can be measured
+    await nextTick()
+    updateLayout()
+    startMotion()
+  }
 }
 
 onMounted(() => {
@@ -152,6 +258,7 @@ onMounted(() => {
 onUnmounted(() => {
   disposed = true
   clearTimeout(refreshTimer)
+  stopMotion()
   motionQuery?.removeEventListener('change', onMotionChange)
   window.removeEventListener('resize', updateLayout)
 })
@@ -186,27 +293,25 @@ onUnmounted(() => {
 .ticker-track {
   display: flex;
   width: max-content;
-  animation: ticker-scroll linear infinite;
+  will-change: transform;
 }
 
-.score-ticker.held .ticker-track,
-.score-ticker:focus-within .ticker-track {
-  animation-play-state: paused;
+/* Horizontal drags move the line; vertical swipes still scroll the page */
+.score-ticker:not(.reduced-motion) {
+  cursor: grab;
+  touch-action: pan-y;
 }
 
-@media (hover: hover) {
-  .score-ticker:hover .ticker-track {
-    animation-play-state: paused;
-  }
+.score-ticker.held {
+  cursor: grabbing;
 }
 
-/* A long press holds the ticker, so don't let it select text or open a menu */
-@media (hover: none) {
-  .score-ticker {
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
-  }
+/* Dragging the line shouldn't select text or open a menu */
+.score-ticker:not(.reduced-motion),
+.score-ticker:not(.reduced-motion) * {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .ticker-content {
@@ -250,22 +355,9 @@ onUnmounted(() => {
   color: var(--color-ticker-highlight);
 }
 
-@keyframes ticker-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
 /* No motion: the line stays still and can be scrolled sideways */
 .reduced-motion .ticker-viewport {
   overflow-x: auto;
-}
-
-.reduced-motion .ticker-track {
-  animation: none;
 }
 
 @media (max-width: 768px) {
