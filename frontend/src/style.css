@@ -230,6 +230,20 @@ html:root:not([data-theme="retro"]) .stat-key {
   font-variant-numeric: tabular-nums;
 }
 
+/* Modern table rows have no outline, so a line separates each row from the
+   one above it, centered in the row gap. Retro rows are outlined boxes. */
+:root:not([data-theme="retro"]) :is(.players-grid, .teams-grid, .favorites-grid)
+  > :is(.player-item, .team-item) + :is(.player-item, .team-item)::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * var(--row-gap) / 2 - var(--color-border-thick) - 0.5px);
+  left: 0.75rem;
+  right: 0.75rem;
+  height: 1px;
+  background-color: var(--color-line);
+  pointer-events: none;
+}
+
 /* Scrollbar for scroll areas inside the page (e.g. the game log table).
    Modern: slim thumb on a clear track. Retro: same as the expanded card's. */
 .themed-scroll::-webkit-scrollbar {
