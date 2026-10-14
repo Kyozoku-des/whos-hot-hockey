@@ -51,7 +51,7 @@
         @touchstart="onTouchStart"
         @touchmove="onTouchMove"
         @touchend="onTouchEnd"
-        @touchcancel="onTouchEnd"
+        @touchcancel="onTouchCancel"
       >
         <div class="swipe-track" :class="{ dragging: isSwiping || !animateSlides }" :style="{ left: `${swipeOffset}px` }">
           <div v-for="(card, index) in mobileCards" :key="card.key" class="swipe-slide">
@@ -238,6 +238,10 @@ const onTouchStart = (e) => {
 const onTouchMove = (e) => {
   if (!tracking) return
   const x = e.touches[0].clientX
+  // Only the last FLICK_WINDOW_MS count, so resting the finger before a flick
+  // does not slow it down. Moves before the swipe locks in are kept too.
+  samples.push({ x, t: e.timeStamp })
+  while (samples.length > 2 && e.timeStamp - samples[0].t > FLICK_WINDOW_MS) samples.shift()
   if (!isSwiping.value) {
     const dx = Math.abs(x - touchStartX.value)
     const dy = Math.abs(e.touches[0].clientY - touchStartY)
@@ -253,8 +257,6 @@ const onTouchMove = (e) => {
   // next card would only stop that fling instead of opening the player/team.
   if (e.cancelable) e.preventDefault()
   touchCurrentX.value = x
-  samples.push({ x, t: e.timeStamp })
-  while (samples.length > 2 && e.timeStamp - samples[1].t > FLICK_WINDOW_MS) samples.shift()
 }
 
 const onTouchEnd = (e) => {
@@ -265,7 +267,7 @@ const onTouchEnd = (e) => {
   const threshold = slideWidth.value * 0.2
   const first = samples[0]
   const last = samples[samples.length - 1]
-  const elapsed = e.timeStamp - first.t
+  const elapsed = last.t - first.t
   // A finger that stopped before lifting is not a flick
   const velocity = elapsed > 0 && e.timeStamp - last.t < FLICK_WINDOW_MS
     ? (last.x - first.x) / elapsed
@@ -285,6 +287,12 @@ const onTouchEnd = (e) => {
   } else if (direction > 0 && activeCardIndex.value > 0) {
     activeCardIndex.value--
   }
+}
+
+// The browser or system took the touch over: snap back, never change card
+const onTouchCancel = () => {
+  tracking = false
+  isSwiping.value = false
 }
 
 const goToCard = (index) => {
