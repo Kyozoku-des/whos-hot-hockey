@@ -197,6 +197,9 @@ onMounted(async () => {
   await searchStore.loadSearchData(async () => {
     return await fetchData('/search/all')
   })
+  // A query restored from the store needs its results too, or focusing the
+  // input would show "No results found"
+  performSearch()
 
   // Add click outside listener
   document.addEventListener('click', handleClickOutside)
