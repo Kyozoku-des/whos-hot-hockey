@@ -36,8 +36,8 @@
       >
         <div class="item-image">
           <img
-            v-if="result.imageUrl"
-            :src="result.imageUrl"
+            v-if="imageFor(result)"
+            :src="imageFor(result)"
             :alt="result.name"
             @error="handleImageError"
           />
@@ -82,6 +82,17 @@ const searchBarRef = ref(null)
 const inputRef = ref(null)
 
 // Computed
+// Team logos by team code, from the team entries in the search index
+const teamLogos = computed(() => new Map(
+  searchStore.searchData
+    .filter(item => item.type === 'TEAM')
+    .map(item => [item.teamCode, item.imageUrl])
+))
+
+// Players show their team's logo: headshots are not ours to show
+const imageFor = (result) =>
+  result.type === 'PLAYER' ? teamLogos.value.get(result.teamCode) : result.imageUrl
+
 const showDropdown = computed(() => {
   return isFocused.value && searchQuery.value.trim() !== ''
 })

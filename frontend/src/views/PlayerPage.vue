@@ -6,12 +6,6 @@
       <div v-else class="player-content">
         <div class="player-header">
           <div class="player-info-card">
-            <PlayerAvatar
-              class="card-image"
-              :headshot-url="player?.headshotUrl"
-              :alt="`${player?.firstName} ${player?.lastName}`"
-              size="large"
-            />
             <div class="player-stats">
               <h1 class="player-name">{{ player?.firstName }} {{ player?.lastName }}</h1>
               <p class="stat-line">Points: {{ player?.points || 0 }}</p>
@@ -59,13 +53,6 @@
             </table>
           </div>
         </div>
-
-        <PlayerAvatar
-          class="bottom-image"
-          :headshot-url="player?.headshotUrl"
-          :alt="`${player?.firstName} ${player?.lastName}`"
-          size="large"
-        />
       </div>
     </div>
   </div>
@@ -75,7 +62,6 @@
 import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePlayerStats } from '../composables/useApi'
-import PlayerAvatar from '../components/PlayerAvatar.vue'
 import PlayerGameLogGraph from '../components/PlayerGameLogGraph.vue'
 import FavoriteButton from '../components/FavoriteButton.vue'
 import NextGameLine from '../components/NextGameLine.vue'
@@ -221,10 +207,6 @@ onBeforeUnmount(() => {
   margin: 0.5rem 0;
 }
 
-.bottom-image {
-  display: none;
-}
-
 .section {
   background-color: var(--color-bg-card);
   border-radius: 8px;
@@ -301,16 +283,6 @@ onBeforeUnmount(() => {
     flex-direction: column;
     text-align: center;
     padding: 1.5rem 1rem;
-  }
-
-  /* The image moves from the card to the bottom of the page */
-  .player-info-card .card-image {
-    display: none;
-  }
-
-  .bottom-image {
-    display: block;
-    margin: 0 auto;
   }
 
   .section {
