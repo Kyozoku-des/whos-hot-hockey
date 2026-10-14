@@ -240,7 +240,7 @@ export const playerFavorite = (player) => ({
   id: player.playerId,
   type: 'PLAYER',
   name: `${player.firstName} ${player.lastName}`,
-  imageUrl: player.headshotUrl || '',
+  imageUrl: player.teamLogoUrl || '',
   secondaryInfo: player.positionCode || ''
 })
 

@@ -8,12 +8,12 @@ const SETTINGS_KEY = 'nhl_settings'
 // table component; the label tells the two "Last 10 games" cards apart here.
 export const HOME_CARDS = [
   { key: 'favorites', title: 'Favorites', label: 'Favorites' },
-  { key: 'standings', title: 'Player standings', label: 'Player standings' },
   { key: 'streaks', title: 'Point streaks', label: 'Point streaks' },
   { key: 'hot-players', title: 'Last 10 games', label: 'Last 10 games (players)' },
-  { key: 'team-standings', title: 'Team standings', label: 'Team standings' },
+  { key: 'standings', title: 'Player standings', label: 'Player standings' },
   { key: 'win-streaks', title: 'Win streaks', label: 'Win streaks' },
-  { key: 'team-hot', title: 'Last 10 games', label: 'Last 10 games (teams)' }
+  { key: 'team-hot', title: 'Last 10 games', label: 'Last 10 games (teams)' },
+  { key: 'team-standings', title: 'Team standings', label: 'Team standings' }
 ]
 
 const DEFAULT_ORDER = HOME_CARDS.map(card => card.key)

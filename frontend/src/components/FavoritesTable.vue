@@ -234,14 +234,6 @@ const goToTeam = (teamCode) => {
   padding-left: 2.5rem;
 }
 
-.player-headshot {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: var(--color-border-thick) solid var(--color-line);
-}
-
 .player-name {
   color: var(--color-name);
   font-size: 1rem;

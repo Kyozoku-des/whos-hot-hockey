@@ -1,17 +1,12 @@
 <template>
   <div class="player-page">
     <div class="container">
+      <HomeLink class="page-home-link" />
       <div v-if="loading" class="loading">Loading...</div>
       <div v-else-if="error" class="error">{{ error }}</div>
       <div v-else class="player-content">
         <div class="player-header">
           <div class="player-info-card">
-            <PlayerAvatar
-              class="card-image"
-              :headshot-url="player?.headshotUrl"
-              :alt="`${player?.firstName} ${player?.lastName}`"
-              size="large"
-            />
             <div class="player-stats">
               <h1 class="player-name">{{ player?.firstName }} {{ player?.lastName }}</h1>
               <p class="stat-line">Points: {{ player?.points || 0 }}</p>
@@ -36,7 +31,7 @@
         <div class="section">
           <h2 class="section-title">Game Logs</h2>
           <div v-if="loadingGameLog" class="loading">Loading game logs...</div>
-          <div v-else ref="tableScroll" class="table-scroll" :style="{ maxHeight: tableMaxHeight }">
+          <div v-else ref="tableScroll" class="table-scroll themed-scroll" :style="{ maxHeight: tableMaxHeight }">
             <table class="game-log-table">
               <thead>
                 <tr>
@@ -59,13 +54,6 @@
             </table>
           </div>
         </div>
-
-        <PlayerAvatar
-          class="bottom-image"
-          :headshot-url="player?.headshotUrl"
-          :alt="`${player?.firstName} ${player?.lastName}`"
-          size="large"
-        />
       </div>
     </div>
   </div>
@@ -75,8 +63,8 @@
 import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePlayerStats } from '../composables/useApi'
-import PlayerAvatar from '../components/PlayerAvatar.vue'
 import PlayerGameLogGraph from '../components/PlayerGameLogGraph.vue'
+import HomeLink from '../components/HomeLink.vue'
 import FavoriteButton from '../components/FavoriteButton.vue'
 import NextGameLine from '../components/NextGameLine.vue'
 import { playerFavorite } from '../composables/useFavorites'
@@ -92,9 +80,12 @@ const previousSeason = ref('')
 const loadingGameLog = ref(false)
 const tableScroll = ref(null)
 const tableMaxHeight = ref('none')
+// Re-measures when row heights change after the first paint (late web font,
+// text wrapping on narrow screens, rotation), not only on window resize
+let tableResizeObserver = null
 
 // Show the latest VISIBLE_GAMES rows; the rest are reached by scrolling the table
-const VISIBLE_GAMES = 10
+const VISIBLE_GAMES = 5
 const updateTableMaxHeight = () => {
   const rows = tableScroll.value?.querySelectorAll('tbody tr')
   if (!rows || rows.length <= VISIBLE_GAMES) {
@@ -156,11 +147,15 @@ onMounted(async () => {
   loadingGameLog.value = false
   await nextTick()
   updateTableMaxHeight()
-  window.addEventListener('resize', updateTableMaxHeight)
+  const table = tableScroll.value?.querySelector('table')
+  if (table) {
+    tableResizeObserver = new ResizeObserver(updateTableMaxHeight)
+    tableResizeObserver.observe(table)
+  }
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', updateTableMaxHeight)
+  tableResizeObserver?.disconnect()
 })
 </script>
 
@@ -173,6 +168,11 @@ onBeforeUnmount(() => {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 2rem;
+}
+
+.page-home-link {
+  display: inline-block;
+  margin: 1.5rem 0 1rem;
 }
 
 .player-content {
@@ -212,10 +212,6 @@ onBeforeUnmount(() => {
 .stat-line {
   font-size: 1.1rem;
   margin: 0.5rem 0;
-}
-
-.bottom-image {
-  display: none;
 }
 
 .section {
@@ -294,16 +290,6 @@ onBeforeUnmount(() => {
     flex-direction: column;
     text-align: center;
     padding: 1.5rem 1rem;
-  }
-
-  /* The image moves from the card to the bottom of the page */
-  .player-info-card .card-image {
-    display: none;
-  }
-
-  .bottom-image {
-    display: block;
-    margin: 0 auto;
   }
 
   .section {
