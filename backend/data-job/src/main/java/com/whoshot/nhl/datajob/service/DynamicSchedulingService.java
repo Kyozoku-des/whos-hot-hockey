@@ -31,6 +31,7 @@ public class DynamicSchedulingService {
     private final DataSyncService dataSyncService;
     private final BackfillLockService seasonLock;
     private final ScoreboardSyncService scoreboardSyncService;
+    private final SyncStatusRecorder syncStatus;
     private ScheduledFuture<?> syncTask;
     private volatile boolean stopping;
     private LocalDateTime lastGameTime;
@@ -57,10 +58,12 @@ public class DynamicSchedulingService {
             // Refresh season as well as schedule so a daemon survives season rollover.
             dataSyncService.initialize();
             String seasonId = dataSyncService.getSeasonId();
-            if (!seasonLock.runExclusively(seasonId, () -> {
+            if (seasonLock.runExclusively(seasonId, () -> {
                 dataSyncService.syncTeams();
                 dataSyncService.syncPlayers();
             })) {
+                syncStatus.statsSynced();
+            } else {
                 log.warn("[game-sync] Season {} is being written by another job; skipping this full sync", seasonId);
             }
             scoreboardSyncService.syncScoreboard(true);
@@ -123,6 +126,10 @@ public class DynamicSchedulingService {
                 schedule(this::syncAndReschedule, Instant.now().plusSeconds(60));
                 return;
             }
+            if (!teamsToSync.isEmpty()) {
+                // Teams not playing have no new games, so their stats are current as of this poll too.
+                syncStatus.statsSynced();
+            }
             scoreboardSyncService.syncScoreboard(false);
             // Retain participants through their first completed poll for final statistics.
             previousActiveTeams = Set.copyOf(activeTeams);
@@ -138,6 +145,7 @@ public class DynamicSchedulingService {
                 })) {
                     // The full sync rewrites every team's completed games.
                     pendingTeamGames.clear();
+                    syncStatus.statsSynced();
                 } else {
                     log.warn("[game-sync] Season is being written by another job; the next hourly sync catches up");
                 }

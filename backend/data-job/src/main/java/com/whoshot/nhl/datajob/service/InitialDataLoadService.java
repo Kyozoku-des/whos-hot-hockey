@@ -17,6 +17,7 @@ public class InitialDataLoadService {
 
     private final DataSyncService dataSyncService;
     private final BackfillLockService seasonLock;
+    private final SyncStatusRecorder syncStatus;
 
     /**
      * Loads all player data for the current season.
@@ -41,6 +42,7 @@ public class InitialDataLoadService {
                 log.error("Initial data load skipped: season {} is being written by another job", seasonId);
                 return;
             }
+            syncStatus.statsSynced();
         } catch (RuntimeException e) {
             IngestionFailures.rethrowIfFatal(e);
             log.error("Initial data load failed: {}", e.getMessage(), e);

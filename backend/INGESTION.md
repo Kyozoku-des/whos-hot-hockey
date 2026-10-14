@@ -35,7 +35,10 @@ not yet. A record that fails keeps its previous valid row:
 | Database lost, or stop requested | run ends; queued work is cancelled; nothing half-written |
 
 Each run logs one `[ingestion]` summary line (see [Observing a run](#observing-a-run)). The
-`ingestion.last.success` gauge only advances for runs with no skipped records. Publishing a whole
+`ingestion.last.success` gauge only advances for runs with no skipped records. The site's
+"Stats last updated" time (`sync_status`, served by `GET /api/status`) is stricter about the run
+and looser about records: it advances whenever a full sync or game-time poll finishes without a
+run-level failure, since skipped records keep their previous valid row. Publishing a whole
 season atomically would need staging tables or versioning, and is out of scope.
 
 ### Writer exclusion

@@ -315,6 +315,24 @@ Takes no parameters. Before any game has been played the response is
 
 ---
 
+## Status
+
+### GET /api/status
+
+When the data job last finished syncing current-season stats, shown in the site footer as
+"Stats last updated". Moved forward by every full sync and every game-time poll that ran to the
+end; a sync that failed or was skipped for another writer leaves it unchanged. Players skipped
+within a finished sync keep their previous row and do not hold it back.
+
+`statsUpdatedAt` is an ISO-8601 UTC instant, or `null` before the first sync has finished.
+
+**Example response:**
+```json
+{ "statsUpdatedAt": "2026-10-14T18:05:12.345Z" }
+```
+
+---
+
 ## Error Responses
 
 | Status | Meaning | Body |
