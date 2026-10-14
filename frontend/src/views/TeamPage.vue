@@ -1,6 +1,7 @@
 <template>
   <div class="team-page">
     <div class="container">
+      <HomeLink class="page-home-link" />
       <div v-if="loading" class="loading">Loading...</div>
       <div v-else-if="error" class="error">{{ error }}</div>
       <div v-else class="team-content">
@@ -78,6 +79,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTeamStats } from '../composables/useApi'
+import HomeLink from '../components/HomeLink.vue'
 import TeamLogo from '../components/TeamLogo.vue'
 import TeamGameLogGraph from '../components/TeamGameLogGraph.vue'
 import FavoriteButton from '../components/FavoriteButton.vue'
@@ -153,6 +155,11 @@ onMounted(async () => {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 2rem;
+}
+
+.page-home-link {
+  display: inline-block;
+  margin: 1.5rem 0 1rem;
 }
 
 .team-content {

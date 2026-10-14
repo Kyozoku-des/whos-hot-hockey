@@ -1,12 +1,14 @@
 <template>
   <div class="info-page">
-    <router-link to="/" class="home-link">&lt; Home</router-link>
+    <HomeLink />
     <h1 class="info-title">{{ title }}</h1>
     <slot></slot>
   </div>
 </template>
 
 <script setup>
+import HomeLink from './HomeLink.vue'
+
 // Shared layout for the pages linked below the content (settings and the like)
 defineProps({
   title: { type: String, required: true }
@@ -18,15 +20,6 @@ defineProps({
   max-width: 700px;
   margin: 0 auto;
   padding: 2rem 1rem 0;
-}
-
-.home-link {
-  color: var(--color-text-secondary);
-  font-size: 0.9rem;
-}
-
-.home-link:hover {
-  color: var(--color-text-primary);
 }
 
 .info-title {

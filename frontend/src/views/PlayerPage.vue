@@ -1,6 +1,7 @@
 <template>
   <div class="player-page">
     <div class="container">
+      <HomeLink class="page-home-link" />
       <div v-if="loading" class="loading">Loading...</div>
       <div v-else-if="error" class="error">{{ error }}</div>
       <div v-else class="player-content">
@@ -63,6 +64,7 @@ import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePlayerStats } from '../composables/useApi'
 import PlayerGameLogGraph from '../components/PlayerGameLogGraph.vue'
+import HomeLink from '../components/HomeLink.vue'
 import FavoriteButton from '../components/FavoriteButton.vue'
 import NextGameLine from '../components/NextGameLine.vue'
 import { playerFavorite } from '../composables/useFavorites'
@@ -166,6 +168,11 @@ onBeforeUnmount(() => {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 2rem;
+}
+
+.page-home-link {
+  display: inline-block;
+  margin: 1.5rem 0 1rem;
 }
 
 .player-content {
