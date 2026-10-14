@@ -36,7 +36,7 @@
         <div class="section">
           <h2 class="section-title">Game Logs</h2>
           <div v-if="loadingGameLog" class="loading">Loading game logs...</div>
-          <div v-else ref="tableScroll" class="table-scroll" :style="{ maxHeight: tableMaxHeight }">
+          <div v-else ref="tableScroll" class="table-scroll themed-scroll" :style="{ maxHeight: tableMaxHeight }">
             <table class="game-log-table">
               <thead>
                 <tr>
