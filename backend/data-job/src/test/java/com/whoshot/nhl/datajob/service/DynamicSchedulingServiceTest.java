@@ -29,7 +29,7 @@ class DynamicSchedulingServiceTest {
             return pending;
         });
         when(sync.getFirstGameTimeForToday()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).plusHours(5));
-        var daemon = new DynamicSchedulingService(scheduler, sync, TestSeasonLocks.available(), mock(ScoreboardSyncService.class));
+        var daemon = new DynamicSchedulingService(scheduler, sync, TestSeasonLocks.available(), mock(ScoreboardSyncService.class), mock(SyncStatusRecorder.class));
         daemon.init();
         for (int i = 0; i < 3; i++) {
             assertEquals(1, tasks.size());
@@ -56,11 +56,14 @@ class DynamicSchedulingServiceTest {
         when(sync.getLastGameTimeForToday()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).minusHours(1));
         Set<String> teams = Set.of("EDM", "VAN");
         when(sync.getActiveGames()).thenReturn(List.of(game("VAN", "EDM")), List.of());
-        var daemon = new DynamicSchedulingService(scheduler, sync, TestSeasonLocks.available(), mock(ScoreboardSyncService.class));
+        var syncStatus = mock(SyncStatusRecorder.class);
+        var daemon = new DynamicSchedulingService(scheduler, sync, TestSeasonLocks.available(), mock(ScoreboardSyncService.class), syncStatus);
         daemon.init();
         tasks.remove().run();
         tasks.remove().run();
         tasks.remove().run();
+        // Hourly full sync, both polls and the final full sync each finished a stats sync.
+        verify(syncStatus, times(4)).statsSynced();
         verify(sync, times(2)).syncTeamsForCodes(teams);
         verify(sync, times(2)).syncPlayersForTeams(teams);
         // Every poll keeps the next-game state current while the game is live.
@@ -92,7 +95,7 @@ class DynamicSchedulingServiceTest {
         when(sync.getActiveGames()).thenReturn(List.of(game("VAN", "EDM")), List.of());
         when(sync.syncTeamGamesForCodes(teams)).thenReturn(Set.of("EDM"));
         when(sync.syncTeamGamesForCodes(Set.of("VAN"))).thenReturn(Set.of("VAN"));
-        var daemon = new DynamicSchedulingService(scheduler, sync, TestSeasonLocks.available(), mock(ScoreboardSyncService.class));
+        var daemon = new DynamicSchedulingService(scheduler, sync, TestSeasonLocks.available(), mock(ScoreboardSyncService.class), mock(SyncStatusRecorder.class));
         daemon.init();
         tasks.remove().run(); // hourly check
         tasks.remove().run(); // game live
@@ -119,16 +122,38 @@ class DynamicSchedulingServiceTest {
         when(sync.getFirstGameTimeForToday()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).minusHours(1));
         when(sync.getLastGameTimeForToday()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).plusHours(2));
         when(sync.getActiveGames()).thenReturn(List.of(game("VAN", "EDM")));
-        var daemon = new DynamicSchedulingService(scheduler, sync, TestSeasonLocks.heldElsewhere(), mock(ScoreboardSyncService.class));
+        var syncStatus = mock(SyncStatusRecorder.class);
+        var daemon = new DynamicSchedulingService(scheduler, sync, TestSeasonLocks.heldElsewhere(), mock(ScoreboardSyncService.class), syncStatus);
         daemon.init();
         tasks.remove().run(); // hourly check
         tasks.remove().run(); // game-time poll
+        verify(syncStatus, never()).statsSynced();
 
         verify(sync, never()).syncTeams();
         verify(sync, never()).syncPlayers();
         verify(sync, never()).syncTeamsForCodes(any());
         verify(sync, never()).syncPlayersForTeams(any());
         assertEquals(1, tasks.size(), "the daemon keeps polling");
+        daemon.stop();
+    }
+
+    @Test
+    void failedFullSync_doesNotRecordStatsAsUpdated() throws Exception {
+        var sync = mock(DataSyncService.class);
+        var scheduler = mock(TaskScheduler.class);
+        var tasks = new ArrayDeque<Runnable>();
+        when(scheduler.schedule(any(Runnable.class), any(Instant.class))).thenAnswer(invocation -> {
+            tasks.add(invocation.getArgument(0));
+            return mock(ScheduledFuture.class);
+        });
+        doThrow(new IllegalStateException("standings unavailable")).when(sync).syncPlayers();
+        var syncStatus = mock(SyncStatusRecorder.class);
+        var daemon = new DynamicSchedulingService(scheduler, sync, TestSeasonLocks.available(), mock(ScoreboardSyncService.class), syncStatus);
+        daemon.init();
+        tasks.remove().run();
+
+        verify(syncStatus, never()).statsSynced();
+        assertEquals(1, tasks.size(), "retried next hour");
         daemon.stop();
     }
 

@@ -40,11 +40,29 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import NextGameTooltip from './components/NextGameTooltip.vue'
 import PixelIcon from './components/PixelIcon.vue'
 import { timeZoneOption } from './composables/useSettings'
+import { useApi } from './composables/useApi'
 
-const loadedAt = new Date()
+// When the data job last finished a sync, not when this page loaded; undefined until fetched
+const statsUpdatedAt = ref(undefined)
+const { fetchData } = useApi()
+const loadStatus = async () => {
+  const data = await fetchData('/status')
+  if (data) {
+    const updatedAt = data.statsUpdatedAt ? new Date(data.statsUpdatedAt) : null
+    statsUpdatedAt.value = updatedAt && !Number.isNaN(updatedAt.getTime()) ? updatedAt : null
+  } else if (statsUpdatedAt.value === undefined) {
+    // A failed refresh keeps the last known time
+    statsUpdatedAt.value = null
+  }
+}
+// The site stays open for hours; refresh along with the syncs (polls run every minute in games)
+const STATUS_REFRESH_MS = 5 * 60 * 1000
+let statusTimer = null
 
 // Shown in the time zone picked in settings
 const lastUpdated = computed(() => {
+  if (statsUpdatedAt.value === undefined) return '…'
+  if (statsUpdatedAt.value === null) return 'unknown'
   const options = {
     year: 'numeric',
     month: 'long',
@@ -54,7 +72,7 @@ const lastUpdated = computed(() => {
     timeZoneName: 'short',
     timeZone: timeZoneOption()
   }
-  return loadedAt.toLocaleString('en-US', options)
+  return statsUpdatedAt.value.toLocaleString('en-US', options)
 })
 
 const siteLinks = ref(null)
@@ -67,6 +85,9 @@ const scrollToLinks = () => {
 }
 
 onMounted(() => {
+  loadStatus()
+  statusTimer = setInterval(loadStatus, STATUS_REFRESH_MS)
+
   // The bottom margin leaves out the strip behind the fixed footer (rootMargin
   // only takes px or %)
   observer = new IntersectionObserver(([entry]) => {
@@ -75,7 +96,10 @@ onMounted(() => {
   observer.observe(siteLinks.value)
 })
 
-onUnmounted(() => observer?.disconnect())
+onUnmounted(() => {
+  observer?.disconnect()
+  clearInterval(statusTimer)
+})
 </script>
 
 <style scoped>

@@ -22,12 +22,15 @@ class InitialDataLoadServiceTest {
     @Mock
     private DataSyncService dataSyncService;
 
+    @Mock
+    private SyncStatusRecorder syncStatus;
+
     private InitialDataLoadService initialDataLoadService;
 
     @BeforeEach
     void setUp() {
         when(dataSyncService.getSeasonId()).thenReturn("20252026");
-        initialDataLoadService = new InitialDataLoadService(dataSyncService, TestSeasonLocks.available());
+        initialDataLoadService = new InitialDataLoadService(dataSyncService, TestSeasonLocks.available(), syncStatus);
     }
 
     @Test
@@ -38,6 +41,7 @@ class InitialDataLoadServiceTest {
         order.verify(dataSyncService).initialize();
         order.verify(dataSyncService).syncTeams();
         order.verify(dataSyncService).syncPlayers();
+        verify(syncStatus).statsSynced();
     }
 
     @Test
@@ -46,15 +50,17 @@ class InitialDataLoadServiceTest {
                 .when(dataSyncService).syncPlayers();
 
         assertDoesNotThrow(() -> initialDataLoadService.loadFullSeason());
+        verify(syncStatus, never()).statsSynced();
     }
 
     @Test
     void loadFullSeason_writesNothingWhileAnotherJobWritesTheSeason() throws PlayerStatisticsException {
-        initialDataLoadService = new InitialDataLoadService(dataSyncService, TestSeasonLocks.heldElsewhere());
+        initialDataLoadService = new InitialDataLoadService(dataSyncService, TestSeasonLocks.heldElsewhere(), syncStatus);
 
         initialDataLoadService.loadFullSeason();
 
         verify(dataSyncService, never()).syncTeams();
         verify(dataSyncService, never()).syncPlayers();
+        verify(syncStatus, never()).statsSynced();
     }
 }

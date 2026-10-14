@@ -101,6 +101,7 @@ class DataJobShutdownTest {
         context.registerBean(DataSyncService.class, () -> sync);
         context.registerBean(BackfillLockService.class, TestSeasonLocks::available);
         context.registerBean(ScoreboardSyncService.class, () -> mock(ScoreboardSyncService.class));
+        context.registerBean(SyncStatusRecorder.class, () -> mock(SyncStatusRecorder.class));
         context.register(DynamicSchedulingService.class);
         context.refresh();
         return context;
