@@ -51,6 +51,7 @@
         @touchstart="onTouchStart"
         @touchmove="onTouchMove"
         @touchend="onTouchEnd"
+        @touchcancel="onTouchEnd"
       >
         <div class="swipe-track" :class="{ dragging: isSwiping || !animateSlides }" :style="{ left: `${swipeOffset}px` }">
           <div v-for="(card, index) in mobileCards" :key="card.key" class="swipe-slide">
@@ -214,8 +215,15 @@ const updateSlideWidth = () => {
 // A touch only becomes a swipe once it has moved this far, and only if it moved
 // more sideways than up/down; otherwise it is left to scroll the table.
 const SWIPE_LOCK_DISTANCE = 10
+// A quick flick changes card even when it is short: at least this fast
+// (px/ms, measured over the last FLICK_WINDOW_MS) and this far
+const FLICK_VELOCITY = 0.3
+const FLICK_MIN_DISTANCE = 20
+const FLICK_WINDOW_MS = 100
 let touchStartY = 0
 let tracking = false
+// Recent { x, t } touch positions, for the flick speed
+let samples = []
 
 const onTouchStart = (e) => {
   // An expanded card is an overlay; scrolling inside it must not change slides.
@@ -223,6 +231,7 @@ const onTouchStart = (e) => {
   touchStartX.value = e.touches[0].clientX
   touchCurrentX.value = e.touches[0].clientX
   touchStartY = e.touches[0].clientY
+  samples = [{ x: e.touches[0].clientX, t: e.timeStamp }]
   tracking = true
 }
 
@@ -239,19 +248,41 @@ const onTouchMove = (e) => {
     }
     isSwiping.value = true
   }
+  // Keep the browser from also scrolling the page while the cards move. A
+  // diagonal swipe would otherwise start a page fling, and a quick tap on the
+  // next card would only stop that fling instead of opening the player/team.
+  if (e.cancelable) e.preventDefault()
   touchCurrentX.value = x
+  samples.push({ x, t: e.timeStamp })
+  while (samples.length > 2 && e.timeStamp - samples[1].t > FLICK_WINDOW_MS) samples.shift()
 }
 
-const onTouchEnd = () => {
+const onTouchEnd = (e) => {
   tracking = false
   if (!isSwiping.value) return
   isSwiping.value = false
   const diff = touchCurrentX.value - touchStartX.value
   const threshold = slideWidth.value * 0.2
+  const first = samples[0]
+  const last = samples[samples.length - 1]
+  const elapsed = e.timeStamp - first.t
+  // A finger that stopped before lifting is not a flick
+  const velocity = elapsed > 0 && e.timeStamp - last.t < FLICK_WINDOW_MS
+    ? (last.x - first.x) / elapsed
+    : 0
+  const fast = Math.abs(velocity) >= FLICK_VELOCITY
+  // -1 shows the next card, 1 the previous, 0 stays: a flick decides on its
+  // own, a flick back towards the start cancels, otherwise the distance does
+  let direction = 0
+  if (fast && Math.abs(diff) >= FLICK_MIN_DISTANCE && Math.sign(velocity) === Math.sign(diff)) {
+    direction = Math.sign(diff)
+  } else if (!fast && Math.abs(diff) > threshold) {
+    direction = Math.sign(diff)
+  }
 
-  if (diff < -threshold && activeCardIndex.value < mobileCards.value.length - 1) {
+  if (direction < 0 && activeCardIndex.value < mobileCards.value.length - 1) {
     activeCardIndex.value++
-  } else if (diff > threshold && activeCardIndex.value > 0) {
+  } else if (direction > 0 && activeCardIndex.value > 0) {
     activeCardIndex.value--
   }
 }
