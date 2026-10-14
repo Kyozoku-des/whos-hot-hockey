@@ -72,7 +72,9 @@ const searchStore = useSearchStore()
 const { fetchData } = useApi()
 
 // State
-const searchQuery = ref('')
+// Starts from the store's query: the table filter outlives this component, so
+// coming back from a player or team page must show what is being filtered on
+const searchQuery = ref(searchStore.currentQuery)
 const searchResults = ref([])
 const selectedIndex = ref(-1)
 const isFocused = ref(false)
