@@ -1,5 +1,5 @@
 <template>
-  <div class="home-page">
+  <div ref="homePage" class="home-page">
     <!-- Desktop header -->
     <div class="header desktop-header">
       <h1 class="title">Whos <span class="title-hot">Hot</span> Hockey</h1>
@@ -44,7 +44,10 @@
     </div>
 
     <!-- Mobile: swipeable cards (one at a time) -->
-    <div class="content-container mobile-content">
+    <div
+      class="content-container mobile-content"
+      :style="mobileListHeight ? { '--mobile-list-height': `${mobileListHeight}px` } : null"
+    >
       <div
         class="swipe-container"
         ref="swipeContainer"
@@ -61,7 +64,7 @@
           </div>
         </div>
       </div>
-      <div class="swipe-dots">
+      <div ref="swipeDots" class="swipe-dots">
         <span
           v-for="(card, index) in mobileCards"
           :key="card.key"
@@ -96,6 +99,7 @@ import ScoreTicker from '../components/ScoreTicker.vue'
 import FavoritesTable from '../components/FavoritesTable.vue'
 import CookieConsent from '../components/CookieConsent.vue'
 import { useFavorites } from '../composables/useFavorites'
+import { useIsMobile } from '../composables/useIsMobile'
 import { useSettings, HOME_CARDS, normalizeOrder } from '../composables/useSettings'
 
 const { initializeFavorites, favoritesCount, consentGiven } = useFavorites()
@@ -113,6 +117,36 @@ const isSwiping = ref(false)
 const slideWidth = ref(0)
 // Off until the first layout, so a restored card shows without sliding in
 const animateSlides = ref(false)
+
+// Mobile: the card lists grow to fill the screen, so the dots end just above
+// the fixed footer and scroll-down arrow instead of leaving dead space on
+// taller phones
+const { isMobile } = useIsMobile()
+const homePage = ref(null)
+const swipeDots = ref(null)
+const mobileListHeight = ref(null)
+const MIN_LIST_HEIGHT = 240
+// The app's scroll-down arrow: fixed 4.5rem up, about 2.25rem tall, nudging
+const SCROLL_HINT_CLEARANCE_REM = 7
+let layoutObserver = null
+let footerEl = null
+
+const updateMobileListHeight = () => {
+  const lists = swipeContainer.value?.querySelectorAll('.card-content')
+  if (!isMobile.value || !lists?.length || !swipeDots.value) return
+  const top = lists[0].getBoundingClientRect().top
+  const bottom = Math.max(...[...lists].map(list => list.getBoundingClientRect().bottom))
+  // Card padding and dots below the lists, which stay put as the lists grow
+  const below = swipeDots.value.getBoundingClientRect().bottom - bottom
+  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+  const footer = Math.max(footerEl?.offsetHeight ?? 0, SCROLL_HINT_CLEARANCE_REM * rem)
+  // clientHeight is the viewport with the browser bars shown, so the height
+  // doesn't jump as they slide away while scrolling
+  const available = document.documentElement.clientHeight - footer - (top + window.scrollY) - below
+  mobileListHeight.value = Math.max(MIN_LIST_HEIGHT, Math.floor(available))
+}
+
+watch(isMobile, () => nextTick(updateMobileListHeight))
 
 const COMPONENTS = {
   favorites: FavoritesTable,
@@ -307,10 +341,18 @@ onMounted(() => {
   if (restored !== -1) activeCardIndex.value = restored
   nextTick(() => {
     updateSlideWidth()
+    updateMobileListHeight()
     // Two frames: the restored position is painted before transitions return
     requestAnimationFrame(() => requestAnimationFrame(() => { animateSlides.value = true }))
   })
   window.addEventListener('resize', updateSlideWidth)
+  // Re-measures as the score ticker, tables and footer text load in (the
+  // page has no min-height on mobile, so it grows with its content)
+  footerEl = document.querySelector('.app-footer')
+  layoutObserver = new ResizeObserver(updateMobileListHeight)
+  layoutObserver.observe(homePage.value)
+  if (footerEl) layoutObserver.observe(footerEl)
+  window.addEventListener('resize', updateMobileListHeight)
 })
 
 onUnmounted(() => {
@@ -318,6 +360,8 @@ onUnmounted(() => {
   // coming back, which shifts the indexes
   lastCardKey = mobileCards.value[activeCardIndex.value]?.key ?? null
   window.removeEventListener('resize', updateSlideWidth)
+  window.removeEventListener('resize', updateMobileListHeight)
+  layoutObserver?.disconnect()
 })
 </script>
 
@@ -521,6 +565,11 @@ onUnmounted(() => {
     padding: 1rem 0.5rem;
   }
 
+  /* Sized by its content, so a resize observer sees the sections load in */
+  .home-page {
+    min-height: 0;
+  }
+
   /* Table rows: name on the first line, stats wrapped onto a second line so a
      row never needs more than the phone's width. The extra .mobile-content
      class outranks the table components' own scoped rules. */
@@ -533,6 +582,10 @@ onUnmounted(() => {
   .mobile-content .swipe-slide :deep(.card-content) {
     overflow-y: auto;
     overscroll-behavior: contain;
+  }
+
+  .mobile-content .swipe-slide :deep(.expandable-card:not(.expanded) .card-content) {
+    max-height: var(--mobile-list-height, 300px);
   }
 
   .mobile-content .swipe-slide :deep(.players-grid),
