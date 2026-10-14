@@ -126,8 +126,10 @@ const homePage = ref(null)
 const swipeDots = ref(null)
 const mobileListHeight = ref(null)
 const MIN_LIST_HEIGHT = 240
-// The app's scroll-down arrow: fixed 4.5rem up, about 2.25rem tall, nudging
-const SCROLL_HINT_CLEARANCE_REM = 7
+// Room above the footer for the app's scroll-down arrowhead (0.75rem up,
+// 1.1rem tall). Kept small: any more and the links below would peek out above
+// the footer, which hides the arrow.
+const SCROLL_HINT_SPACE_REM = 1.75
 let layoutObserver = null
 let footerEl = null
 
@@ -139,7 +141,7 @@ const updateMobileListHeight = () => {
   // Card padding and dots below the lists, which stay put as the lists grow
   const below = swipeDots.value.getBoundingClientRect().bottom - bottom
   const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
-  const footer = Math.max(footerEl?.offsetHeight ?? 0, SCROLL_HINT_CLEARANCE_REM * rem)
+  const footer = (footerEl?.offsetHeight ?? 0) + SCROLL_HINT_SPACE_REM * rem
   // clientHeight is the viewport with the browser bars shown, so the height
   // doesn't jump as they slide away while scrolling
   const available = document.documentElement.clientHeight - footer - (top + window.scrollY) - below

@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="app" :style="{ '--footer-height': `${footerHeight}px` }">
     <main class="app-main">
       <router-view />
     </main>
@@ -21,11 +21,12 @@
         aria-label="Scroll down to settings"
         @click="scrollToLinks"
       >
-        <PixelIcon name="arrow-down" />
+        <!-- Phones: just the arrowhead, in the slim gap the home tables leave -->
+        <PixelIcon :name="isMobile ? 'chevron-down' : 'arrow-down'" />
       </button>
     </Transition>
 
-    <footer class="app-footer">
+    <footer ref="footer" class="app-footer">
       <div class="container">
         <p>Stats last updated: {{ lastUpdated }}</p>
       </div>
@@ -40,6 +41,7 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import NextGameTooltip from './components/NextGameTooltip.vue'
 import PixelIcon from './components/PixelIcon.vue'
 import { timeZoneOption } from './composables/useSettings'
+import { useIsMobile } from './composables/useIsMobile'
 import { useApi } from './composables/useApi'
 
 // When the data job last finished a sync, not when this page loaded; undefined until fetched
@@ -75,10 +77,27 @@ const lastUpdated = computed(() => {
   return statsUpdatedAt.value.toLocaleString('en-US', options)
 })
 
+const { isMobile } = useIsMobile()
 const siteLinks = ref(null)
+const footer = ref(null)
+const footerHeight = ref(64)
 // Starts true so the arrow doesn't flash before the first check
 const linksVisible = ref(true)
 let observer = null
+let footerObserver = null
+
+// Watches the first link itself, not the nav: the nav's top padding can peek
+// out above the footer while the links are still hidden behind it. The bottom
+// margin leaves out the strip behind the fixed footer, so it is rebuilt when
+// the footer's height changes (rootMargin can't be updated in place).
+const observeLinks = () => {
+  observer?.disconnect()
+  observer = new IntersectionObserver(([entry]) => {
+    linksVisible.value = entry.isIntersecting
+  }, { rootMargin: `0px 0px -${footerHeight.value}px 0px` })
+  const firstLink = siteLinks.value?.firstElementChild
+  if (firstLink) observer.observe(firstLink)
+}
 
 const scrollToLinks = () => {
   siteLinks.value?.scrollIntoView({ behavior: 'smooth', block: 'end' })
@@ -88,15 +107,19 @@ onMounted(() => {
   loadStatus()
   statusTimer = setInterval(loadStatus, STATUS_REFRESH_MS)
 
-  // The bottom margin leaves out the strip behind the fixed footer (rootMargin
-  // only takes px or %)
-  observer = new IntersectionObserver(([entry]) => {
-    linksVisible.value = entry.isIntersecting
-  }, { rootMargin: '0px 0px -64px 0px' })
-  observer.observe(siteLinks.value)
+  // The footer wraps to two lines on narrow phones once the time has loaded
+  footerObserver = new ResizeObserver(() => {
+    const height = footer.value.offsetHeight
+    if (height === footerHeight.value) return
+    footerHeight.value = height
+    observeLinks()
+  })
+  footerObserver.observe(footer.value)
+  observeLinks()
 })
 
 onUnmounted(() => {
+  footerObserver?.disconnect()
   observer?.disconnect()
   clearInterval(statusTimer)
 })
@@ -151,6 +174,15 @@ onUnmounted(() => {
 @keyframes nudge {
   0%, 100% { transform: translate(-50%, 0); }
   50% { transform: translate(-50%, 6px); }
+}
+
+@media (max-width: 768px) {
+  /* Just above the footer, in the gap the home tables leave for it */
+  .scroll-hint {
+    bottom: calc(var(--footer-height) + 0.75rem);
+    padding: 0;
+    font-size: 1.1rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
