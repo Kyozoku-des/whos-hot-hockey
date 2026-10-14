@@ -92,9 +92,12 @@ const previousSeason = ref('')
 const loadingGameLog = ref(false)
 const tableScroll = ref(null)
 const tableMaxHeight = ref('none')
+// Re-measures when row heights change after the first paint (late web font,
+// text wrapping on narrow screens, rotation), not only on window resize
+let tableResizeObserver = null
 
 // Show the latest VISIBLE_GAMES rows; the rest are reached by scrolling the table
-const VISIBLE_GAMES = 10
+const VISIBLE_GAMES = 5
 const updateTableMaxHeight = () => {
   const rows = tableScroll.value?.querySelectorAll('tbody tr')
   if (!rows || rows.length <= VISIBLE_GAMES) {
@@ -156,11 +159,15 @@ onMounted(async () => {
   loadingGameLog.value = false
   await nextTick()
   updateTableMaxHeight()
-  window.addEventListener('resize', updateTableMaxHeight)
+  const table = tableScroll.value?.querySelector('table')
+  if (table) {
+    tableResizeObserver = new ResizeObserver(updateTableMaxHeight)
+    tableResizeObserver.observe(table)
+  }
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', updateTableMaxHeight)
+  tableResizeObserver?.disconnect()
 })
 </script>
 
