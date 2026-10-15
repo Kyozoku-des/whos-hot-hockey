@@ -28,6 +28,7 @@
         <div class="player-main">
           <TeamLogo :logoUrl="player.teamLogoUrl" :teamCode="player.teamCode" size="small" />
           <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
+          <NextGameBadge :team-code="player.teamCode" />
         </div>
         <span class="player-stats">
           <span class="stat-item stat-form" title="Consecutive games with at least one point">Point streak: {{ player.currentPointStreak ?? '—' }}</span>
@@ -58,6 +59,7 @@
         <div class="team-main">
           <TeamLogo :logoUrl="team.logoUrl" :teamCode="team.teamCode" :alt="team.teamName" size="small" />
           <span class="team-name">{{ team.teamName }}</span>
+          <NextGameBadge :team-code="team.teamCode" />
         </div>
         <span class="team-stats">
           <span class="stat-item stat-form" title="Current consecutive wins or losses, including overtime losses">{{ formatTeamStreak(team) }}</span>
@@ -82,6 +84,7 @@ import { useRouter } from 'vue-router'
 import { useFavorites } from '../composables/useFavorites'
 import { usePlayerStats, useTeamStats } from '../composables/useApi'
 import TeamLogo from './TeamLogo.vue'
+import NextGameBadge from './NextGameBadge.vue'
 import { useNextGames } from '../composables/useNextGames'
 import PixelIcon from './PixelIcon.vue'
 

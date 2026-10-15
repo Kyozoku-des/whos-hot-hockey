@@ -73,13 +73,13 @@
    - Everything else is the theme's look: fonts, border widths, row and card
      styling. Its colors are translucent white or mixed from the scheme colors
      (every scheme keeps white text), so every scheme works with every theme.
-   Modern is the default; Retro overrides it below. */
+   Modern is the default; Retro overrides its look below but shares its colors. */
 :root {
-  --color-bg-primary: #0d1117;
-  --color-bg-card: #151b24;
-  --color-text-primary: #e8edf4;
-  --color-text-secondary: #ff6b3d;   /* Highlights: hot stats, active states */
-  --color-border: #ff6b3d;
+  --color-bg-primary: #131515;
+  --color-bg-card: #0c0d0d;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #ffd580;   /* Gold highlights: hot stats, active states */
+  --color-border: #ffffff;
   --color-bg-dark: color-mix(in srgb, var(--color-bg-card) 70%, black);
 
   --font-family: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -94,7 +94,7 @@
   --color-line: rgba(255, 255, 255, 0.13);   /* Decorative dividers only */
   /* Inputs and outlined buttons. Team schemes set their own outline, kept 3:1
      from page and card (controlOutline in themes/colorSchemes.js) */
-  --color-control-outline: #676B71;
+  --color-control-outline: #6D6E6E;
   --color-control-border: var(--color-control-outline);
   --color-card-border: var(--color-line);
   --color-muted: rgba(255, 255, 255, 0.6);
@@ -130,12 +130,6 @@
 }
 
 :root[data-theme="retro"] {
-  --color-bg-primary: hsl(180, 5%, 8%);
-  --color-bg-card: hsl(166, 5%, 5%);
-  --color-text-primary: #ffffff;
-  --color-text-secondary: hsl(40, 100%, 75%);  /* Gold highlights */
-  --color-border: #ffffff;
-
   --font-family: 'Minecraft', monospace, system-ui;
   --font-display: var(--font-family);
   --tracking: 1px;

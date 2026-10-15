@@ -95,19 +95,12 @@ public class DataSyncService {
     }
 
     /**
-     * Fetches today's game schedule and determines the earliest and latest game
-     * start times.
+     * Fetches today's game schedule and determines the earliest and latest start times of the
+     * games still to finish.
      */
     public void setFirstAndLastGameTimesForToday() {
-        List<GameDto> games = nhlApiService.getLeagueSchedule();
-
-        LocalDateTime todayStart = LocalDateTime.now(ZoneOffset.UTC).toLocalDate().atStartOfDay();
-        LocalDateTime todayEnd = todayStart.plusDays(1);
-
-        List<LocalDateTime> todayGameTimes = games.stream()
-                .map(game -> LocalDateTime.parse(game.getStartTimeUTC(), DateTimeFormatter.ISO_DATE_TIME))
-                .filter(time -> !time.isBefore(todayStart) && time.isBefore(todayEnd))
-                .toList();
+        List<LocalDateTime> todayGameTimes = remainingGameTimesToday(
+                nhlApiService.getLeagueSchedule(), LocalDateTime.now(ZoneOffset.UTC));
 
         firstGameTimeForToday = todayGameTimes.stream()
                 .min(LocalDateTime::compareTo)
@@ -116,6 +109,22 @@ public class DataSyncService {
         lastGameTimeForToday = todayGameTimes.stream()
                 .max(LocalDateTime::compareTo)
                 .orElse(null);
+    }
+
+    /**
+     * Start times of the games on the current UTC date that have not finished. Last night's late
+     * North American games also fall on this date; counting them would open the game window in the
+     * early morning and hold off hourly full syncs until tonight's games end.
+     */
+    static List<LocalDateTime> remainingGameTimesToday(List<GameDto> games, LocalDateTime now) {
+        LocalDateTime todayStart = now.toLocalDate().atStartOfDay();
+        LocalDateTime todayEnd = todayStart.plusDays(1);
+
+        return games.stream()
+                .filter(game -> game.getGameState() == null || !game.getGameState().isCompleted())
+                .map(game -> LocalDateTime.parse(game.getStartTimeUTC(), DateTimeFormatter.ISO_DATE_TIME))
+                .filter(time -> !time.isBefore(todayStart) && time.isBefore(todayEnd))
+                .toList();
     }
 
     /**

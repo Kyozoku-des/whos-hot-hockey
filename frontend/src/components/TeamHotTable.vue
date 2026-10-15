@@ -16,6 +16,7 @@
           <div class="team-main">
             <TeamLogo :logoUrl="team.logoUrl" :teamCode="team.teamCode" :alt="team.teamName" size="small" />
             <span class="team-name">{{ team.teamName }}</span>
+            <NextGameBadge :team-code="team.teamCode" />
           </div>
           <span class="team-stats">
             <span class="stat-item">W: {{ team.wins }}</span>
@@ -41,6 +42,7 @@ import { useTeamStats } from '../composables/useApi'
 import { useSearchStore } from '../stores/searchStore'
 import { teamFavorite } from '../composables/useFavorites'
 import TeamLogo from './TeamLogo.vue'
+import NextGameBadge from './NextGameBadge.vue'
 import { useNextGames } from '../composables/useNextGames'
 import FavoriteToggle from './FavoriteToggle.vue'
 

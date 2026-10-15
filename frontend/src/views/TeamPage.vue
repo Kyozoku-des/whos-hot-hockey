@@ -6,23 +6,17 @@
       <div v-else-if="error" class="error">{{ error }}</div>
       <div v-else class="team-content">
         <div class="team-header">
-          <div class="team-info-card">
+          <div class="page-title">
             <TeamLogo
-              class="card-image"
               :logoUrl="team?.logoUrl"
               :teamCode="team?.teamCode"
               :alt="team?.teamName"
-              size="large"
+              size="medium"
             />
-            <div class="team-stats">
-              <h1 class="team-name">{{ team?.teamName }}</h1>
-              <p class="stat-line">Wins: {{ team?.wins || 0 }}</p>
-              <p class="stat-line">Losses: {{ team?.losses || 0 }}</p>
-              <p class="stat-line">Points: {{ team?.points || 0 }}</p>
-              <NextGameLine :team-code="team?.teamCode" />
-              <FavoriteButton v-if="team" :item="teamFavorite(team)" />
-            </div>
+            <h1 class="team-name">{{ team?.teamName }}</h1>
           </div>
+          <NextGameLine :team-code="team?.teamCode" />
+          <FavoriteButton v-if="team" :item="teamFavorite(team)" />
         </div>
 
         <div class="section">
@@ -33,6 +27,21 @@
             :season-games="team?.seasonGames"
             :projected-points="team?.projectedPoints"
           />
+        </div>
+
+        <div class="section season-totals">
+          <div class="total">
+            <span class="total-label">Wins</span>
+            <span class="total-value">{{ team?.wins || 0 }}</span>
+          </div>
+          <div class="total">
+            <span class="total-label">Losses</span>
+            <span class="total-value">{{ team?.losses || 0 }}</span>
+          </div>
+          <div class="total">
+            <span class="total-label">Points</span>
+            <span class="total-value">{{ team?.points || 0 }}</span>
+          </div>
         </div>
 
         <div class="section">
@@ -63,14 +72,6 @@
           </ul>
           <p v-else class="placeholder-text">No roster data available</p>
         </div>
-
-        <TeamLogo
-          class="bottom-image"
-          :logoUrl="team?.logoUrl"
-          :teamCode="team?.teamCode"
-          :alt="team?.teamName"
-          size="large"
-        />
       </div>
     </div>
   </div>
@@ -175,39 +176,63 @@ onMounted(async () => {
   gap: 2rem;
 }
 
+/* Logo, name, next game and favorite button on one line, wrapping on narrow screens */
 .team-header {
   display: flex;
-  gap: 2rem;
-}
-
-.team-info-card {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 2rem;
   background-color: var(--color-bg-card);
   border-radius: 8px;
-  padding: 2rem;
-  display: flex;
-  gap: 2rem;
-  align-items: center;
+  padding: 1.5rem 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-
-.team-stats {
-  flex: 1;
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .team-name {
   font-size: 2rem;
   font-weight: 700;
-  margin-bottom: 1rem;
+  margin: 0;
 }
 
 .stat-line {
   font-size: 1.1rem;
-  margin: 0.5rem 0;
+  margin: 0;
 }
 
-.bottom-image {
-  display: none;
+/* Pushed to the far right of the header */
+.team-header .favorite-button {
+  margin-top: 0;
+  margin-left: auto;
+}
+
+.season-totals {
+  display: flex;
+  justify-content: space-around;
+  gap: 1rem;
+}
+
+.total {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.total-label {
+  color: var(--color-text-secondary);
+  font-weight: 700;
+}
+
+.total-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .section {
@@ -300,24 +325,21 @@ onMounted(async () => {
   }
 
   .team-header {
-    justify-content: center;
-  }
-
-  .team-info-card {
-    flex: 1;
     flex-direction: column;
     text-align: center;
     padding: 1.5rem 1rem;
   }
 
-  /* The image moves from the card to the bottom of the page */
-  .team-info-card .card-image {
-    display: none;
+  .page-title {
+    gap: 0.75rem;
   }
 
-  .bottom-image {
-    display: block;
-    margin: 0 auto;
+  .team-header .favorite-button {
+    margin-left: 0;
+  }
+
+  .total-value {
+    font-size: 1.35rem;
   }
 
   .section {
