@@ -26,29 +26,29 @@ export function routeSeo(path) {
   const canonical = `${SITE_URL}${cleanPath}`
   if (cleanPath === '/') return { title: HOME_TITLE, description: HOME_DESCRIPTION, canonical }
   if (cleanPath === '/tips') return {
-    title: "How to Read NHL Stats & Streaks | Who's Hot Hockey",
-    description: 'Learn how to explore NHL scoring leaders, point streaks, recent form, team standings and player game logs on Who’s Hot Hockey.', canonical
+    title: `How to Read NHL Stats & Streaks | ${SITE_NAME}`,
+    description: `Learn how to explore NHL scoring leaders, point streaks, recent form, team standings and player game logs on ${SITE_NAME}.`, canonical
   }
   const team = cleanPath.match(/^\/team\/([A-Z]{3})$/)
   if (team && TEAM_COLORS[team[1]]) return entitySeo('team', cleanPath, TEAM_COLORS[team[1]].name)
   // Keep player pages indexable while JavaScript fetches their names and stats.
   if (/^\/player\/\d+$/.test(cleanPath)) return {
-    title: "NHL Player Stats & Game Logs | Who's Hot Hockey",
-    description: 'Explore NHL player goals, assists, points and game-by-game scoring stats on Who’s Hot Hockey.', canonical
+    title: `NHL Player Stats & Game Logs | ${SITE_NAME}`,
+    description: `Explore NHL player goals, assists, points and game-by-game scoring stats on ${SITE_NAME}.`, canonical
   }
   const label = {
     '/settings': 'Settings', '/feedback': 'Feedback', '/donations': 'Support the Site'
   }[cleanPath] || 'Page Not Found'
-  return { title: `${label} | Who's Hot Hockey`, description: HOME_DESCRIPTION, canonical, noindex: true }
+  return { title: `${label} | ${SITE_NAME}`, description: HOME_DESCRIPTION, canonical, noindex: true }
 }
 
 export function entitySeo(kind, path, name) {
   const cleanPath = normalizeSeoPath(path)
   const label = kind === 'player' ? 'NHL Stats & Game Logs' : 'Stats, Roster & Standings'
   const description = kind === 'player'
-    ? `Explore ${name} NHL goals, assists, points and game-by-game stats. Compare season scoring progress on Who’s Hot Hockey.`
-    : `Explore ${name} wins, losses, points, roster and season scoring progress on Who’s Hot Hockey.`
-  return { title: `${name} ${label} | Who's Hot Hockey`, description, canonical: `${SITE_URL}${cleanPath}` }
+    ? `Explore ${name} NHL goals, assists, points and game-by-game stats. Compare season scoring progress on ${SITE_NAME}.`
+    : `Explore ${name} wins, losses, points, roster and season scoring progress on ${SITE_NAME}.`
+  return { title: `${name} ${label} | ${SITE_NAME}`, description, canonical: `${SITE_URL}${cleanPath}` }
 }
 
 export function unavailableEntitySeo(kind, path) {
