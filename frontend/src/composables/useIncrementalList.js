@@ -12,18 +12,27 @@ const LOOKAHEAD = '0px 0px 600px 0px'
 export function useIncrementalList(items) {
   const limit = ref(PAGE_SIZE)
   const sentinel = ref(null)
+  // Kept while the sentinel is gone (a short search result), for the reset
+  let scrollArea = null
+  let observer = null
 
   const visible = computed(() => items.value.slice(0, limit.value))
   const hasMore = computed(() => limit.value < items.value.length)
 
-  // A new search starts again from the top
+  // A new search starts again from the top. Scrolled before the new rows
+  // render: left at the bottom, scroll anchoring would hold the sentinel in
+  // view and the whole list would fill in again. Sightings queued from the
+  // old list are dropped for the same reason.
   watch(items, () => {
     limit.value = PAGE_SIZE
+    if (scrollArea) scrollArea.scrollTop = 0
+    observer?.takeRecords()
   })
 
   watch(sentinel, (el, _, onCleanup) => {
     if (!el) return
-    const observer = new IntersectionObserver((entries) => {
+    scrollArea = el.closest('.card-content')
+    const current = new IntersectionObserver((entries) => {
       if (!entries.some(entry => entry.isIntersecting)) return
       limit.value += PAGE_SIZE
       // Observing again reports the new position, so a tall list (an
@@ -31,12 +40,16 @@ export function useIncrementalList(items) {
       nextTick(() => {
         // Gone once every row is shown
         if (sentinel.value !== el) return
-        observer.unobserve(el)
-        observer.observe(el)
+        current.unobserve(el)
+        current.observe(el)
       })
-    }, { root: el.closest('.card-content'), rootMargin: LOOKAHEAD })
-    observer.observe(el)
-    onCleanup(() => observer.disconnect())
+    }, { root: scrollArea, rootMargin: LOOKAHEAD })
+    observer = current
+    current.observe(el)
+    onCleanup(() => {
+      current.disconnect()
+      if (observer === current) observer = null
+    })
   })
 
   return { visible, hasMore, sentinel }
