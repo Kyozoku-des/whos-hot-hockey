@@ -5,7 +5,7 @@
     <div v-else-if="players.length === 0" class="empty">No hot players</div>
     <div v-else class="players-grid">
       <div
-        v-for="player in players"
+        v-for="player in shownPlayers"
         :key="player.playerId"
         class="player-item"
         @mouseenter="showNextGame($event, player.teamCode)"
@@ -26,6 +26,7 @@
         </router-link>
       </div>
     </div>
+    <div v-if="hasMore" ref="sentinel" class="load-more" aria-hidden="true"></div>
   </div>
 </template>
 
@@ -38,6 +39,7 @@ import TeamLogo from './TeamLogo.vue'
 import NextGameBadge from './NextGameBadge.vue'
 import { useNextGames } from '../composables/useNextGames'
 import FavoriteToggle from './FavoriteToggle.vue'
+import { useIncrementalList } from '../composables/useIncrementalList'
 
 const { showNextGame, hideNextGame } = useNextGames()
 const { loading, error, getHottestPlayers } = usePlayerStats()
@@ -65,6 +67,9 @@ const players = computed(() => {
     return false
   })
 })
+
+// Rows are added as the list is scrolled
+const { visible: shownPlayers, hasMore, sentinel } = useIncrementalList(players)
 
 const loadData = async () => {
   const data = await getHottestPlayers()
@@ -151,5 +156,10 @@ onMounted(() => {
   text-align: center;
   padding: 2rem;
   color: var(--color-text-secondary);
+}
+
+/* Watched to add more rows as the list nears its end */
+.load-more {
+  height: 1px;
 }
 </style>
