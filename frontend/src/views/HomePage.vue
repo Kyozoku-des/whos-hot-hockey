@@ -1,7 +1,9 @@
 <template>
   <div ref="homePage" class="home-page">
+    <!-- Only one layout is mounted: each card fetches and renders its own
+         rows, so a hidden second copy would double the work on every phone -->
     <!-- Desktop header -->
-    <div class="header desktop-header">
+    <div v-if="!isMobile" class="header desktop-header">
       <h1 class="title">Whos <span class="title-hot">Hot</span> Hockey</h1>
       <div class="search-container">
         <SearchBar />
@@ -9,7 +11,7 @@
     </div>
 
     <!-- Mobile header: title above search bar, both centered -->
-    <div class="header mobile-header">
+    <div v-else class="header mobile-header">
       <h1 class="title mobile-title">Whos <span class="title-hot">Hot</span> Hockey</h1>
       <div class="search-container">
         <SearchBar />
@@ -20,7 +22,7 @@
     <ScoreTicker />
 
     <!-- Desktop: grid of cards, rearranged by dragging one onto another -->
-    <div class="content-container desktop-content">
+    <div v-if="!isMobile" class="content-container desktop-content">
       <div class="cards-grid">
         <div
           v-for="card in desktopCards"
@@ -45,6 +47,7 @@
 
     <!-- Mobile: swipeable cards (one at a time) -->
     <div
+      v-else
       class="content-container mobile-content"
       :style="mobileListHeight ? { '--mobile-list-height': `${mobileListHeight}px` } : null"
     >
@@ -155,7 +158,11 @@ const updateMobileListHeight = () => {
   mobileListHeight.value = Math.max(MIN_LIST_HEIGHT, Math.floor(available))
 }
 
-watch(isMobile, () => nextTick(updateMobileListHeight))
+// The carousel is only mounted on phones, so it is measured once it appears
+watch(isMobile, () => nextTick(() => {
+  updateSlideWidth()
+  updateMobileListHeight()
+}))
 
 const COMPONENTS = {
   favorites: FavoritesTable,
@@ -405,7 +412,7 @@ onUnmounted(() => {
 }
 
 .mobile-header {
-  display: none;
+  display: flex;
   flex-direction: column;
   align-items: center;
   padding: 1rem 1.5rem;
@@ -474,11 +481,6 @@ onUnmounted(() => {
   max-width: 1600px;
   margin: 0 auto;
   min-height: 700px;
-}
-
-/* Mobile content hidden on desktop */
-.mobile-content {
-  display: none;
 }
 
 /* Swipe carousel styles */
@@ -561,26 +563,12 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
-  /* Switch to mobile layout */
-  .desktop-header {
-    display: none;
-  }
-
-  .mobile-header {
-    display: flex;
-  }
-
   .mobile-header .search-container {
     width: 100%;
     max-width: 100%;
   }
 
-  .desktop-content {
-    display: none;
-  }
-
   .mobile-content {
-    display: block;
     padding: 1rem 0.5rem;
   }
 
