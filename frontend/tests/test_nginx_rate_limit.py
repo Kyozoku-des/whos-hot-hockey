@@ -57,8 +57,12 @@ class MockApi(BaseHTTPRequestHandler):
 def running_nginx(trusted_proxy, logs=None):
     with tempfile.TemporaryDirectory(prefix="nhl-nginx-") as directory:
         root = Path(directory)
-        (root / "index.html").write_text("SPA")
-        (root / "app.js").write_text("asset")
+        # Public files live in their own web root, as in the image; server config,
+        # logs and temp files stay outside it.
+        html = root / "html"
+        html.mkdir()
+        (html / "index.html").write_text("SPA")
+        (html / "app.js").write_text("asset")
         # Use the same generators as Vite, without needing a bundled frontend.
         subprocess.run(
             ["node", "--input-type=module", "-e",
@@ -66,7 +70,7 @@ def running_nginx(trusted_proxy, logs=None):
              "import {writeFileSync} from 'node:fs';"
              "writeFileSync(process.argv[1]+'/sitemap.xml',createSitemap());"
              "writeFileSync(process.argv[1]+'/robots.txt',createRobots());"
-             "writeFileSync(process.argv[1]+'/spa-routes.conf',createSpaRoutes());", str(root)],
+             "writeFileSync(process.argv[2]+'/spa-routes.conf',createSpaRoutes());", str(html), str(root)],
             cwd=FRONTEND, capture_output=True, text=True, check=True)
         with socket.socket() as listener:
             listener.bind(("127.0.0.1", 0))
@@ -75,7 +79,7 @@ def running_nginx(trusted_proxy, logs=None):
         thread = threading.Thread(target=api.serve_forever, daemon=True)
         config = (FRONTEND / "nginx.conf").read_text()
         config = config.replace("listen 3000;", f"listen 127.0.0.1:{port};")
-        config = config.replace("/usr/share/nginx/html", str(root))
+        config = config.replace("/usr/share/nginx/html", str(html))
         config = config.replace("/var/log/nginx/error.log", str(root / "error.log"))
         config = config.replace("backend-api:8080", f"127.0.0.1:{api.server_port}")
         config = config.replace("/etc/nginx/spa-routes.conf", str(root / "spa-routes.conf"))
@@ -244,7 +248,7 @@ class RateLimitTest(unittest.TestCase):
         with running_nginx("unix:") as port:
             for path in ("/", "/player/8478402", "/team/BOS", "/team/bos", "/TEAM/bos/", "/player/any-id", "/tips", "/settings"):
                 self.assertEqual(request(port, path=path), (200, "SPA"), path)
-            for path in ("/not-a-page", "/player", "/team/BOS/extra"):
+            for path in ("/not-a-page", "/player", "/team/BOS/extra", "/spa-routes.conf"):
                 self.assertEqual(request(port, path=path), (404, "SPA"), path)
             for path in ("/team/logo.png", "/player/x.js", "/team/missing.css"):
                 status, body = request(port, path=path)
