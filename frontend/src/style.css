@@ -289,3 +289,28 @@ html:root:not([data-theme="retro"]) .stat-key {
     scrollbar-color: var(--color-line) var(--color-bg-primary);
   }
 }
+
+
+/* Entity rows are real navigation links in tables and rosters. The ::after
+   stretches the click target over the row's padding (rows are position:
+   relative); favourite toggles sit above it. Only the name is underlined. */
+.entity-row-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.entity-row-link:hover :is(.player-name, .team-name, .roster-name) {
+  text-decoration: underline;
+}
+
+.entity-row-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: inherit;
+  row-gap: inherit;
+  column-gap: inherit;
+  width: 100%;
+  min-width: 0;
+}

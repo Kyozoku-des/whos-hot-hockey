@@ -8,29 +8,30 @@
         v-for="(team, index) in teams"
         :key="team.teamCode"
         class="team-item"
-        @click="goToTeam(team.teamCode)"
         @mouseenter="showNextGame($event, team.teamCode)"
         @mouseleave="hideNextGame"
       >
         <FavoriteToggle :item="teamFavorite(team)" />
-        <div class="team-main">
-          <TeamLogo :logoUrl="team.logoUrl" :teamCode="team.teamCode" :alt="team.teamName" size="small" />
-          <span class="team-name">{{ team.teamName }}</span>
-          <NextGameBadge :team-code="team.teamCode" />
-        </div>
-        <span class="team-stats">
-          <span class="stat-item">GP: {{ team.gamesPlayed }}</span>
-          <span class="stat-item">W: {{ team.wins }}</span>
-          <span class="stat-item">L: {{ team.losses }}</span>
-          <span class="stat-item">OTL: {{ team.overtimeLosses }}</span>
-          <span class="stat-item stat-points stat-key">PTS: {{ team.points }}</span>
-          <span v-if="isExpanded" class="stat-item">P%: {{ (team.pointPercentage * 100).toFixed(1) }}</span>
-          <span v-if="isExpanded" class="stat-item">GF: {{ team.goalsFor }}</span>
-          <span v-if="isExpanded" class="stat-item">GA: {{ team.goalsAgainst }}</span>
-          <span v-if="isExpanded" class="stat-item" :class="{ 'stat-positive': team.goalDifferential > 0, 'stat-negative': team.goalDifferential < 0 }">
-            DIFF: {{ team.goalDifferential > 0 ? '+' : '' }}{{ team.goalDifferential }}
+        <router-link class="entity-link entity-row-link" :to="`/team/${team.teamCode}`" draggable="false" @click.stop>
+          <div class="team-main">
+            <TeamLogo :logoUrl="team.logoUrl" :teamCode="team.teamCode" :alt="team.teamName" size="small" />
+            <span class="team-name">{{ team.teamName }}</span>
+            <NextGameBadge :team-code="team.teamCode" />
+          </div>
+          <span class="team-stats">
+            <span class="stat-item">GP: {{ team.gamesPlayed }}</span>
+            <span class="stat-item">W: {{ team.wins }}</span>
+            <span class="stat-item">L: {{ team.losses }}</span>
+            <span class="stat-item">OTL: {{ team.overtimeLosses }}</span>
+            <span class="stat-item stat-points stat-key">PTS: {{ team.points }}</span>
+            <span v-if="isExpanded" class="stat-item">P%: {{ (team.pointPercentage * 100).toFixed(1) }}</span>
+            <span v-if="isExpanded" class="stat-item">GF: {{ team.goalsFor }}</span>
+            <span v-if="isExpanded" class="stat-item">GA: {{ team.goalsAgainst }}</span>
+            <span v-if="isExpanded" class="stat-item" :class="{ 'stat-positive': team.goalDifferential > 0, 'stat-negative': team.goalDifferential < 0 }">
+              DIFF: {{ team.goalDifferential > 0 ? '+' : '' }}{{ team.goalDifferential }}
+            </span>
           </span>
-        </span>
+        </router-link>
       </div>
     </div>
   </div>
@@ -38,7 +39,6 @@
 
 <script setup>
 import { ref, computed, inject, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useTeamStats } from '../composables/useApi'
 import { useSearchStore } from '../stores/searchStore'
 import { teamFavorite } from '../composables/useFavorites'
@@ -47,7 +47,6 @@ import NextGameBadge from './NextGameBadge.vue'
 import { useNextGames } from '../composables/useNextGames'
 import FavoriteToggle from './FavoriteToggle.vue'
 
-const router = useRouter()
 const { showNextGame, hideNextGame } = useNextGames()
 const { loading, error, getStandings } = useTeamStats()
 const searchStore = useSearchStore()
@@ -75,9 +74,6 @@ onMounted(() => {
   loadData()
 })
 
-const goToTeam = (teamCode) => {
-  router.push(`/team/${teamCode}`)
-}
 </script>
 
 <style scoped>

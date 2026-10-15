@@ -8,19 +8,20 @@
         v-for="player in players"
         :key="player.playerId"
         class="player-item"
-        @click="goToPlayer(player.playerId)"
         @mouseenter="showNextGame($event, player.teamCode)"
         @mouseleave="hideNextGame"
       >
         <FavoriteToggle :item="playerFavorite(player)" />
-        <div class="player-main">
-          <TeamLogo :logoUrl="player.teamLogoUrl" :teamCode="player.teamCode" size="small" />
-          <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
-          <NextGameBadge :team-code="player.teamCode" />
-        </div>
-        <span class="player-icons">
-          <span class="streak-count stat-key">Games: {{ player.currentPointStreak }}</span>
-        </span>
+        <router-link class="entity-link entity-row-link" :to="`/player/${player.playerId}`" draggable="false" @click.stop>
+          <div class="player-main">
+            <TeamLogo :logoUrl="player.teamLogoUrl" :teamCode="player.teamCode" size="small" />
+            <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
+            <NextGameBadge :team-code="player.teamCode" />
+          </div>
+          <span class="player-icons">
+            <span class="streak-count stat-key">Games: {{ player.currentPointStreak }}</span>
+          </span>
+        </router-link>
       </div>
     </div>
   </div>
@@ -28,7 +29,6 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { usePlayerStats } from '../composables/useApi'
 import { useSearchStore } from '../stores/searchStore'
 import { playerFavorite } from '../composables/useFavorites'
@@ -37,7 +37,6 @@ import NextGameBadge from './NextGameBadge.vue'
 import { useNextGames } from '../composables/useNextGames'
 import FavoriteToggle from './FavoriteToggle.vue'
 
-const router = useRouter()
 const { showNextGame, hideNextGame } = useNextGames()
 const { loading, error, getPlayerStreaks } = usePlayerStats()
 const searchStore = useSearchStore()
@@ -76,9 +75,6 @@ onMounted(() => {
   loadData()
 })
 
-const goToPlayer = (playerId) => {
-  router.push(`/player/${playerId}`)
-}
 </script>
 
 <style scoped>

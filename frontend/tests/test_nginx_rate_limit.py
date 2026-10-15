@@ -57,8 +57,21 @@ class MockApi(BaseHTTPRequestHandler):
 def running_nginx(trusted_proxy, logs=None):
     with tempfile.TemporaryDirectory(prefix="nhl-nginx-") as directory:
         root = Path(directory)
-        (root / "index.html").write_text("SPA")
-        (root / "app.js").write_text("asset")
+        # Public files live in their own web root, as in the image; server config,
+        # logs and temp files stay outside it.
+        html = root / "html"
+        html.mkdir()
+        (html / "index.html").write_text("SPA")
+        (html / "app.js").write_text("asset")
+        # Use the same generators as Vite, without needing a bundled frontend.
+        subprocess.run(
+            ["node", "--input-type=module", "-e",
+             "import {createSitemap,createSpaRoutes,createRobots} from './scripts/search-assets.js';"
+             "import {writeFileSync} from 'node:fs';"
+             "writeFileSync(process.argv[1]+'/sitemap.xml',createSitemap());"
+             "writeFileSync(process.argv[1]+'/robots.txt',createRobots());"
+             "writeFileSync(process.argv[2]+'/spa-routes.conf',createSpaRoutes());", str(html), str(root)],
+            cwd=FRONTEND, capture_output=True, text=True, check=True)
         with socket.socket() as listener:
             listener.bind(("127.0.0.1", 0))
             port = listener.getsockname()[1]
@@ -66,9 +79,10 @@ def running_nginx(trusted_proxy, logs=None):
         thread = threading.Thread(target=api.serve_forever, daemon=True)
         config = (FRONTEND / "nginx.conf").read_text()
         config = config.replace("listen 3000;", f"listen 127.0.0.1:{port};")
-        config = config.replace("/usr/share/nginx/html", str(root))
+        config = config.replace("/usr/share/nginx/html", str(html))
         config = config.replace("/var/log/nginx/error.log", str(root / "error.log"))
         config = config.replace("backend-api:8080", f"127.0.0.1:{api.server_port}")
+        config = config.replace("/etc/nginx/spa-routes.conf", str(root / "spa-routes.conf"))
         config = config.replace("/etc/nginx/security-headers.conf",
                                 str(FRONTEND / "nginx/security-headers.conf"))
         realip = (FRONTEND / "nginx/realip.conf.template").read_text()
@@ -179,7 +193,7 @@ class RateLimitTest(unittest.TestCase):
         with running_nginx("unix:") as port:
             self.assertEqual(request(port), (200, "127.0.0.1|127.0.0.1"))
             self.assert_limited(self.burst(port))
-            for path in ("/", "/players/123", "/app.js"):
+            for path in ("/", "/player/123", "/app.js"):
                 time.sleep(0.2)
                 statuses = [status for status, _ in self.burst(port, path=path)]
                 self.assertIn(429, statuses)
@@ -215,7 +229,7 @@ class RateLimitTest(unittest.TestCase):
 
     def test_security_headers_on_every_route_and_no_version(self):
         with running_nginx("unix:") as port:
-            for path in ("/", "/players/123", "/app.js", "/missing.js", "/api/players"):
+            for path in ("/", "/player/123", "/app.js", "/missing.js", "/api/players"):
                 with self.subTest(path=path):
                     connection = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
                     try:
@@ -229,6 +243,23 @@ class RateLimitTest(unittest.TestCase):
                     self.assertEqual(response.getheader("X-Content-Type-Options"), "nosniff")
                     self.assertEqual(response.getheader("Server"), "nginx")
                     self.assertNotRegex(body, r"nginx/\d")
+
+    def test_crawl_routes_and_unknown_urls(self):
+        with running_nginx("unix:") as port:
+            for path in ("/", "/player/8478402", "/team/BOS", "/team/bos", "/TEAM/bos/", "/player/any-id", "/tips", "/settings"):
+                self.assertEqual(request(port, path=path), (200, "SPA"), path)
+            for path in ("/not-a-page", "/player", "/team/BOS/extra", "/spa-routes.conf"):
+                self.assertEqual(request(port, path=path), (404, "SPA"), path)
+            for path in ("/team/logo.png", "/player/x.js", "/team/missing.css"):
+                status, body = request(port, path=path)
+                self.assertEqual(status, 404, path)
+                self.assertNotEqual(body, "SPA", path)
+            status, robots = request(port, path="/robots.txt")
+            self.assertEqual(status, 200)
+            self.assertIn("Sitemap: https://whoshothockey.com/sitemap.xml", robots)
+            status, sitemap = request(port, path="/sitemap.xml")
+            self.assertEqual(status, 200)
+            self.assertIn("<loc>https://whoshothockey.com/team/BOS</loc>", sitemap)
 
     def test_api_with_asset_extension_cannot_bypass_limit(self):
         for path in ("/api/players.json", "/api/players.js"):

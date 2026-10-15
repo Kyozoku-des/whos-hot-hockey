@@ -269,3 +269,49 @@ Modern browsers with ES6+ support:
 ## License
 
 MIT
+
+
+## Search indexing for whoshothockey.com
+
+`src/seo.js` defines the shared title and description. The Vite `search-assets`
+plugin injects these into the HTML entry; the shared template has no canonical,
+`og:url`, or homepage body that could be mistaken for another route's content.
+Vue adds canonical URLs and page metadata after navigation, including player names
+after data loads. Team metadata uses one source: `src/themes/teamColors.js`.
+Leaderboards and rosters expose real player/team links. Settings, feedback,
+donations and unknown client routes use `noindex, follow`.
+The homepage introduction follows the tables so it does not shrink the mobile cards.
+
+`npm run build` emits `dist/sitemap.xml` from the 32 clubs, the homepage and tips,
+and `dist/robots.txt`, both using `SITE_URL` as their only domain source.
+No generated sitemap is tracked or written into the source tree. Player pages are
+discovered through leaderboards and rosters. The generated `robots.txt` advertises the sitemap
+and permits crawling of scripts and API requests needed to render stats.
+When changing the domain, update `SITE_URL` in `src/seo.js`.
+
+`src/router/routes.js` is shared by Vue and the generated `.build/nginx/spa-routes.conf` (outside the public output).
+Docker installs that file into nginx so direct loads accept the same route patterns,
+case variations and entity IDs as the client router. Unknown route patterns serve the SPA
+with HTTP 404 so Vue can display NotFoundPage. Entity existence is checked in the
+browser: missing entities return the SPA with HTTP 200, then become `noindex` if
+the details lookup fails. The view stops there rather than clearing the error
+with game-log requests. Lowercase team IDs are uppercased for every API request.
+Missing static assets still return 404, including paths below `/player/` or `/team/`.
+Add future page routes to the shared declarations and wire their components in the router.
+
+After deploying:
+
+1. Verify `whoshothockey.com` in Google Search Console with its DNS TXT record.
+2. Submit `https://whoshothockey.com/sitemap.xml`.
+3. Inspect the homepage and representative team/player URLs with the live URL test.
+   Confirm Google can render the stats, then request indexing.
+4. Monitor indexing, impressions and clicks in Search Console.
+
+The live API must remain publicly reachable for Google to render stats. Player/team
+stats and page metadata still need JavaScript; this change does not introduce
+server-side rendering or guarantee indexing or rankings. Social link crawlers
+that do not execute JavaScript may show generic site metadata on detail links.
+Server-side rendering is a possible follow-up if rendering becomes an indexing issue.
+
+Validation: `npm run test:security` (includes SEO tests), `npm run build`,
+`npm run check:targets`, and the nginx integration tests documented above.

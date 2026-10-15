@@ -35,6 +35,8 @@ RUN apk upgrade --no-cache
 
 # Copy built assets from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
+# Server configuration is built separately from the public site output.
+COPY --from=build /app/.build/nginx/spa-routes.conf /etc/nginx/spa-routes.conf
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf

@@ -1,12 +1,13 @@
 import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { searchAssetsPlugin } from './scripts/search-assets.js'
 
 const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8'))
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [vue(), searchAssetsPlugin()],
   // Preserve Vite 6's browser floor while upgrading the build toolchain.
   build: {
     target: ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari14']

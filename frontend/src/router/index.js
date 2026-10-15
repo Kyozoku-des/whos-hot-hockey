@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { installSeoNavigation } from '../seo.js'
+import { PAGE_ROUTES } from './routes.js'
 import HomePage from '../views/HomePage.vue'
 import PlayerPage from '../views/PlayerPage.vue'
 import TeamPage from '../views/TeamPage.vue'
@@ -7,41 +9,16 @@ import FeedbackPage from '../views/FeedbackPage.vue'
 import DonationsPage from '../views/DonationsPage.vue'
 import TipsPage from '../views/TipsPage.vue'
 
+const components = {
+  Home: HomePage, Player: PlayerPage, Team: TeamPage, Settings: SettingsPage,
+  Feedback: FeedbackPage, Donations: DonationsPage, Tips: TipsPage
+}
 const routes = [
+  ...PAGE_ROUTES.map(route => ({ ...route, component: components[route.name] })),
   {
-    path: '/',
-    name: 'Home',
-    component: HomePage
-  },
-  {
-    path: '/player/:id',
-    name: 'Player',
-    component: PlayerPage
-  },
-  {
-    path: '/team/:id',
-    name: 'Team',
-    component: TeamPage
-  },
-  {
-    path: '/settings',
-    name: 'Settings',
-    component: SettingsPage
-  },
-  {
-    path: '/feedback',
-    name: 'Feedback',
-    component: FeedbackPage
-  },
-  {
-    path: '/donations',
-    name: 'Donations',
-    component: DonationsPage
-  },
-  {
-    path: '/tips',
-    name: 'Tips',
-    component: TipsPage
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('../views/NotFoundPage.vue')
   }
 ]
 
@@ -54,5 +31,7 @@ const router = createRouter({
     return savedPosition || { top: 0 }
   }
 })
+
+installSeoNavigation(router)
 
 export default router

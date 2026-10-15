@@ -5,6 +5,10 @@ on:
     paths:
       - "frontend/nginx.conf"
       - "frontend/nginx/**"
+      - "frontend/scripts/search-assets.js"
+      - "frontend/src/router/routes.js"
+      - "frontend/src/seo.js"
+      - "frontend/src/themes/teamColors.js"
       - "frontend/tests/**"
       - ".github/workflows/nginx-tests.yml"
   push:
@@ -12,6 +16,10 @@ on:
     paths:
       - "frontend/nginx.conf"
       - "frontend/nginx/**"
+      - "frontend/scripts/search-assets.js"
+      - "frontend/src/router/routes.js"
+      - "frontend/src/seo.js"
+      - "frontend/src/themes/teamColors.js"
       - "frontend/tests/**"
       - ".github/workflows/nginx-tests.yml"
   # The deploy workflow runs the rate limiting tests before every deploy.
@@ -25,6 +33,9 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"

@@ -74,6 +74,12 @@
       </div>
     </div>
 
+    <section class="home-intro" aria-labelledby="nhl-stats-heading">
+      <h2 id="nhl-stats-heading">NHL stats, hot players and point streaks</h2>
+      <p>{{ HOME_DESCRIPTION }}</p>
+      <router-link to="/tips">Learn how to use the NHL stats tables</router-link>
+    </section>
+
     <!-- Cookie Consent Banner -->
     <CookieConsent />
   </div>
@@ -86,6 +92,7 @@ let lastCardKey = null
 </script>
 
 <script setup>
+import { HOME_DESCRIPTION } from '../seo.js'
 import { computed, onMounted, ref, onUnmounted, nextTick, watch, shallowRef } from 'vue'
 import ExpandableCard from '../components/ExpandableCard.vue'
 import TopPointsTable from '../components/TopPointsTable.vue'
@@ -368,6 +375,16 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.home-intro {
+  max-width: 1000px;
+  margin: 1.5rem auto;
+  padding: 0 1.5rem;
+  text-align: center;
+}
+.home-intro h2 { font-size: 1.2rem; }
+.home-intro p { line-height: 1.6; }
+.home-intro a { color: var(--color-text-secondary); }
+
 .home-page {
   width: 100%;
   min-height: 100vh;

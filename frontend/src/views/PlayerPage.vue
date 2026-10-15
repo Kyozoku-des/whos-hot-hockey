@@ -72,6 +72,7 @@
 
 <script setup>
 import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { applySeo, entitySeo, unavailableEntitySeo } from '../seo.js'
 import { useRoute } from 'vue-router'
 import { usePlayerStats } from '../composables/useApi'
 import PlayerGameLogGraph from '../components/PlayerGameLogGraph.vue'
@@ -82,7 +83,8 @@ import TeamLogo from '../components/TeamLogo.vue'
 import { playerFavorite } from '../composables/useFavorites'
 
 const route = useRoute()
-const { loading, error, getPlayerDetails, getPlayerGameLog } = usePlayerStats()
+const pagePath = route.path
+const { loading, error, status, getPlayerDetails, getPlayerGameLog } = usePlayerStats()
 
 const player = ref(null)
 const gameLogs = ref([])
@@ -136,9 +138,13 @@ onMounted(async () => {
   const playerId = route.params.id
 
   const playerData = await getPlayerDetails(playerId)
-  if (playerData) {
-    player.value = playerData
+  if (!playerData) {
+    // Only a missing player is permanent; a rate limit or outage keeps the page indexable.
+    if (route.path === pagePath && status.value === 404) applySeo(unavailableEntitySeo('player', pagePath))
+    return
   }
+  player.value = playerData
+  if (route.path === pagePath) applySeo(entitySeo('player', pagePath, `${playerData.firstName} ${playerData.lastName}`))
 
   loadingGameLog.value = true
 

@@ -8,23 +8,24 @@
         v-for="(team, index) in teams"
         :key="team.teamCode"
         class="team-item"
-        @click="goToTeam(team.teamCode)"
         @mouseenter="showNextGame($event, team.teamCode)"
         @mouseleave="hideNextGame"
       >
         <FavoriteToggle :item="teamFavorite(team)" />
-        <div class="team-main">
-          <TeamLogo :logoUrl="team.logoUrl" :teamCode="team.teamCode" :alt="team.teamName" size="small" />
-          <span class="team-name">{{ team.teamName }}</span>
-          <NextGameBadge :team-code="team.teamCode" />
-        </div>
-        <span class="team-stats">
-          <span class="stat-item stat-streak stat-key">Games: {{ team.currentWinStreak }}</span>
-          <span v-if="isExpanded" class="stat-item">W: {{ team.wins }}</span>
-          <span v-if="isExpanded" class="stat-item">L: {{ team.losses }}</span>
-          <span v-if="isExpanded" class="stat-item">GP: {{ team.gamesPlayed }}</span>
-          <span v-if="isExpanded" class="stat-item">PTS: {{ team.points }}</span>
-        </span>
+        <router-link class="entity-link entity-row-link" :to="`/team/${team.teamCode}`" draggable="false" @click.stop>
+          <div class="team-main">
+            <TeamLogo :logoUrl="team.logoUrl" :teamCode="team.teamCode" :alt="team.teamName" size="small" />
+            <span class="team-name">{{ team.teamName }}</span>
+            <NextGameBadge :team-code="team.teamCode" />
+          </div>
+          <span class="team-stats">
+            <span class="stat-item stat-streak stat-key">Games: {{ team.currentWinStreak }}</span>
+            <span v-if="isExpanded" class="stat-item">W: {{ team.wins }}</span>
+            <span v-if="isExpanded" class="stat-item">L: {{ team.losses }}</span>
+            <span v-if="isExpanded" class="stat-item">GP: {{ team.gamesPlayed }}</span>
+            <span v-if="isExpanded" class="stat-item">PTS: {{ team.points }}</span>
+          </span>
+        </router-link>
       </div>
     </div>
   </div>
@@ -32,7 +33,6 @@
 
 <script setup>
 import { ref, computed, inject, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useTeamStats } from '../composables/useApi'
 import { useSearchStore } from '../stores/searchStore'
 import { teamFavorite } from '../composables/useFavorites'
@@ -41,7 +41,6 @@ import NextGameBadge from './NextGameBadge.vue'
 import { useNextGames } from '../composables/useNextGames'
 import FavoriteToggle from './FavoriteToggle.vue'
 
-const router = useRouter()
 const { showNextGame, hideNextGame } = useNextGames()
 const { loading, error, getStandings } = useTeamStats()
 const searchStore = useSearchStore()
@@ -74,9 +73,6 @@ onMounted(() => {
   loadData()
 })
 
-const goToTeam = (teamCode) => {
-  router.push(`/team/${teamCode}`)
-}
 </script>
 
 <style scoped>

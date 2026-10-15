@@ -59,14 +59,15 @@
               v-for="player in sortedRoster"
               :key="player.playerId"
               class="roster-row roster-player"
-              @click="goToPlayer(player.playerId)"
             >
-              <span class="roster-name">{{ player.fullName }}</span>
-              <span class="roster-stats">
-                <span class="roster-stat">{{ player.goals ?? 0 }}</span>
-                <span class="roster-stat">{{ player.assists ?? 0 }}</span>
-                <span class="roster-stat roster-points">{{ player.points ?? 0 }}</span>
-              </span>
+              <router-link class="entity-link entity-row-link" :to="`/player/${player.playerId}`">
+                <span class="roster-name">{{ player.fullName }}</span>
+                <span class="roster-stats">
+                  <span class="roster-stat">{{ player.goals ?? 0 }}</span>
+                  <span class="roster-stat">{{ player.assists ?? 0 }}</span>
+                  <span class="roster-stat roster-points">{{ player.points ?? 0 }}</span>
+                </span>
+              </router-link>
             </li>
           </ul>
           <p v-else class="placeholder-text">No roster data available</p>
@@ -78,7 +79,9 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
+import { applySeo, entitySeo, unavailableEntitySeo } from '../seo.js'
+import { TEAM_COLORS } from '../themes/teamColors.js'
 import { useTeamStats } from '../composables/useApi'
 import HomeLink from '../components/HomeLink.vue'
 import TeamLogo from '../components/TeamLogo.vue'
@@ -88,23 +91,20 @@ import NextGameLine from '../components/NextGameLine.vue'
 import { teamFavorite } from '../composables/useFavorites'
 
 const route = useRoute()
-const { loading, error, getTeamDetails, getTeamGameLog } = useTeamStats()
+const pagePath = route.path
+const { loading, error, status, getTeamDetails, getTeamGameLog } = useTeamStats()
 
 const team = ref(null)
 const teamGameLogs = ref([])
 const previousSeasonTeamGameLogs = ref([])
 const previousSeason = ref('')
 
-const router = useRouter()
 
 // Highest scorers first
 const sortedRoster = computed(() =>
   [...(team.value?.roster || [])].sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
 )
 
-const goToPlayer = (playerId) => {
-  router.push(`/player/${playerId}`)
-}
 
 // Calculate previous season ID
 const calculatePreviousSeason = () => {
@@ -126,12 +126,17 @@ const calculatePreviousSeason = () => {
 
 onMounted(async () => {
   previousSeason.value = calculatePreviousSeason()
-  const teamId = route.params.id
+  const teamId = String(route.params.id).toUpperCase()
 
   const teamData = await getTeamDetails(teamId)
-  if (teamData) {
-    team.value = teamData
+  if (!teamData) {
+    // Only a missing team is permanent; a rate limit or outage keeps the page indexable.
+    if (route.path === pagePath && status.value === 404) applySeo(unavailableEntitySeo('team', pagePath))
+    return
   }
+  team.value = teamData
+  // routeSeo names only teams in TEAM_COLORS; keep that name so the title doesn't change mid-load.
+  if (route.path === pagePath) applySeo(entitySeo('team', pagePath, TEAM_COLORS[teamId]?.name ?? teamData.teamName))
 
   // Fetch current season game log
   const gameLogData = await getTeamGameLog(teamId)
@@ -266,6 +271,7 @@ onMounted(async () => {
 }
 
 .roster-player {
+  position: relative;
   border-bottom: 1px solid var(--color-line);
   cursor: pointer;
 }

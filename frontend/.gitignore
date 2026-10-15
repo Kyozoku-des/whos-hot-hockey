@@ -25,3 +25,6 @@ dist-ssr
 
 # Environment variables
 .env
+
+# Generated server configuration (outside the public dist directory)
+.build/
