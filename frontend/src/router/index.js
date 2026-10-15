@@ -2,16 +2,18 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { installSeoNavigation } from '../seo.js'
 import { PAGE_ROUTES } from './routes.js'
 import HomePage from '../views/HomePage.vue'
-import PlayerPage from '../views/PlayerPage.vue'
-import TeamPage from '../views/TeamPage.vue'
-import SettingsPage from '../views/SettingsPage.vue'
-import FeedbackPage from '../views/FeedbackPage.vue'
-import DonationsPage from '../views/DonationsPage.vue'
-import TipsPage from '../views/TipsPage.vue'
 
+// The home page is in the main bundle, as most visits start there. The other
+// pages load on first visit, so Chart.js only downloads with the player and
+// team pages.
 const components = {
-  Home: HomePage, Player: PlayerPage, Team: TeamPage, Settings: SettingsPage,
-  Feedback: FeedbackPage, Donations: DonationsPage, Tips: TipsPage
+  Home: HomePage,
+  Player: () => import('../views/PlayerPage.vue'),
+  Team: () => import('../views/TeamPage.vue'),
+  Settings: () => import('../views/SettingsPage.vue'),
+  Feedback: () => import('../views/FeedbackPage.vue'),
+  Donations: () => import('../views/DonationsPage.vue'),
+  Tips: () => import('../views/TipsPage.vue')
 }
 const routes = [
   ...PAGE_ROUTES.map(route => ({ ...route, component: components[route.name] })),
