@@ -16,12 +16,6 @@
       </div>
     </div>
 
-    <section class="home-intro" aria-labelledby="nhl-stats-heading">
-      <h2 id="nhl-stats-heading">NHL stats, hot players and point streaks</h2>
-      <p>Track NHL scoring leaders, active point streaks, hot players, team standings and winning streaks. Explore player game logs and team rosters.</p>
-      <router-link to="/tips">Learn how to use the NHL stats tables</router-link>
-    </section>
-
     <!-- Latest game day's scores and point scorers -->
     <ScoreTicker />
 
@@ -80,6 +74,12 @@
       </div>
     </div>
 
+    <section class="home-intro" aria-labelledby="nhl-stats-heading">
+      <h2 id="nhl-stats-heading">NHL stats, hot players and point streaks</h2>
+      <p>{{ HOME_DESCRIPTION }}</p>
+      <router-link to="/tips">Learn how to use the NHL stats tables</router-link>
+    </section>
+
     <!-- Cookie Consent Banner -->
     <CookieConsent />
   </div>
@@ -92,6 +92,7 @@ let lastCardKey = null
 </script>
 
 <script setup>
+import { HOME_DESCRIPTION } from '../seo.js'
 import { computed, onMounted, ref, onUnmounted, nextTick, watch, shallowRef } from 'vue'
 import ExpandableCard from '../components/ExpandableCard.vue'
 import TopPointsTable from '../components/TopPointsTable.vue'

@@ -35,6 +35,9 @@ RUN apk upgrade --no-cache
 
 # Copy built assets from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
+# Generated from Vue's route declarations; it belongs to nginx, not the public site.
+COPY --from=build /app/dist/spa-routes.conf /etc/nginx/spa-routes.conf
+RUN rm /usr/share/nginx/html/spa-routes.conf
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
@@ -51,3 +54,4 @@ EXPOSE 3000
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
+

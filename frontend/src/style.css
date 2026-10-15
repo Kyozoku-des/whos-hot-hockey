@@ -295,3 +295,8 @@ html:root:not([data-theme="retro"]) .stat-key {
     scrollbar-color: var(--color-line) var(--color-bg-primary);
   }
 }
+
+
+/* Entity names are real navigation links in tables and rosters. */
+a.entity-link { color: inherit; text-decoration: none; }
+a.entity-link:hover { text-decoration: underline; }

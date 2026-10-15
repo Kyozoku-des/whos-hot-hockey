@@ -273,18 +273,26 @@ MIT
 
 ## Search indexing for whoshothockey.com
 
-The entry HTML contains the homepage title, description and a short visible introduction.
-Vue updates canonical URLs, descriptions and social metadata when navigating, including
-player names after data loads. Leaderboards and team rosters expose real player/team
-links. Settings, feedback, donations and unknown client routes use `noindex, follow`.
-Nginx returns HTTP 404 for unknown URL patterns instead of serving the homepage.
+`src/seo.js` defines the shared title and description. The Vite `search-assets`
+plugin injects these into the HTML entry; the shared template has no canonical,
+`og:url`, or homepage body that could be mistaken for another route's content.
+Vue adds canonical URLs and page metadata after navigation, including player names
+after data loads. Team metadata uses one source: `src/themes/teamColors.js`.
+Leaderboards and rosters expose real player/team links. Settings, feedback,
+donations and unknown client routes use `noindex, follow`.
+The homepage introduction follows the tables so it does not shrink the mobile cards.
 
-`npm run build` generates `public/sitemap.xml` from the 32 clubs in
-`src/themes/teamColors.js`. It includes the homepage, tips and team pages; player
-pages are discovered through leaderboards and rosters. `robots.txt` advertises the
-sitemap and permits crawling, including scripts and API requests needed to render stats.
-No modification dates are fabricated. When changing the production domain, update
-`SITE_URL` in `src/seo.js`, the static metadata in `index.html` and `public/robots.txt`.
+`npm run build` emits `dist/sitemap.xml` from the 32 clubs, the homepage and tips.
+No generated sitemap is tracked or written into the source tree. Player pages are
+discovered through leaderboards and rosters. `robots.txt` advertises the sitemap
+and permits crawling of scripts and API requests needed to render stats.
+When changing the domain, update `SITE_URL` in `src/seo.js` and `public/robots.txt`.
+
+`src/router/routes.js` is shared by Vue and the generated `dist/spa-routes.conf`.
+Docker installs that file into nginx so direct loads accept the same route patterns,
+case variations and entity IDs as the client router. Unknown paths serve the SPA
+with HTTP 404 so Vue can display NotFoundPage. Missing static assets still return 404.
+Add future page routes to the shared declarations and wire their components in the router.
 
 After deploying:
 
@@ -295,10 +303,10 @@ After deploying:
 4. Monitor indexing, impressions and clicks in Search Console.
 
 The live API must remain publicly reachable for Google to render stats. Player/team
-stats and their personalized metadata still need JavaScript; this change does not
-introduce server-side rendering or guarantee indexing or rankings. Social link crawlers
-that do not execute JavaScript may show homepage metadata on detail links. Server-side
-rendering of detail pages is a possible follow-up if rendering becomes an indexing issue.
+stats and page metadata still need JavaScript; this change does not introduce
+server-side rendering or guarantee indexing or rankings. Social link crawlers
+that do not execute JavaScript may show generic site metadata on detail links.
+Server-side rendering is a possible follow-up if rendering becomes an indexing issue.
 
-Validation: `npm run test:seo`, `npm run test:security`, `npm run build`,
+Validation: `npm run test:security` (includes SEO tests), `npm run build`,
 `npm run check:targets`, and the nginx integration tests documented above.

@@ -1,12 +1,15 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
-import { applySeo, entitySeo, routeSeo, HOME_TITLE, HOME_DESCRIPTION, SITE_URL } from '../src/seo.js'
+import { createRouter, createMemoryHistory } from 'vue-router'
+import { applySeo, entitySeo, routeSeo, HOME_TITLE, HOME_DESCRIPTION, SITE_URL, installSeoNavigation } from '../src/seo.js'
+import { createSitemap, createSpaRoutes, searchAssetsPlugin } from '../scripts/search-assets.js'
+import { PAGE_ROUTES } from '../src/router/routes.js'
 import { TEAM_COLORS } from '../src/themes/teamColors.js'
 
-test('canonical URLs discard filters and fragments without hiding player pages from rendering', () => {
-  assert.equal(routeSeo('/?search=McDavid#scores').canonical, SITE_URL + '/')
-  assert.equal(routeSeo('/team/BOS/?season=20252026').canonical, SITE_URL + '/team/BOS')
+test('canonical URLs normalize path case and trailing slashes without hiding player pages', () => {
+  assert.equal(routeSeo('/').canonical, SITE_URL + '/')
+  assert.equal(routeSeo('/Team/bos/').canonical, SITE_URL + '/team/BOS')
   assert.ok(!routeSeo('/player/8478402').noindex)
   assert.match(entitySeo('player', '/player/8478402', 'Connor McDavid').title, /Connor McDavid NHL Stats/)
   assert.match(routeSeo('/team/BOS').title, /Boston Bruins/)
@@ -43,7 +46,7 @@ test('navigating from utility pages to entity pages and home resets all head met
 })
 
 test('sitemap covers public routes, excludes utility pages and uses the production domain', () => {
-  const xml = readFileSync(new URL('../public/sitemap.xml', import.meta.url), 'utf8')
+  const xml = createSitemap()
   const locations = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map(match => match[1])
   assert.equal(locations.length, Object.keys(TEAM_COLORS).length + 2)
   assert.equal(new Set(locations).size, locations.length)
@@ -56,10 +59,65 @@ test('sitemap covers public routes, excludes utility pages and uses the producti
   assert.ok(robots.includes(`Sitemap: ${SITE_URL}/sitemap.xml`))
 })
 
-test('entry HTML describes the site before JavaScript and matches the home metadata', () => {
+test('shared HTML has no homepage body or conflicting raw canonical/og:url', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8')
-  assert.ok(html.includes(HOME_TITLE.replace('&', '&amp;')))
-  assert.ok(html.includes(HOME_DESCRIPTION))
-  assert.ok(html.includes('<h2>NHL stats, hot players and point streaks</h2>'))
+  assert.ok(html.includes('<div id="app"></div>'))
+  assert.ok(!html.includes('rel="canonical"'))
+  assert.ok(!html.includes('og:url'))
   assert.ok(!html.includes('/vite.svg'))
+  const tags = searchAssetsPlugin().transformIndexHtml()
+  assert.equal(tags.find(tag => tag.tag === 'title').children, HOME_TITLE.replace('&', '&amp;'))
+  assert.equal(tags.find(tag => tag.attrs?.name === 'description').attrs.content, HOME_DESCRIPTION)
+  assert.ok(!tags.some(tag => tag.attrs?.rel === 'canonical' || tag.attrs?.property === 'og:url'))
+})
+
+test('failed navigation leaves entity metadata intact', () => {
+  let afterEach
+  const updates = []
+  const router = { afterEach(callback) { afterEach = callback } }
+  installSeoNavigation(router, metadata => updates.push(metadata))
+  afterEach({ path: '/player/123' }, { path: '/' }, undefined)
+  assert.equal(updates.length, 1)
+  for (const failure of [{ type: 16 }, { type: 4 }, { type: 8 }]) {
+    afterEach({ path: '/player/123' }, { path: '/player/123' }, failure)
+  }
+  assert.equal(updates.length, 1)
+})
+
+test('Vue Router duplicate and aborted navigations preserve the loaded player title', async () => {
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes: PAGE_ROUTES.map(route => ({ ...route, component: {} }))
+  })
+  let metadata
+  installSeoNavigation(router, value => { metadata = value })
+  await router.push('/player/8478402')
+  metadata = entitySeo('player', '/player/8478402', 'Connor McDavid')
+  const loaded = metadata
+  assert.ok(await router.push('/player/8478402'))
+  assert.equal(metadata, loaded)
+  const removeGuard = router.beforeEach(() => false)
+  assert.ok(await router.push('/team/BOS'))
+  assert.equal(metadata, loaded)
+  removeGuard()
+  await router.push('/team/bos')
+  assert.match(metadata.title, /Boston Bruins/)
+  assert.equal(metadata.canonical, SITE_URL + '/team/BOS')
+})
+
+test('build emits the generated sitemap and nginx routes rather than rewriting public files', () => {
+  const assets = []
+  searchAssetsPlugin().generateBundle.call({ emitFile(asset) { assets.push(asset) } })
+  assert.equal(assets.find(asset => asset.fileName === 'sitemap.xml').source, createSitemap())
+  assert.equal(assets.find(asset => asset.fileName === 'spa-routes.conf').source, createSpaRoutes())
+  assert.equal(assets.length, 2)
+})
+
+test('nginx routes track shared Vue routes including case-insensitive arbitrary entity IDs', () => {
+  const config = createSpaRoutes()
+  const matcher = new RegExp(config.match(/location ~\* "(.*?)"/)[1], 'i')
+  for (const route of PAGE_ROUTES) assert.ok(matcher.test(route.path.replace(':id', 'example')), route.path)
+  for (const path of ['/TEAM/bos', '/Player/123/', '/player/any-id', '/settings']) assert.ok(matcher.test(path), path)
+  for (const path of ['/missing', '/team', '/team/BOS/extra', '/api/players']) assert.ok(!matcher.test(path), path)
+  assert.ok(createSpaRoutes([...PAGE_ROUTES, { path: '/future', name: 'Future' }]).includes('/future'))
 })

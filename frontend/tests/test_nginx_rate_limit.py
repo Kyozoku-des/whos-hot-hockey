@@ -59,8 +59,15 @@ def running_nginx(trusted_proxy, logs=None):
         root = Path(directory)
         (root / "index.html").write_text("SPA")
         (root / "app.js").write_text("asset")
-        for name in ("robots.txt", "sitemap.xml"):
-            shutil.copyfile(FRONTEND / "public" / name, root / name)
+        shutil.copyfile(FRONTEND / "public/robots.txt", root / "robots.txt")
+        # Use the same generators as Vite, without needing a bundled frontend.
+        subprocess.run(
+            ["node", "--input-type=module", "-e",
+             "import {createSitemap,createSpaRoutes} from './scripts/search-assets.js';"
+             "import {writeFileSync} from 'node:fs';"
+             "writeFileSync(process.argv[1]+'/sitemap.xml',createSitemap());"
+             "writeFileSync(process.argv[1]+'/spa-routes.conf',createSpaRoutes());", str(root)],
+            cwd=FRONTEND, capture_output=True, text=True, check=True)
         with socket.socket() as listener:
             listener.bind(("127.0.0.1", 0))
             port = listener.getsockname()[1]
@@ -71,6 +78,7 @@ def running_nginx(trusted_proxy, logs=None):
         config = config.replace("/usr/share/nginx/html", str(root))
         config = config.replace("/var/log/nginx/error.log", str(root / "error.log"))
         config = config.replace("backend-api:8080", f"127.0.0.1:{api.server_port}")
+        config = config.replace("/etc/nginx/spa-routes.conf", str(root / "spa-routes.conf"))
         config = config.replace("/etc/nginx/security-headers.conf",
                                 str(FRONTEND / "nginx/security-headers.conf"))
         realip = (FRONTEND / "nginx/realip.conf.template").read_text()
@@ -234,10 +242,10 @@ class RateLimitTest(unittest.TestCase):
 
     def test_crawl_routes_and_unknown_urls(self):
         with running_nginx("unix:") as port:
-            for path in ("/", "/player/8478402", "/team/BOS", "/tips", "/settings"):
+            for path in ("/", "/player/8478402", "/team/BOS", "/team/bos", "/TEAM/bos/", "/player/any-id", "/tips", "/settings"):
                 self.assertEqual(request(port, path=path), (200, "SPA"), path)
-            for path in ("/not-a-page", "/player/not-an-id", "/team/invalid"):
-                self.assertEqual(request(port, path=path)[0], 404, path)
+            for path in ("/not-a-page", "/player", "/team/BOS/extra"):
+                self.assertEqual(request(port, path=path), (404, "SPA"), path)
             status, robots = request(port, path="/robots.txt")
             self.assertEqual(status, 200)
             self.assertIn("Sitemap: https://whoshothockey.com/sitemap.xml", robots)

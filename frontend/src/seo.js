@@ -4,9 +4,21 @@ export const SITE_URL = 'https://whoshothockey.com'
 export const HOME_TITLE = "NHL Stats, Hot Players & Point Streaks | Who's Hot Hockey"
 export const HOME_DESCRIPTION = 'Track NHL scoring leaders, active point streaks, hot players, team standings and winning streaks. Explore player game logs and team rosters.'
 
+function normalizeSeoPath(path) {
+  const normalized = path.replace(/\/+$/, '').toLowerCase() || '/'
+  const team = normalized.match(/^\/team\/([^/]+)$/)
+  return team ? `/team/${team[1].toUpperCase()}` : normalized
+}
+
+export function installSeoNavigation(router, update = applySeo) {
+  return router.afterEach((to, _from, failure) => {
+    if (!failure) update(routeSeo(to.path))
+  })
+}
+
 export function routeSeo(path) {
-  // Queries and fragments are UI state, not separate pages for indexing.
-  const cleanPath = path.split(/[?#]/)[0].replace(/\/+$/, '') || '/'
+  // Vue Router supplies path without query/hash. Match its case-insensitive routes.
+  const cleanPath = normalizeSeoPath(path)
   const canonical = `${SITE_URL}${cleanPath}`
   if (cleanPath === '/') return { title: HOME_TITLE, description: HOME_DESCRIPTION, canonical }
   if (cleanPath === '/tips') return {
@@ -27,7 +39,7 @@ export function routeSeo(path) {
 }
 
 export function entitySeo(kind, path, name) {
-  const cleanPath = path.split(/[?#]/)[0].replace(/\/+$/, '')
+  const cleanPath = normalizeSeoPath(path)
   const label = kind === 'player' ? 'NHL Stats & Game Logs' : 'Stats, Roster & Standings'
   const description = kind === 'player'
     ? `Explore ${name} NHL goals, assists, points and game-by-game stats. Compare season scoring progress on Who’s Hot Hockey.`
