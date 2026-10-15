@@ -19,6 +19,25 @@ import { ref } from 'vue'
 
 // Shared by every row: only one row shows its button after a long press
 const pressedId = ref(null)
+let pressedRow = null
+
+// A touch anywhere outside the open row closes its button. One listener
+// serves every row: with one each, every touch ran hundreds of them.
+const onDocumentTouch = (e) => {
+  if (pressedId.value !== null && !pressedRow?.contains(e.target)) {
+    pressedId.value = null
+  }
+}
+
+let mountedCount = 0
+
+const listenForOutsideTouch = () => {
+  if (mountedCount++ === 0) document.addEventListener('touchstart', onDocumentTouch, { passive: true })
+}
+
+const stopListeningForOutsideTouch = () => {
+  if (--mountedCount === 0) document.removeEventListener('touchstart', onDocumentTouch)
+}
 </script>
 
 <script setup>
@@ -94,6 +113,7 @@ const onTouchStart = (e) => {
   pressTimer = setTimeout(() => {
     longPressed = true
     pressedId.value = props.item.id
+    pressedRow = row
   }, LONG_PRESS_MS)
 }
 
@@ -120,13 +140,6 @@ const onContextMenu = (e) => {
 const onMouseEnter = () => { if (canHover) hovered.value = true }
 const onMouseLeave = () => { hovered.value = false }
 
-// A touch anywhere outside the open row closes its button
-const onDocumentTouch = (e) => {
-  if (pressedId.value === props.item.id && !row.contains(e.target)) {
-    pressedId.value = null
-  }
-}
-
 onMounted(() => {
   row = buttonRef.value.parentElement
   row.classList.add('has-favorite-toggle')
@@ -138,7 +151,7 @@ onMounted(() => {
   row.addEventListener('contextmenu', onContextMenu)
   row.addEventListener('mouseenter', onMouseEnter)
   row.addEventListener('mouseleave', onMouseLeave)
-  document.addEventListener('touchstart', onDocumentTouch, { passive: true })
+  listenForOutsideTouch()
 })
 
 onUnmounted(() => {
@@ -151,8 +164,11 @@ onUnmounted(() => {
   row.removeEventListener('contextmenu', onContextMenu)
   row.removeEventListener('mouseenter', onMouseEnter)
   row.removeEventListener('mouseleave', onMouseLeave)
-  document.removeEventListener('touchstart', onDocumentTouch)
-  if (pressedId.value === props.item.id) pressedId.value = null
+  stopListeningForOutsideTouch()
+  if (pressedRow === row) {
+    pressedId.value = null
+    pressedRow = null
+  }
 })
 </script>
 
