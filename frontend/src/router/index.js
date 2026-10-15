@@ -35,4 +35,3 @@ const router = createRouter({
 installSeoNavigation(router)
 
 export default router
-

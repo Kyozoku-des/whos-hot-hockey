@@ -232,4 +232,3 @@ onUnmounted(() => {
   padding: 0 2rem;
 }
 </style>
-

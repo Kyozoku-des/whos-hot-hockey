@@ -8,20 +8,21 @@
         v-for="player in players"
         :key="player.playerId"
         class="player-item"
-        @click="goToPlayer(player.playerId)"
         @mouseenter="showNextGame($event, player.teamCode)"
         @mouseleave="hideNextGame"
       >
         <FavoriteToggle :item="playerFavorite(player)" />
-        <div class="player-main">
-          <TeamLogo :logoUrl="player.teamLogoUrl" :teamCode="player.teamCode" size="small" />
-          <router-link class="player-name entity-link" :to="`/player/${player.playerId}`" @click.stop>{{ player.firstName }} {{ player.lastName }}</router-link>
-        </div>
-        <span class="player-stats">
-          <span class="stat-item">P: {{ player.points }}</span>
-          <span class="stat-item">GP: {{ player.gamesPlayed }}</span>
-          <span class="stat-item stat-key">PPG: {{ player.pointsPerLastNGames?.toFixed(2) ?? '0.00' }}</span>
-        </span>
+        <router-link class="entity-link entity-row-link" :to="`/player/${player.playerId}`" @click.stop>
+          <div class="player-main">
+            <TeamLogo :logoUrl="player.teamLogoUrl" :teamCode="player.teamCode" size="small" />
+            <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
+          </div>
+          <span class="player-stats">
+            <span class="stat-item">P: {{ player.points }}</span>
+            <span class="stat-item">GP: {{ player.gamesPlayed }}</span>
+            <span class="stat-item stat-key">PPG: {{ player.pointsPerLastNGames?.toFixed(2) ?? '0.00' }}</span>
+          </span>
+        </router-link>
       </div>
     </div>
   </div>
@@ -29,7 +30,6 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { usePlayerStats } from '../composables/useApi'
 import { useSearchStore } from '../stores/searchStore'
 import { playerFavorite } from '../composables/useFavorites'
@@ -37,7 +37,6 @@ import TeamLogo from './TeamLogo.vue'
 import { useNextGames } from '../composables/useNextGames'
 import FavoriteToggle from './FavoriteToggle.vue'
 
-const router = useRouter()
 const { showNextGame, hideNextGame } = useNextGames()
 const { loading, error, getHottestPlayers } = usePlayerStats()
 const searchStore = useSearchStore()
@@ -76,9 +75,6 @@ onMounted(() => {
   loadData()
 })
 
-const goToPlayer = (playerId) => {
-  router.push(`/player/${playerId}`)
-}
 </script>
 
 <style scoped>
@@ -155,4 +151,3 @@ const goToPlayer = (playerId) => {
   color: var(--color-text-secondary);
 }
 </style>
-

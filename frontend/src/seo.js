@@ -1,7 +1,8 @@
 import { TEAM_COLORS } from './themes/teamColors.js'
 
 export const SITE_URL = 'https://whoshothockey.com'
-export const HOME_TITLE = "NHL Stats, Hot Players & Point Streaks | Who's Hot Hockey"
+export const SITE_NAME = "Who's Hot Hockey"
+export const HOME_TITLE = `NHL Stats, Hot Players & Point Streaks | ${SITE_NAME}`
 export const HOME_DESCRIPTION = 'Track NHL scoring leaders, active point streaks, hot players, team standings and winning streaks. Explore player game logs and team rosters.'
 
 function normalizeSeoPath(path) {
@@ -11,8 +12,11 @@ function normalizeSeoPath(path) {
 }
 
 export function installSeoNavigation(router, update = applySeo) {
-  return router.afterEach((to, _from, failure) => {
-    if (!failure) update(routeSeo(to.path))
+  return router.afterEach((to, from, failure) => {
+    // The initial navigation to / has no matched source route. Later query/hash
+    // changes reuse the view and must preserve its loaded entity metadata.
+    if (failure || (to.path === from.path && from.matched?.length)) return
+    update(routeSeo(to.path))
   })
 }
 
@@ -47,9 +51,37 @@ export function entitySeo(kind, path, name) {
   return { title: `${name} ${label} | Who's Hot Hockey`, description, canonical: `${SITE_URL}${cleanPath}` }
 }
 
-export function applySeo({ title, description, canonical, noindex = false }, doc = document) {
-  doc.title = title
-  const meta = (attribute, key, content) => {
+export function unavailableEntitySeo(kind, path) {
+  return {
+    ...routeSeo(path),
+    title: `${kind === 'player' ? 'Player' : 'Team'} Unavailable | ${SITE_NAME}`,
+    description: `The requested NHL ${kind} could not be loaded. Explore other player and team stats on ${SITE_NAME}.`,
+    noindex: true
+  }
+}
+
+// Shared by the build-time HTML and runtime updates. URL tags are added only
+// when the router knows the current page; the common shell has no page URL.
+export function seoTags({ title, description, canonical, noindex = false }) {
+  const meta = (attribute, key, content) => ({ attribute, key, content })
+  const tags = [
+    meta('name', 'description', description),
+    meta('name', 'robots', noindex ? 'noindex, follow' : 'index, follow'),
+    meta('property', 'og:type', 'website'),
+    meta('property', 'og:site_name', SITE_NAME),
+    meta('property', 'og:title', title),
+    meta('property', 'og:description', description),
+    meta('name', 'twitter:card', 'summary'),
+    meta('name', 'twitter:title', title),
+    meta('name', 'twitter:description', description)
+  ]
+  if (canonical) tags.push(meta('property', 'og:url', canonical))
+  return tags
+}
+
+export function applySeo(metadata, doc = document) {
+  doc.title = metadata.title
+  for (const { attribute, key, content } of seoTags(metadata)) {
     let element = doc.head.querySelector(`meta[${attribute}="${key}"]`)
     if (!element) {
       element = doc.createElement('meta')
@@ -58,21 +90,13 @@ export function applySeo({ title, description, canonical, noindex = false }, doc
     }
     element.setAttribute('content', content)
   }
-  meta('name', 'description', description)
-  meta('name', 'robots', noindex ? 'noindex, follow' : 'index, follow')
-  meta('property', 'og:type', 'website')
-  meta('property', 'og:site_name', "Who's Hot Hockey")
-  meta('property', 'og:title', title)
-  meta('property', 'og:description', description)
-  meta('property', 'og:url', canonical)
-  meta('name', 'twitter:card', 'summary')
-  meta('name', 'twitter:title', title)
-  meta('name', 'twitter:description', description)
-  let link = doc.head.querySelector('link[rel="canonical"]')
-  if (!link) {
-    link = doc.createElement('link')
-    link.setAttribute('rel', 'canonical')
-    doc.head.appendChild(link)
+  if (metadata.canonical) {
+    let link = doc.head.querySelector('link[rel="canonical"]')
+    if (!link) {
+      link = doc.createElement('link')
+      link.setAttribute('rel', 'canonical')
+      doc.head.appendChild(link)
+    }
+    link.setAttribute('href', metadata.canonical)
   }
-  link.setAttribute('href', canonical)
 }

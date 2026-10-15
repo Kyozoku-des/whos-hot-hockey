@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readFileSync, existsSync } from 'node:fs'
+import { mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import test from 'node:test'
 import { createRouter, createMemoryHistory } from 'vue-router'
-import { applySeo, entitySeo, routeSeo, HOME_TITLE, HOME_DESCRIPTION, SITE_URL, installSeoNavigation } from '../src/seo.js'
-import { createSitemap, createSpaRoutes, searchAssetsPlugin } from '../scripts/search-assets.js'
+import { applySeo, entitySeo, routeSeo, HOME_TITLE, HOME_DESCRIPTION, SITE_URL, installSeoNavigation, unavailableEntitySeo, seoTags } from '../src/seo.js'
+import { createSitemap, createSpaRoutes, createRobots, searchAssetsPlugin } from '../scripts/search-assets.js'
 import { PAGE_ROUTES } from '../src/router/routes.js'
 import { TEAM_COLORS } from '../src/themes/teamColors.js'
 
@@ -55,7 +58,7 @@ test('sitemap covers public routes, excludes utility pages and uses the producti
     assert.ok(!routeSeo(new URL(url).pathname).noindex, url)
   }
   for (const code of Object.keys(TEAM_COLORS)) assert.ok(locations.includes(`${SITE_URL}/team/${code}`))
-  const robots = readFileSync(new URL('../public/robots.txt', import.meta.url), 'utf8')
+  const robots = createRobots()
   assert.ok(robots.includes(`Sitemap: ${SITE_URL}/sitemap.xml`))
 })
 
@@ -91,10 +94,18 @@ test('Vue Router duplicate and aborted navigations preserve the loaded player ti
   })
   let metadata
   installSeoNavigation(router, value => { metadata = value })
+  await router.push('/')
+  assert.equal(metadata.title, HOME_TITLE)
   await router.push('/player/8478402')
   metadata = entitySeo('player', '/player/8478402', 'Connor McDavid')
   const loaded = metadata
   assert.ok(await router.push('/player/8478402'))
+  assert.equal(metadata, loaded)
+  await router.push('/player/8478402?season=20252026')
+  assert.equal(router.currentRoute.value.query.season, '20252026')
+  assert.equal(metadata, loaded)
+  await router.push('/player/8478402?season=20252026#game-logs')
+  assert.equal(router.currentRoute.value.hash, '#game-logs')
   assert.equal(metadata, loaded)
   const removeGuard = router.beforeEach(() => false)
   assert.ok(await router.push('/team/BOS'))
@@ -105,12 +116,24 @@ test('Vue Router duplicate and aborted navigations preserve the loaded player ti
   assert.equal(metadata.canonical, SITE_URL + '/team/BOS')
 })
 
-test('build emits the generated sitemap and nginx routes rather than rewriting public files', () => {
+test('build emits public crawl resources and keeps server config outside public output', async () => {
   const assets = []
   searchAssetsPlugin().generateBundle.call({ emitFile(asset) { assets.push(asset) } })
   assert.equal(assets.find(asset => asset.fileName === 'sitemap.xml').source, createSitemap())
-  assert.equal(assets.find(asset => asset.fileName === 'spa-routes.conf').source, createSpaRoutes())
+  assert.equal(assets.find(asset => asset.fileName === 'robots.txt').source, createRobots())
+  assert.ok(!assets.some(asset => asset.fileName === 'spa-routes.conf'))
   assert.equal(assets.length, 2)
+  const root = await mkdtemp(join(tmpdir(), 'nhl-server-assets-'))
+  try {
+    const plugin = searchAssetsPlugin()
+    plugin.configResolved({ root })
+    await plugin.writeBundle()
+    assert.equal(readFileSync(join(root, '.build/nginx/spa-routes.conf'), 'utf8'), createSpaRoutes())
+    assert.ok(!existsSync(join(root, 'dist/spa-routes.conf')))
+    assert.ok(!existsSync(join(root, 'public')))
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
 })
 
 test('nginx routes track shared Vue routes including case-insensitive arbitrary entity IDs', () => {
@@ -120,4 +143,24 @@ test('nginx routes track shared Vue routes including case-insensitive arbitrary 
   for (const path of ['/TEAM/bos', '/Player/123/', '/player/any-id', '/settings']) assert.ok(matcher.test(path), path)
   for (const path of ['/missing', '/team', '/team/BOS/extra', '/api/players']) assert.ok(!matcher.test(path), path)
   assert.ok(createSpaRoutes([...PAGE_ROUTES, { path: '/future', name: 'Future' }]).includes('/future'))
+})
+
+test('failed entity loads are noindex and subsequent successful pages become indexable', () => {
+  for (const [kind, path] of [['player', '/player/99999999'], ['team', '/team/BOS']]) {
+    const failed = unavailableEntitySeo(kind, path)
+    assert.equal(failed.noindex, true)
+    assert.match(failed.title, /Unavailable/)
+    assert.equal(seoTags(failed).find(tag => tag.key === 'robots').content, 'noindex, follow')
+    assert.equal(seoTags(entitySeo(kind, path, 'Example')).find(tag => tag.key === 'robots').content, 'index, follow')
+  }
+})
+
+test('build-time and runtime metadata share the same tags and site name', () => {
+  const metadata = { title: HOME_TITLE, description: HOME_DESCRIPTION }
+  const injected = searchAssetsPlugin().transformIndexHtml().filter(tag => tag.tag === 'meta')
+  assert.deepEqual(injected, seoTags(metadata).map(({ attribute, key, content }) => ({
+    tag: 'meta', attrs: { [attribute]: key, content }, injectTo: 'head'
+  })))
+  const runtime = seoTags({ ...metadata, canonical: SITE_URL + '/' })
+  assert.deepEqual(runtime.filter(tag => tag.key !== 'og:url'), seoTags(metadata))
 })

@@ -1,5 +1,7 @@
+import { mkdir, writeFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 import { TEAM_COLORS } from '../src/themes/teamColors.js'
-import { HOME_TITLE, HOME_DESCRIPTION, SITE_URL } from '../src/seo.js'
+import { HOME_TITLE, HOME_DESCRIPTION, SITE_URL, seoTags } from '../src/seo.js'
 import { PAGE_ROUTES } from '../src/router/routes.js'
 
 export function createSitemap() {
@@ -27,29 +29,34 @@ location ~* "^(?:${patterns.join('|')})$" {
 `
 }
 
+export function createRobots() {
+  return `User-agent: *\nAllow: /\n\nSitemap: ${SITE_URL}/sitemap.xml\n`
+}
+
 export function searchAssetsPlugin() {
+  let root
   return {
     name: 'search-assets',
+    configResolved(config) {
+      root = config.root
+    },
     transformIndexHtml() {
-      // The template is shared by every route. Canonical and og:url are added
-      // only after the router knows the page, never hardcoded to the homepage.
-      const meta = (attribute, key, content) => ({ tag: 'meta', attrs: { [attribute]: key, content }, injectTo: 'head' })
       return [
         { tag: 'title', children: HOME_TITLE.replaceAll('&', '&amp;'), injectTo: 'head' },
-        meta('name', 'description', HOME_DESCRIPTION),
-        meta('name', 'robots', 'index, follow'),
-        meta('property', 'og:type', 'website'),
-        meta('property', 'og:site_name', "Who's Hot Hockey"),
-        meta('property', 'og:title', HOME_TITLE),
-        meta('property', 'og:description', HOME_DESCRIPTION),
-        meta('name', 'twitter:card', 'summary'),
-        meta('name', 'twitter:title', HOME_TITLE),
-        meta('name', 'twitter:description', HOME_DESCRIPTION)
+        ...seoTags({ title: HOME_TITLE, description: HOME_DESCRIPTION }).map(({ attribute, key, content }) => ({
+          tag: 'meta', attrs: { [attribute]: key, content }, injectTo: 'head'
+        }))
       ]
     },
     generateBundle() {
       this.emitFile({ type: 'asset', fileName: 'sitemap.xml', source: createSitemap() })
-      this.emitFile({ type: 'asset', fileName: 'spa-routes.conf', source: createSpaRoutes() })
+      this.emitFile({ type: 'asset', fileName: 'robots.txt', source: createRobots() })
+    },
+    async writeBundle() {
+      // Nginx configuration is never part of the public output (including preview).
+      const directory = resolve(root, '.build/nginx')
+      await mkdir(directory, { recursive: true })
+      await writeFile(resolve(directory, 'spa-routes.conf'), createSpaRoutes())
     }
   }
 }

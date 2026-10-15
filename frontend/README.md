@@ -282,16 +282,21 @@ Leaderboards and rosters expose real player/team links. Settings, feedback,
 donations and unknown client routes use `noindex, follow`.
 The homepage introduction follows the tables so it does not shrink the mobile cards.
 
-`npm run build` emits `dist/sitemap.xml` from the 32 clubs, the homepage and tips.
+`npm run build` emits `dist/sitemap.xml` from the 32 clubs, the homepage and tips,
+and `dist/robots.txt`, both using `SITE_URL` as their only domain source.
 No generated sitemap is tracked or written into the source tree. Player pages are
-discovered through leaderboards and rosters. `robots.txt` advertises the sitemap
+discovered through leaderboards and rosters. The generated `robots.txt` advertises the sitemap
 and permits crawling of scripts and API requests needed to render stats.
-When changing the domain, update `SITE_URL` in `src/seo.js` and `public/robots.txt`.
+When changing the domain, update `SITE_URL` in `src/seo.js`.
 
-`src/router/routes.js` is shared by Vue and the generated `dist/spa-routes.conf`.
+`src/router/routes.js` is shared by Vue and the generated `.build/nginx/spa-routes.conf` (outside the public output).
 Docker installs that file into nginx so direct loads accept the same route patterns,
-case variations and entity IDs as the client router. Unknown paths serve the SPA
-with HTTP 404 so Vue can display NotFoundPage. Missing static assets still return 404.
+case variations and entity IDs as the client router. Unknown route patterns serve the SPA
+with HTTP 404 so Vue can display NotFoundPage. Entity existence is checked in the
+browser: missing entities return the SPA with HTTP 200, then become `noindex` if
+the details lookup fails. The view stops there rather than clearing the error
+with game-log requests. Lowercase team IDs are uppercased for every API request.
+Missing static assets still return 404, including paths below `/player/` or `/team/`.
 Add future page routes to the shared declarations and wire their components in the router.
 
 After deploying:

@@ -300,3 +300,14 @@ html:root:not([data-theme="retro"]) .stat-key {
 /* Entity names are real navigation links in tables and rosters. */
 a.entity-link { color: inherit; text-decoration: none; }
 a.entity-link:hover { text-decoration: underline; }
+
+.entity-row-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: inherit;
+  row-gap: inherit;
+  column-gap: inherit;
+  width: 100%;
+  min-width: 0;
+}

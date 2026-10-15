@@ -61,7 +61,7 @@
 
 <script setup>
 import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue'
-import { applySeo, entitySeo } from '../seo.js'
+import { applySeo, entitySeo, unavailableEntitySeo } from '../seo.js'
 import { useRoute } from 'vue-router'
 import { usePlayerStats } from '../composables/useApi'
 import PlayerGameLogGraph from '../components/PlayerGameLogGraph.vue'
@@ -126,10 +126,12 @@ onMounted(async () => {
   const playerId = route.params.id
 
   const playerData = await getPlayerDetails(playerId)
-  if (playerData) {
-    player.value = playerData
-    if (route.path === pagePath) applySeo(entitySeo('player', pagePath, `${playerData.firstName} ${playerData.lastName}`))
+  if (!playerData) {
+    if (route.path === pagePath) applySeo(unavailableEntitySeo('player', pagePath))
+    return
   }
+  player.value = playerData
+  if (route.path === pagePath) applySeo(entitySeo('player', pagePath, `${playerData.firstName} ${playerData.lastName}`))
 
   loadingGameLog.value = true
 
@@ -322,4 +324,3 @@ onBeforeUnmount(() => {
   }
 }
 </style>
-

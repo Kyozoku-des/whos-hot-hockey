@@ -50,14 +50,15 @@
               v-for="player in sortedRoster"
               :key="player.playerId"
               class="roster-row roster-player"
-              @click="goToPlayer(player.playerId)"
             >
-              <router-link class="roster-name entity-link" :to="`/player/${player.playerId}`" @click.stop>{{ player.fullName }}</router-link>
-              <span class="roster-stats">
-                <span class="roster-stat">{{ player.goals ?? 0 }}</span>
-                <span class="roster-stat">{{ player.assists ?? 0 }}</span>
-                <span class="roster-stat roster-points">{{ player.points ?? 0 }}</span>
-              </span>
+              <router-link class="entity-link entity-row-link" :to="`/player/${player.playerId}`">
+                <span class="roster-name">{{ player.fullName }}</span>
+                <span class="roster-stats">
+                  <span class="roster-stat">{{ player.goals ?? 0 }}</span>
+                  <span class="roster-stat">{{ player.assists ?? 0 }}</span>
+                  <span class="roster-stat roster-points">{{ player.points ?? 0 }}</span>
+                </span>
+              </router-link>
             </li>
           </ul>
           <p v-else class="placeholder-text">No roster data available</p>
@@ -77,7 +78,8 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
+import { applySeo, unavailableEntitySeo } from '../seo.js'
 import { useTeamStats } from '../composables/useApi'
 import HomeLink from '../components/HomeLink.vue'
 import TeamLogo from '../components/TeamLogo.vue'
@@ -87,6 +89,7 @@ import NextGameLine from '../components/NextGameLine.vue'
 import { teamFavorite } from '../composables/useFavorites'
 
 const route = useRoute()
+const pagePath = route.path
 const { loading, error, getTeamDetails, getTeamGameLog } = useTeamStats()
 
 const team = ref(null)
@@ -94,16 +97,12 @@ const teamGameLogs = ref([])
 const previousSeasonTeamGameLogs = ref([])
 const previousSeason = ref('')
 
-const router = useRouter()
 
 // Highest scorers first
 const sortedRoster = computed(() =>
   [...(team.value?.roster || [])].sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
 )
 
-const goToPlayer = (playerId) => {
-  router.push(`/player/${playerId}`)
-}
 
 // Calculate previous season ID
 const calculatePreviousSeason = () => {
@@ -125,12 +124,14 @@ const calculatePreviousSeason = () => {
 
 onMounted(async () => {
   previousSeason.value = calculatePreviousSeason()
-  const teamId = route.params.id
+  const teamId = String(route.params.id).toUpperCase()
 
   const teamData = await getTeamDetails(teamId)
-  if (teamData) {
-    team.value = teamData
+  if (!teamData) {
+    if (route.path === pagePath) applySeo(unavailableEntitySeo('team', pagePath))
+    return
   }
+  team.value = teamData
 
   // Fetch current season game log
   const gameLogData = await getTeamGameLog(teamId)
@@ -337,4 +338,3 @@ onMounted(async () => {
   }
 }
 </style>
-
