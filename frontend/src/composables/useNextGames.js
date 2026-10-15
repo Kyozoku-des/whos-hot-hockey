@@ -77,3 +77,20 @@ export const formatGameTime = (game) => {
   const day = start.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', timeZone })
   return `${day}, ${time}`
 }
+
+// Narrow version for phone rows: "Live", "Today 7:00 PM", "Tmrw 7:00 PM", "Sat 7:00 PM"
+// within the coming week, otherwise "Oct 25"
+export const formatGameTimeShort = (game) => {
+  if (LIVE_STATES.includes(game.gameState)) return 'Live'
+
+  const start = game.startTimeUtc ? new Date(game.startTimeUtc) : null
+  if (!start || Number.isNaN(start.getTime())) return game.gameDate
+
+  const timeZone = timeZoneOption()
+  const time = start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone })
+  const daysAway = Math.round((Date.parse(dayKey(start, timeZone)) - Date.parse(dayKey(new Date(), timeZone))) / (24 * 60 * 60 * 1000))
+  if (daysAway === 0) return `Today ${time}`
+  if (daysAway === 1) return `Tmrw ${time}`
+  if (daysAway < 7) return `${start.toLocaleDateString([], { weekday: 'short', timeZone })} ${time}`
+  return start.toLocaleDateString([], { month: 'short', day: 'numeric', timeZone })
+}
