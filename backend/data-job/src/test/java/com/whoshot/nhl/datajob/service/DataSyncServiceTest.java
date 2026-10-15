@@ -1,6 +1,8 @@
 package com.whoshot.nhl.datajob.service;
 
 import com.whoshot.nhl.datajob.dto.SeasonDto;
+import com.whoshot.nhl.datajob.dto.nhlapi.GameDto;
+import com.whoshot.nhl.datajob.dto.nhlapi.GameState;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -46,6 +48,38 @@ class DataSyncServiceTest {
     void ignoresEntriesWithoutStartDates() {
         assertSame(current, DataSyncService.selectSeason(
                 List.of(new SeasonDto(), current), LocalDateTime.parse("2026-09-07T18:05:00")));
+    }
+
+    @Test
+    void gameWindowSkipsLastNightsFinishedGames() {
+        var games = List.of(
+                game("2026-10-15T00:30:00Z", GameState.OFF),
+                game("2026-10-15T23:00:00Z", GameState.FUT),
+                game("2026-10-15T23:30:00Z", GameState.FUT),
+                game("2026-10-16T02:00:00Z", GameState.FUT));
+
+        assertEquals(
+                List.of(LocalDateTime.parse("2026-10-15T23:00:00"), LocalDateTime.parse("2026-10-15T23:30:00")),
+                DataSyncService.remainingGameTimesToday(games, LocalDateTime.parse("2026-10-15T04:30:00")));
+    }
+
+    @Test
+    void gameWindowKeepsGamesInProgressOrWithoutState() {
+        var games = List.of(
+                game("2026-10-15T00:30:00Z", GameState.LIVE),
+                game("2026-10-15T01:00:00Z", GameState.OVER),
+                game("2026-10-15T02:00:00Z", null));
+
+        assertEquals(
+                List.of(LocalDateTime.parse("2026-10-15T00:30:00"), LocalDateTime.parse("2026-10-15T02:00:00")),
+                DataSyncService.remainingGameTimesToday(games, LocalDateTime.parse("2026-10-15T01:30:00")));
+    }
+
+    private static GameDto game(String startTimeUTC, GameState state) {
+        var game = new GameDto();
+        game.setStartTimeUTC(startTimeUTC);
+        game.setGameState(state);
+        return game;
     }
 
     private static SeasonDto season(String id, String start, String end) {
