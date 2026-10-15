@@ -1,7 +1,7 @@
 <template>
   <div id="app" :style="{ '--footer-height': `${footerHeight}px` }">
     <main class="app-main">
-      <router-view />
+      <router-view :key="$route.path" />
     </main>
 
     <nav ref="siteLinks" class="site-links">
@@ -232,3 +232,4 @@ onUnmounted(() => {
   padding: 0 2rem;
 }
 </style>
+

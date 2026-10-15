@@ -52,7 +52,7 @@
               class="roster-row roster-player"
               @click="goToPlayer(player.playerId)"
             >
-              <span class="roster-name">{{ player.fullName }}</span>
+              <router-link class="roster-name" :to="`/player/${player.playerId}`" @click.stop>{{ player.fullName }}</router-link>
               <span class="roster-stats">
                 <span class="roster-stat">{{ player.goals ?? 0 }}</span>
                 <span class="roster-stat">{{ player.assists ?? 0 }}</span>
@@ -77,6 +77,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { applySeo, entitySeo } from '../seo.js'
 import { useRoute, useRouter } from 'vue-router'
 import { useTeamStats } from '../composables/useApi'
 import HomeLink from '../components/HomeLink.vue'
@@ -87,6 +88,7 @@ import NextGameLine from '../components/NextGameLine.vue'
 import { teamFavorite } from '../composables/useFavorites'
 
 const route = useRoute()
+const pagePath = route.path
 const { loading, error, getTeamDetails, getTeamGameLog } = useTeamStats()
 
 const team = ref(null)
@@ -130,6 +132,7 @@ onMounted(async () => {
   const teamData = await getTeamDetails(teamId)
   if (teamData) {
     team.value = teamData
+    if (route.path === pagePath) applySeo(entitySeo('team', pagePath, teamData.teamName))
   }
 
   // Fetch current season game log
@@ -147,6 +150,9 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+a.roster-name { color: inherit; text-decoration: none; }
+a.roster-name:hover { text-decoration: underline; }
+
 .team-page {
   width: 100%;
 }
@@ -337,3 +343,4 @@ onMounted(async () => {
   }
 }
 </style>
+

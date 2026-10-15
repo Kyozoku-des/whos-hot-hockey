@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "vite",
     "test:security": "node --test tests/*.test.js",
-    "build": "vite build",
+    "build": "node scripts/build-sitemap.js && vite build",
     "preview": "vite preview",
-    "check:targets": "node scripts/check-targets.js"
+    "check:targets": "node scripts/check-targets.js",
+    "test:seo": "node --test tests/seo.test.js"
   },
   "dependencies": {
     "chart.js": "^4.5.1",

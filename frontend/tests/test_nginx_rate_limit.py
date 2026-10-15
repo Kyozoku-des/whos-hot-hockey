@@ -59,6 +59,8 @@ def running_nginx(trusted_proxy, logs=None):
         root = Path(directory)
         (root / "index.html").write_text("SPA")
         (root / "app.js").write_text("asset")
+        for name in ("robots.txt", "sitemap.xml"):
+            shutil.copyfile(FRONTEND / "public" / name, root / name)
         with socket.socket() as listener:
             listener.bind(("127.0.0.1", 0))
             port = listener.getsockname()[1]
@@ -179,7 +181,7 @@ class RateLimitTest(unittest.TestCase):
         with running_nginx("unix:") as port:
             self.assertEqual(request(port), (200, "127.0.0.1|127.0.0.1"))
             self.assert_limited(self.burst(port))
-            for path in ("/", "/players/123", "/app.js"):
+            for path in ("/", "/player/123", "/app.js"):
                 time.sleep(0.2)
                 statuses = [status for status, _ in self.burst(port, path=path)]
                 self.assertIn(429, statuses)
@@ -215,7 +217,7 @@ class RateLimitTest(unittest.TestCase):
 
     def test_security_headers_on_every_route_and_no_version(self):
         with running_nginx("unix:") as port:
-            for path in ("/", "/players/123", "/app.js", "/missing.js", "/api/players"):
+            for path in ("/", "/player/123", "/app.js", "/missing.js", "/api/players"):
                 with self.subTest(path=path):
                     connection = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
                     try:
@@ -230,6 +232,19 @@ class RateLimitTest(unittest.TestCase):
                     self.assertEqual(response.getheader("Server"), "nginx")
                     self.assertNotRegex(body, r"nginx/\d")
 
+    def test_crawl_routes_and_unknown_urls(self):
+        with running_nginx("unix:") as port:
+            for path in ("/", "/player/8478402", "/team/BOS", "/tips", "/settings"):
+                self.assertEqual(request(port, path=path), (200, "SPA"), path)
+            for path in ("/not-a-page", "/player/not-an-id", "/team/invalid"):
+                self.assertEqual(request(port, path=path)[0], 404, path)
+            status, robots = request(port, path="/robots.txt")
+            self.assertEqual(status, 200)
+            self.assertIn("Sitemap: https://whoshothockey.com/sitemap.xml", robots)
+            status, sitemap = request(port, path="/sitemap.xml")
+            self.assertEqual(status, 200)
+            self.assertIn("<loc>https://whoshothockey.com/team/BOS</loc>", sitemap)
+
     def test_api_with_asset_extension_cannot_bypass_limit(self):
         for path in ("/api/players.json", "/api/players.js"):
             with self.subTest(path=path), running_nginx("unix:") as port:
@@ -238,3 +253,4 @@ class RateLimitTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

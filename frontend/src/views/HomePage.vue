@@ -16,6 +16,12 @@
       </div>
     </div>
 
+    <section class="home-intro" aria-labelledby="nhl-stats-heading">
+      <h2 id="nhl-stats-heading">NHL stats, hot players and point streaks</h2>
+      <p>Track NHL scoring leaders, active point streaks, hot players, team standings and winning streaks. Explore player game logs and team rosters.</p>
+      <router-link to="/tips">Learn how to use the NHL stats tables</router-link>
+    </section>
+
     <!-- Latest game day's scores and point scorers -->
     <ScoreTicker />
 
@@ -368,6 +374,16 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.home-intro {
+  max-width: 1000px;
+  margin: 1.5rem auto;
+  padding: 0 1.5rem;
+  text-align: center;
+}
+.home-intro h2 { font-size: 1.2rem; }
+.home-intro p { line-height: 1.6; }
+.home-intro a { color: var(--color-text-secondary); }
+
 .home-page {
   width: 100%;
   min-height: 100vh;
@@ -642,3 +658,4 @@ onUnmounted(() => {
   }
 }
 </style>
+

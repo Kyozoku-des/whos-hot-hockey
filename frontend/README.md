@@ -269,3 +269,36 @@ Modern browsers with ES6+ support:
 ## License
 
 MIT
+
+
+## Search indexing for whoshothockey.com
+
+The entry HTML contains the homepage title, description and a short visible introduction.
+Vue updates canonical URLs, descriptions and social metadata when navigating, including
+player names after data loads. Leaderboards and team rosters expose real player/team
+links. Settings, feedback, donations and unknown client routes use `noindex, follow`.
+Nginx returns HTTP 404 for unknown URL patterns instead of serving the homepage.
+
+`npm run build` generates `public/sitemap.xml` from the 32 clubs in
+`src/themes/teamColors.js`. It includes the homepage, tips and team pages; player
+pages are discovered through leaderboards and rosters. `robots.txt` advertises the
+sitemap and permits crawling, including scripts and API requests needed to render stats.
+No modification dates are fabricated. When changing the production domain, update
+`SITE_URL` in `src/seo.js`, the static metadata in `index.html` and `public/robots.txt`.
+
+After deploying:
+
+1. Verify `whoshothockey.com` in Google Search Console with its DNS TXT record.
+2. Submit `https://whoshothockey.com/sitemap.xml`.
+3. Inspect the homepage and representative team/player URLs with the live URL test.
+   Confirm Google can render the stats, then request indexing.
+4. Monitor indexing, impressions and clicks in Search Console.
+
+The live API must remain publicly reachable for Google to render stats. Player/team
+stats and their personalized metadata still need JavaScript; this change does not
+introduce server-side rendering or guarantee indexing or rankings. Social link crawlers
+that do not execute JavaScript may show homepage metadata on detail links. Server-side
+rendering of detail pages is a possible follow-up if rendering becomes an indexing issue.
+
+Validation: `npm run test:seo`, `npm run test:security`, `npm run build`,
+`npm run check:targets`, and the nginx integration tests documented above.

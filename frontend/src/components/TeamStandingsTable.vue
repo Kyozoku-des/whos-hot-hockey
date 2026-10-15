@@ -15,7 +15,7 @@
         <FavoriteToggle :item="teamFavorite(team)" />
         <div class="team-main">
           <TeamLogo :logoUrl="team.logoUrl" :teamCode="team.teamCode" :alt="team.teamName" size="small" />
-          <span class="team-name">{{ team.teamName }}</span>
+          <router-link class="team-name" :to="`/team/${team.teamCode}`" @click.stop>{{ team.teamName }}</router-link>
         </div>
         <span class="team-stats">
           <span class="stat-item">GP: {{ team.gamesPlayed }}</span>
@@ -79,6 +79,9 @@ const goToTeam = (teamCode) => {
 </script>
 
 <style scoped>
+.team-name { color: inherit; text-decoration: none; }
+.team-name:hover { text-decoration: underline; }
+
 .team-list {
   width: 100%;
 }
@@ -166,3 +169,4 @@ const goToTeam = (teamCode) => {
   color: var(--color-text-secondary);
 }
 </style>
+

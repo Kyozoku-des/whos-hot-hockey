@@ -15,7 +15,7 @@
         <FavoriteToggle :item="playerFavorite(player)" />
         <div class="player-main">
           <TeamLogo :logoUrl="player.teamLogoUrl" :teamCode="player.teamCode" size="small" />
-          <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
+          <router-link class="player-name" :to="`/player/${player.playerId}`" @click.stop>{{ player.firstName }} {{ player.lastName }}</router-link>
         </div>
         <span class="player-stats">
           <span class="stat-item">G: {{ player.goals }}</span>
@@ -83,6 +83,9 @@ const goToPlayer = (playerId) => {
 </script>
 
 <style scoped>
+.player-name { color: inherit; text-decoration: none; }
+.player-name:hover { text-decoration: underline; }
+
 .player-list {
   width: 100%;
 }
@@ -155,3 +158,4 @@ const goToPlayer = (playerId) => {
   color: var(--color-text-secondary);
 }
 </style>
+

@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { applySeo, routeSeo } from '../seo.js'
 import HomePage from '../views/HomePage.vue'
 import PlayerPage from '../views/PlayerPage.vue'
 import TeamPage from '../views/TeamPage.vue'
@@ -42,6 +43,11 @@ const routes = [
     path: '/tips',
     name: 'Tips',
     component: TipsPage
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('../views/NotFoundPage.vue')
   }
 ]
 
@@ -55,4 +61,7 @@ const router = createRouter({
   }
 })
 
+router.afterEach((to) => applySeo(routeSeo(to.path)))
+
 export default router
+
