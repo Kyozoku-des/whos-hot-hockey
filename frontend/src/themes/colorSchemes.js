@@ -1,7 +1,7 @@
 import { TEAM_COLORS } from './teamColors.js'
 
 // A color scheme recolors whatever theme is active; the theme keeps its font
-// and shapes. 'default' leaves the theme's own colors (Retro's in style.css).
+// and shapes. 'default' leaves the colors both themes share (:root in style.css).
 export const DEFAULT_COLOR_SCHEME = 'default'
 
 // WCAG 2.2 AA: normal text 4.5:1, borders and other UI parts 3:1
