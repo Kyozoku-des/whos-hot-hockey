@@ -620,6 +620,13 @@ onUnmounted(() => {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    /* Natural width, so the next game badge gets the space left over */
+    flex: 0 1 auto;
+  }
+
+  /* No hover tooltip on phones: the next game sits at the right of the name, when it fits */
+  .mobile-content .swipe-slide :deep(.next-game-badge) {
+    display: flex;
   }
 
   .mobile-content .swipe-slide :deep(.player-stats),

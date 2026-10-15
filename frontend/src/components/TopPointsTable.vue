@@ -16,6 +16,7 @@
         <div class="player-main">
           <TeamLogo :logoUrl="player.teamLogoUrl" :teamCode="player.teamCode" size="small" />
           <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
+          <NextGameBadge :team-code="player.teamCode" />
         </div>
         <span class="player-stats">
           <span class="stat-item">G: {{ player.goals }}</span>
@@ -35,6 +36,7 @@ import { usePlayerStats } from '../composables/useApi'
 import { useSearchStore } from '../stores/searchStore'
 import { playerFavorite } from '../composables/useFavorites'
 import TeamLogo from './TeamLogo.vue'
+import NextGameBadge from './NextGameBadge.vue'
 import { useNextGames } from '../composables/useNextGames'
 import FavoriteToggle from './FavoriteToggle.vue'
 

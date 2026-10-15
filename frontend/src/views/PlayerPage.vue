@@ -6,16 +6,12 @@
       <div v-else-if="error" class="error">{{ error }}</div>
       <div v-else class="player-content">
         <div class="player-header">
-          <div class="player-info-card">
-            <div class="player-stats">
-              <h1 class="player-name">{{ player?.firstName }} {{ player?.lastName }}</h1>
-              <p class="stat-line">Points: {{ player?.points || 0 }}</p>
-              <p class="stat-line">Goals: {{ player?.goals || 0 }}</p>
-              <p class="stat-line">Assists: {{ player?.assists || 0 }}</p>
-              <NextGameLine :team-code="player?.teamCode" />
-              <FavoriteButton v-if="player" :item="playerFavorite(player)" />
-            </div>
+          <div class="page-title">
+            <TeamLogo :logoUrl="player?.teamLogoUrl" :teamCode="player?.teamCode" size="medium" />
+            <h1 class="player-name">{{ player?.firstName }} {{ player?.lastName }}</h1>
           </div>
+          <NextGameLine :team-code="player?.teamCode" />
+          <FavoriteButton v-if="player" :item="playerFavorite(player)" />
         </div>
 
         <div class="section">
@@ -26,6 +22,21 @@
             :season-games="player?.seasonGames"
             :projected-points="player?.projectedPoints"
           />
+        </div>
+
+        <div class="section season-totals">
+          <div class="total">
+            <span class="total-label">Points</span>
+            <span class="total-value">{{ player?.points || 0 }}</span>
+          </div>
+          <div class="total">
+            <span class="total-label">Goals</span>
+            <span class="total-value">{{ player?.goals || 0 }}</span>
+          </div>
+          <div class="total">
+            <span class="total-label">Assists</span>
+            <span class="total-value">{{ player?.assists || 0 }}</span>
+          </div>
         </div>
 
         <div class="section">
@@ -67,6 +78,7 @@ import PlayerGameLogGraph from '../components/PlayerGameLogGraph.vue'
 import HomeLink from '../components/HomeLink.vue'
 import FavoriteButton from '../components/FavoriteButton.vue'
 import NextGameLine from '../components/NextGameLine.vue'
+import TeamLogo from '../components/TeamLogo.vue'
 import { playerFavorite } from '../composables/useFavorites'
 
 const route = useRoute()
@@ -183,35 +195,63 @@ onBeforeUnmount(() => {
   gap: 2rem;
 }
 
+/* Name, next game and favorite button on one line, wrapping on narrow screens */
 .player-header {
   display: flex;
-  gap: 2rem;
-}
-
-.player-info-card {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 2rem;
   background-color: var(--color-bg-card);
   border-radius: 8px;
-  padding: 2rem;
-  display: flex;
-  gap: 2rem;
-  align-items: center;
+  padding: 1.5rem 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-
-.player-stats {
-  flex: 1;
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .player-name {
   font-size: 2rem;
   font-weight: 700;
-  margin-bottom: 1rem;
+  margin: 0;
 }
 
 .stat-line {
   font-size: 1.1rem;
-  margin: 0.5rem 0;
+  margin: 0;
+}
+
+/* Pushed to the far right of the header */
+.player-header .favorite-button {
+  margin-top: 0;
+  margin-left: auto;
+}
+
+.season-totals {
+  display: flex;
+  justify-content: space-around;
+  gap: 1rem;
+}
+
+.total {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.total-label {
+  color: var(--color-text-secondary);
+  font-weight: 700;
+}
+
+.total-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .section {
@@ -282,14 +322,21 @@ onBeforeUnmount(() => {
   }
 
   .player-header {
-    justify-content: center;
-  }
-
-  .player-info-card {
-    flex: 1;
     flex-direction: column;
     text-align: center;
     padding: 1.5rem 1rem;
+  }
+
+  .page-title {
+    gap: 0.75rem;
+  }
+
+  .player-header .favorite-button {
+    margin-left: 0;
+  }
+
+  .total-value {
+    font-size: 1.35rem;
   }
 
   .section {
