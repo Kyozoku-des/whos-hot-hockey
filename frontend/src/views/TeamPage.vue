@@ -79,7 +79,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { applySeo, unavailableEntitySeo } from '../seo.js'
+import { applySeo, entitySeo, unavailableEntitySeo } from '../seo.js'
+import { TEAM_COLORS } from '../themes/teamColors.js'
 import { useTeamStats } from '../composables/useApi'
 import HomeLink from '../components/HomeLink.vue'
 import TeamLogo from '../components/TeamLogo.vue'
@@ -90,7 +91,7 @@ import { teamFavorite } from '../composables/useFavorites'
 
 const route = useRoute()
 const pagePath = route.path
-const { loading, error, getTeamDetails, getTeamGameLog } = useTeamStats()
+const { loading, error, status, getTeamDetails, getTeamGameLog } = useTeamStats()
 
 const team = ref(null)
 const teamGameLogs = ref([])
@@ -128,10 +129,13 @@ onMounted(async () => {
 
   const teamData = await getTeamDetails(teamId)
   if (!teamData) {
-    if (route.path === pagePath) applySeo(unavailableEntitySeo('team', pagePath))
+    // Only a missing team is permanent; a rate limit or outage keeps the page indexable.
+    if (route.path === pagePath && status.value === 404) applySeo(unavailableEntitySeo('team', pagePath))
     return
   }
   team.value = teamData
+  // routeSeo names only teams in TEAM_COLORS; keep that name so the title doesn't change mid-load.
+  if (route.path === pagePath) applySeo(entitySeo('team', pagePath, TEAM_COLORS[teamId]?.name ?? teamData.teamName))
 
   // Fetch current season game log
   const gameLogData = await getTeamGameLog(teamId)

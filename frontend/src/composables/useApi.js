@@ -9,13 +9,17 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 export function useApi() {
   const loading = ref(false)
   const error = ref(null)
+  // HTTP status of the last response; null when the request never got one.
+  const status = ref(null)
 
   const fetchData = async (endpoint) => {
     loading.value = true
     error.value = null
+    status.value = null
 
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`)
+      status.value = response.status
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
@@ -33,13 +37,14 @@ export function useApi() {
   return {
     loading,
     error,
+    status,
     fetchData
   }
 }
 
 // Specific API hooks for different data types
 export function usePlayerStats() {
-  const { loading, error, fetchData } = useApi()
+  const { loading, error, status, fetchData } = useApi()
 
   const getTopScorers = async () => {
     const data = await fetchData(`/players/standings`)
@@ -71,6 +76,7 @@ export function usePlayerStats() {
   return {
     loading,
     error,
+    status,
     getTopScorers,
     getPlayerStreaks,
     getHottestPlayers,
@@ -80,7 +86,7 @@ export function usePlayerStats() {
 }
 
 export function useTeamStats() {
-  const { loading, error, fetchData } = useApi()
+  const { loading, error, status, fetchData } = useApi()
 
   const getStandings = async () => {
     const data = await fetchData(`/teams/standings`)
@@ -112,6 +118,7 @@ export function useTeamStats() {
   return {
     loading,
     error,
+    status,
     getStandings,
     getTeamWinStreaks,
     getTeamLoseStreaks,
