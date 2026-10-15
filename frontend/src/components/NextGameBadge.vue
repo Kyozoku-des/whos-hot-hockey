@@ -81,9 +81,11 @@ const game = computed(() => (props.teamCode ? nextGameFor(props.teamCode) : null
   overflow: hidden;
 }
 
-/* Empty first item, so the time has a line to wrap away from */
+/* Empty first item, so the time has a line to wrap away from. It needs a height: Chrome
+   keeps a too-wide time on the line of a zero-size item, clipping the time's start. */
 .time-line::before {
   content: '';
+  height: 1.2em;
 }
 
 .time {
