@@ -12,7 +12,7 @@
         @mouseleave="hideNextGame"
       >
         <FavoriteToggle :item="teamFavorite(team)" />
-        <router-link class="entity-link entity-row-link" :to="`/team/${team.teamCode}`" @click.stop>
+        <router-link class="entity-link entity-row-link" :to="`/team/${team.teamCode}`" draggable="false" @click.stop>
           <div class="team-main">
             <TeamLogo :logoUrl="team.logoUrl" :teamCode="team.teamCode" :alt="team.teamName" size="small" />
             <span class="team-name">{{ team.teamName }}</span>

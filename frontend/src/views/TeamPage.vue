@@ -246,6 +246,7 @@ onMounted(async () => {
 }
 
 .roster-player {
+  position: relative;
   border-bottom: 1px solid var(--color-line);
   cursor: pointer;
 }
