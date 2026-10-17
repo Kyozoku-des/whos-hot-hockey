@@ -317,6 +317,20 @@ vulnerabilities:
       - "pkg:golang/github.com/moby/sys/user@v0.1.0"
     statement: "postgres:17 gosu, built by upstream with an old Go. gosu only drops privileges once at container start; it opens no sockets and parses no input. Fixed when the official image rebuilds gosu."
     expired_at: 2026-11-30
+  - id: CVE-2026-78659
+    paths:
+      - "usr/local/bin/gosu"
+    purls:
+      - "pkg:golang/stdlib@v1.24.6"
+    statement: "postgres:17 gosu, built by upstream with an old Go. gosu only drops privileges once at container start; it opens no sockets and parses no input. Fixed when the official image rebuilds gosu."
+    expired_at: 2026-11-30
+  - id: CVE-2026-78660
+    paths:
+      - "usr/local/bin/gosu"
+    purls:
+      - "pkg:golang/stdlib@v1.24.6"
+    statement: "postgres:17 gosu, built by upstream with an old Go. gosu only drops privileges once at container start; it opens no sockets and parses no input. Fixed when the official image rebuilds gosu."
+    expired_at: 2026-11-30
   - id: CVE-2026-78663
     paths:
       - "usr/local/bin/gosu"
@@ -339,6 +353,13 @@ vulnerabilities:
     statement: "postgres:17 gosu, built by upstream with an old Go. gosu only drops privileges once at container start; it opens no sockets and parses no input. Fixed when the official image rebuilds gosu."
     expired_at: 2026-11-30
   - id: CVE-2026-94439
+    paths:
+      - "usr/local/bin/gosu"
+    purls:
+      - "pkg:golang/stdlib@v1.24.6"
+    statement: "postgres:17 gosu, built by upstream with an old Go. gosu only drops privileges once at container start; it opens no sockets and parses no input. Fixed when the official image rebuilds gosu."
+    expired_at: 2026-11-30
+  - id: CVE-2026-94440
     paths:
       - "usr/local/bin/gosu"
     purls:
@@ -648,13 +669,6 @@ vulnerabilities:
       - "pkg:deb/debian/libxml2@2.12.7%2Bdfsg%2Breally2.9.14-2.1%2Bdeb13u3?arch=amd64&distro=debian-13.7"
     statement: "postgres:17 (Debian): no Debian fix released yet. PostgreSQL is reachable only from the Compose network and the host's loopback; these are OS libraries and tools, not the server itself."
     expired_at: 2026-11-30
-  - id: CVE-2026-67693
-    paths:
-      - "postgres:17 (debian 13.7)"
-    purls:
-      - "pkg:deb/debian/libgnutls30t64@3.8.9-3%2Bdeb13u4?arch=amd64&distro=debian-13.7"
-    statement: "postgres:17 (Debian): no Debian fix released yet. PostgreSQL is reachable only from the Compose network and the host's loopback; these are OS libraries and tools, not the server itself."
-    expired_at: 2026-11-30
   - id: CVE-2026-6791
     paths:
       - "postgres:17 (debian 13.7)"
@@ -833,20 +847,6 @@ vulnerabilities:
       - "pkg:deb/debian/libc-l10n@2.41-12%2Bdeb13u4?arch=all&distro=debian-13.7"
       - "pkg:deb/debian/libc6@2.41-12%2Bdeb13u4?arch=amd64&distro=debian-13.7"
       - "pkg:deb/debian/locales@2.41-12%2Bdeb13u4?arch=all&distro=debian-13.7"
-    statement: "postgres:17 (Debian): no Debian fix released yet. PostgreSQL is reachable only from the Compose network and the host's loopback; these are OS libraries and tools, not the server itself."
-    expired_at: 2026-11-30
-  - id: CVE-2026-88647
-    paths:
-      - "postgres:17 (debian 13.7)"
-    purls:
-      - "pkg:deb/debian/libgnutls30t64@3.8.9-3%2Bdeb13u4?arch=amd64&distro=debian-13.7"
-    statement: "postgres:17 (Debian): no Debian fix released yet. PostgreSQL is reachable only from the Compose network and the host's loopback; these are OS libraries and tools, not the server itself."
-    expired_at: 2026-11-30
-  - id: CVE-2026-88648
-    paths:
-      - "postgres:17 (debian 13.7)"
-    purls:
-      - "pkg:deb/debian/libgnutls30t64@3.8.9-3%2Bdeb13u4?arch=amd64&distro=debian-13.7"
     statement: "postgres:17 (Debian): no Debian fix released yet. PostgreSQL is reachable only from the Compose network and the host's loopback; these are OS libraries and tools, not the server itself."
     expired_at: 2026-11-30
   - id: CVE-2026-89092
