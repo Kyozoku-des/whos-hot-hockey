@@ -1,5 +1,5 @@
 <template>
-  <div class="team-list">
+  <div class="team-list stat-table" :style="{ '--stat-cols': isExpanded ? 7 : 4 }">
     <div v-if="loading" class="loading">Loading...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else-if="teams.length === 0" class="empty">No hot teams</div>
