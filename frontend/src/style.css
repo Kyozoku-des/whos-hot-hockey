@@ -325,6 +325,12 @@ html:root:not([data-theme="retro"]) .stat-key {
       container: stat-table / inline-size;
     }
 
+    /* Expanded cards show up to nine stats, so they change layout at wider
+       widths (the queries below are repeated for this container name) */
+    html:root .stat-table.stat-table-wide {
+      container-name: stat-table-wide;
+    }
+
     html:root .stat-table > :is(.players-grid, .teams-grid) {
       display: grid;
       grid-template-columns: minmax(0, 1fr) repeat(var(--stat-cols), auto);
@@ -377,6 +383,41 @@ html:root:not([data-theme="retro"]) .stat-key {
     /* Narrower still, five late-season team stats (GP: 82 … PTS: 110) no
        longer fit on one line: the stats wrap instead of lining up */
     @container stat-table (max-width: 22em) {
+      html:root .stat-table :is(.player-stats, .team-stats) {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem 0.75rem;
+        grid-column: 1 / -1;
+      }
+    }
+
+    /* The same two steps for expanded cards, sized for nine late-season
+       team stats (… GF: 310 GA: 220 DIFF: +90) */
+    @container stat-table-wide (max-width: 66em) {
+      html:root .stat-table > :is(.players-grid, .teams-grid) {
+        grid-template-columns: repeat(var(--stat-cols), auto) minmax(0, 1fr);
+        column-gap: 0.75rem;
+        padding-right: var(--row-hover-shift);
+      }
+
+      html:root .stat-table :is(.player-item, .team-item) {
+        padding: 0.6rem 0.75rem;
+      }
+
+      html:root .stat-table :is(.player-main, .team-main) {
+        grid-column: 1 / -1;
+      }
+
+      html:root .stat-table .entity-row-link {
+        row-gap: 0.35rem;
+      }
+
+      html:root .stat-table .stat-item {
+        font-size: 0.8rem;
+      }
+    }
+
+    @container stat-table-wide (max-width: 42em) {
       html:root .stat-table :is(.player-stats, .team-stats) {
         display: flex;
         flex-wrap: wrap;
