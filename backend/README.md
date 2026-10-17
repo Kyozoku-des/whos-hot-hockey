@@ -98,10 +98,11 @@ The data-job daemon alternates between two modes:
 - **Hourly full sync** – season, all team standings, all team schedules (`team_games`), every
   team's official roster (`team_rosters`) and all active players with their game logs
   (`game_logs`). Players are the skater points leaders plus everyone on a roster, so players
-  without points and goalies are stored too. It also reads today's schedule to find the
-  first and last game start times.
-- **Game-time sync** – from 5 minutes before the first game until the last game has ended, a poll
-  runs 60 seconds after the previous one finishes. Each poll:
+  without points and goalies are stored too. It also reads the schedule to find the start of
+  the next game that has not finished, on any date.
+- **Game-time sync** – from 5 minutes before the next game until no game is live and the next one
+  starts more than an hour away, a poll runs 60 seconds after the previous one finishes. Game
+  nights cross UTC midnight, so the window follows the games, not the calendar date. Each poll:
   1. reads `/v1/schedule/now` to find games in `PRE`, `LIVE` or `CRIT` state;
   2. updates standings rows for teams in those games, plus teams that were playing in the
      previous poll (so final stats are captured once);
@@ -113,7 +114,8 @@ The data-job daemon alternates between two modes:
      checked too. A player traded to a playing team since the last full sync is picked up by the
      full sync that closes the game window.
 
-  When the last game has ended, a full sync runs and the daemon returns to hourly checks.
+  When the window closes, a full sync runs and the daemon returns to hourly checks until the
+  next game is less than an hour away.
 
 Both modes fetch teams and players in parallel and write them one at a time, committing each
 player with their game logs; see the [ingestion guide](INGESTION.md).
@@ -149,7 +151,7 @@ podman logs nhl-data-job 2>&1 | Select-String "\[game-sync\]"
 ```
 
 ```
-[game-sync] Hourly full sync done in 412s; game window opens at 2026-10-04T23:00:00Z (games ...)
+[game-sync] Hourly full sync done in 412s; game window opens at 2026-10-04T23:00:00Z (next game 2026-10-04T23:05 UTC)
 [game-sync] Poll #1 in 38s: games [VAN 0-0 EDM PRE]; finished []; updated 2 teams, 0 team schedules, 41 players
 [game-sync] Poll #87 in 35s: games []; finished [VAN, EDM]; updated 2 teams, 2 team schedules, 41 players
 [game-sync] Game window closed after 87 polls (0 failed); final full sync done in 405s, next check in 1h

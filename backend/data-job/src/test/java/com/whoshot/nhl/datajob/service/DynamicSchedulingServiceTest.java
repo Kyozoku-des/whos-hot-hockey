@@ -28,7 +28,7 @@ class DynamicSchedulingServiceTest {
             tasks.add(invocation.getArgument(0));
             return pending;
         });
-        when(sync.getFirstGameTimeForToday()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).plusHours(5));
+        when(sync.getNextGameStart()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).plusHours(5));
         var daemon = new DynamicSchedulingService(scheduler, sync, TestSeasonLocks.available(), mock(ScoreboardSyncService.class), mock(SyncStatusRecorder.class));
         daemon.init();
         for (int i = 0; i < 3; i++) {
@@ -52,8 +52,8 @@ class DynamicSchedulingServiceTest {
             tasks.add(invocation.getArgument(0));
             return mock(ScheduledFuture.class);
         });
-        when(sync.getFirstGameTimeForToday()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).minusHours(3));
-        when(sync.getLastGameTimeForToday()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).minusHours(1));
+        // A live game opens the window; once it has ended no other game is scheduled.
+        when(sync.getNextGameStart()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).minusHours(3), (LocalDateTime) null);
         Set<String> teams = Set.of("EDM", "VAN");
         when(sync.getActiveGames()).thenReturn(List.of(game("VAN", "EDM")), List.of());
         var syncStatus = mock(SyncStatusRecorder.class);
@@ -80,6 +80,32 @@ class DynamicSchedulingServiceTest {
     }
 
     @Test
+    void windowClosesAfterLastNightsGamesWhenTonightsStartOnTheSameUtcDate() throws Exception {
+        // 2026-10-17: last night's late games run 01:00-04:42 UTC, tonight's start at 17:00 UTC.
+        var sync = mock(DataSyncService.class);
+        var scheduler = mock(TaskScheduler.class);
+        var tasks = new ArrayDeque<Runnable>();
+        when(scheduler.schedule(any(Runnable.class), any(Instant.class))).thenAnswer(invocation -> {
+            tasks.add(invocation.getArgument(0));
+            return mock(ScheduledFuture.class);
+        });
+        when(sync.getNextGameStart()).thenReturn(
+                LocalDateTime.now(ZoneOffset.UTC).minusHours(2), LocalDateTime.now(ZoneOffset.UTC).plusHours(12));
+        when(sync.getActiveGames()).thenReturn(List.of(game("BOS", "ANA")), List.of());
+        var daemon = new DynamicSchedulingService(scheduler, sync, TestSeasonLocks.available(), mock(ScoreboardSyncService.class), mock(SyncStatusRecorder.class));
+        daemon.init();
+        tasks.remove().run(); // hourly check opens the window
+        tasks.remove().run(); // game live
+        tasks.remove().run(); // game ended: final full sync, window closes
+        verify(sync, times(2)).syncPlayers();
+        tasks.remove().run(); // an hourly full sync, not another poll
+        verify(sync, times(3)).syncPlayers();
+        verify(sync, times(2)).getActiveGames();
+        assertEquals(1, tasks.size());
+        daemon.stop();
+    }
+
+    @Test
     void failedCompletedGameWriteIsRetriedOnTheNextPoll() throws Exception {
         var sync = mock(DataSyncService.class);
         var scheduler = mock(TaskScheduler.class);
@@ -88,9 +114,9 @@ class DynamicSchedulingServiceTest {
             tasks.add(invocation.getArgument(0));
             return mock(ScheduledFuture.class);
         });
-        when(sync.getFirstGameTimeForToday()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).minusHours(3));
-        // A later game keeps the window open after this one ends.
-        when(sync.getLastGameTimeForToday()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).plusHours(1));
+        // A game starting soon keeps the window open after this one ends.
+        when(sync.getNextGameStart()).thenReturn(
+                LocalDateTime.now(ZoneOffset.UTC).minusHours(3), LocalDateTime.now(ZoneOffset.UTC).plusMinutes(30));
         Set<String> teams = Set.of("EDM", "VAN");
         when(sync.getActiveGames()).thenReturn(List.of(game("VAN", "EDM")), List.of());
         when(sync.syncTeamGamesForCodes(teams)).thenReturn(Set.of("EDM"));
@@ -119,8 +145,7 @@ class DynamicSchedulingServiceTest {
             tasks.add(invocation.getArgument(0));
             return mock(ScheduledFuture.class);
         });
-        when(sync.getFirstGameTimeForToday()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).minusHours(1));
-        when(sync.getLastGameTimeForToday()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).plusHours(2));
+        when(sync.getNextGameStart()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).minusHours(1));
         when(sync.getActiveGames()).thenReturn(List.of(game("VAN", "EDM")));
         var syncStatus = mock(SyncStatusRecorder.class);
         var daemon = new DynamicSchedulingService(scheduler, sync, TestSeasonLocks.heldElsewhere(), mock(ScoreboardSyncService.class), syncStatus);

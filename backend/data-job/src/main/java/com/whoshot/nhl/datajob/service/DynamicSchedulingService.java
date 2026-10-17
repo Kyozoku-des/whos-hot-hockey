@@ -34,7 +34,6 @@ public class DynamicSchedulingService {
     private final SyncStatusRecorder syncStatus;
     private ScheduledFuture<?> syncTask;
     private volatile boolean stopping;
-    private LocalDateTime lastGameTime;
     private Set<String> previousActiveTeams = Set.of();
     private final Set<String> pendingTeamGames = new HashSet<>();
     private int polls;
@@ -67,25 +66,24 @@ public class DynamicSchedulingService {
                 log.warn("[game-sync] Season {} is being written by another job; skipping this full sync", seasonId);
             }
             scoreboardSyncService.syncScoreboard(true);
-            LocalDateTime firstGameTime = dataSyncService.getFirstGameTimeForToday();
-            lastGameTime = dataSyncService.getLastGameTimeForToday();
-            if (firstGameTime != null) {
-                Instant start = firstGameTime.minusMinutes(5).toInstant(ZoneOffset.UTC);
-                if (start.isAfter(Instant.now().plusSeconds(3600))) {
-                    log.info("[game-sync] Hourly full sync done in {}s; first game at {} UTC, next check in 1h",
-                            secondsSince(started), firstGameTime);
+            LocalDateTime nextGame = dataSyncService.getNextGameStart();
+            if (nextGame != null) {
+                if (!windowOpensWithinAnHour(nextGame)) {
+                    log.info("[game-sync] Hourly full sync done in {}s; next game at {} UTC, next check in 1h",
+                            secondsSince(started), nextGame);
                     schedule(this::hourlyCheck, Instant.now().plusSeconds(3600));
                 } else {
+                    Instant start = windowOpening(nextGame);
                     Instant windowStart = start.isBefore(Instant.now()) ? Instant.now() : start;
-                    log.info("[game-sync] Hourly full sync done in {}s; game window opens at {} (games {} - {} UTC)",
-                            secondsSince(started), windowStart, firstGameTime, lastGameTime);
+                    log.info("[game-sync] Hourly full sync done in {}s; game window opens at {} (next game {} UTC)",
+                            secondsSince(started), windowStart, nextGame);
                     polls = 0;
                     failedPolls = 0;
                     schedule(this::syncAndReschedule, windowStart);
                 }
                 return;
             }
-            log.info("[game-sync] Hourly full sync done in {}s; no games today, next check in 1h",
+            log.info("[game-sync] Hourly full sync done in {}s; no upcoming games, next check in 1h",
                     secondsSince(started));
         } catch (Exception e) {
             if (!stopping) log.error("[game-sync] Hourly synchronization failed; retrying next hour", e);
@@ -135,9 +133,10 @@ public class DynamicSchedulingService {
             previousActiveTeams = Set.copyOf(activeTeams);
             log.info("[game-sync] Poll #{} in {}s: games [{}]; finished {}; updated {} teams, {} team schedules, {} players",
                     polls, secondsSince(started), describe(activeGames), finishedTeams, counts[0], counts[1], counts[2]);
-            if (lastGameTime != null && LocalDateTime.now(ZoneOffset.UTC).isAfter(lastGameTime)
-                    && activeTeams.isEmpty()) {
-                // Also covers a game that completed entirely between two polls.
+            if (activeTeams.isEmpty() && !windowOpensWithinAnHour(dataSyncService.getNextGameStart())) {
+                // No game is live and the next starts later, typically on the next game night: close
+                // the window so hourly full syncs resume. Also covers a game that completed entirely
+                // between two polls.
                 Instant finalStarted = Instant.now();
                 if (seasonLock.runExclusively(dataSyncService.getSeasonId(), () -> {
                     dataSyncService.syncTeams();
@@ -165,6 +164,15 @@ public class DynamicSchedulingService {
         }
         // Delay from completion, avoiding catch-up loops when ingestion takes over a minute.
         schedule(this::syncAndReschedule, Instant.now().plusSeconds(60));
+    }
+
+    /** The game window opens 5 minutes before a game starts. */
+    private static Instant windowOpening(LocalDateTime gameStart) {
+        return gameStart.minusMinutes(5).toInstant(ZoneOffset.UTC);
+    }
+
+    private static boolean windowOpensWithinAnHour(LocalDateTime gameStart) {
+        return gameStart != null && !windowOpening(gameStart).isAfter(Instant.now().plusSeconds(3600));
     }
 
     /** Renders games as {@code "AWAY 1-2 HOME LIVE"} for the poll summary. */
