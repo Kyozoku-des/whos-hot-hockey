@@ -5,8 +5,11 @@ import com.whoshot.nhl.datajob.dto.nhlapi.GameState;
 import org.junit.jupiter.api.Test;
 import org.springframework.scheduling.TaskScheduler;
 
+import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayDeque;
 import java.util.List;
@@ -106,6 +109,46 @@ class DynamicSchedulingServiceTest {
     }
 
     @Test
+    void slowFinalSyncBeforeAShortGapStartsPollingAtTheWindowOpening() throws Exception {
+        // An afternoon game ends at 20:50 and the next starts at 22:00 (window opens 21:55, 65 minutes
+        // later). Each full sync takes 7 minutes, so an hourly check after the final sync would only
+        // start at 21:57 and add another full sync before the first poll.
+        var clock = new MutableClock(Instant.parse("2026-10-17T19:00:00Z"));
+        var sync = mock(DataSyncService.class);
+        var scheduler = mock(TaskScheduler.class);
+        var tasks = new ArrayDeque<Runnable>();
+        var times = new ArrayDeque<Instant>();
+        when(scheduler.schedule(any(Runnable.class), any(Instant.class))).thenAnswer(invocation -> {
+            tasks.add(invocation.getArgument(0));
+            times.add(invocation.getArgument(1));
+            return mock(ScheduledFuture.class);
+        });
+        doAnswer(invocation -> {
+            clock.advance(Duration.ofMinutes(7));
+            return null;
+        }).when(sync).syncPlayers();
+        when(sync.getNextGameStart()).thenReturn(
+                LocalDateTime.parse("2026-10-17T18:00:00"), LocalDateTime.parse("2026-10-17T22:00:00"));
+        when(sync.getActiveGames()).thenReturn(List.of(game("NJD", "WSH")), List.of());
+        var daemon = new DynamicSchedulingService(scheduler, sync, TestSeasonLocks.available(),
+                mock(ScoreboardSyncService.class), mock(SyncStatusRecorder.class), clock);
+        daemon.init();
+        tasks.remove().run(); // hourly check opens the window for the live game
+        times.clear();
+        clock.set(Instant.parse("2026-10-17T20:40:00Z"));
+        tasks.remove().run(); // game live
+        clock.set(Instant.parse("2026-10-17T20:50:00Z"));
+        tasks.remove().run(); // game ended: final full sync until 20:57, window closes
+
+        assertEquals(Instant.parse("2026-10-17T21:55:00Z"), times.getLast());
+        clock.set(times.getLast());
+        tasks.remove().run(); // the first poll of the next window, without another full sync
+        verify(sync, times(2)).syncPlayers();
+        verify(sync, times(3)).getActiveGames();
+        daemon.stop();
+    }
+
+    @Test
     void failedCompletedGameWriteIsRetriedOnTheNextPoll() throws Exception {
         var sync = mock(DataSyncService.class);
         var scheduler = mock(TaskScheduler.class);
@@ -180,6 +223,37 @@ class DynamicSchedulingServiceTest {
         verify(syncStatus, never()).statsSynced();
         assertEquals(1, tasks.size(), "retried next hour");
         daemon.stop();
+    }
+
+    private static final class MutableClock extends Clock {
+        private Instant now;
+
+        MutableClock(Instant now) {
+            this.now = now;
+        }
+
+        void set(Instant instant) {
+            now = instant;
+        }
+
+        void advance(Duration duration) {
+            now = now.plus(duration);
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return ZoneOffset.UTC;
+        }
+
+        @Override
+        public Clock withZone(ZoneId zone) {
+            return this;
+        }
+
+        @Override
+        public Instant instant() {
+            return now;
+        }
     }
 
     private static GameDto game(String away, String home) {

@@ -151,7 +151,7 @@ podman logs nhl-data-job 2>&1 | Select-String "\[game-sync\]"
 ```
 
 ```
-[game-sync] Hourly full sync done in 412s; game window opens at 2026-10-04T23:00:00Z (next game 2026-10-04T23:05 UTC)
+[game-sync] Hourly full sync done in 412s; next game at 2026-10-04T23:05 UTC, game window opens at 2026-10-04T23:00:00Z
 [game-sync] Poll #1 in 38s: games [VAN 0-0 EDM PRE]; finished []; updated 2 teams, 0 team schedules, 41 players
 [game-sync] Poll #87 in 35s: games []; finished [VAN, EDM]; updated 2 teams, 2 team schedules, 41 players
 [game-sync] Game window closed after 87 polls (0 failed); final full sync done in 405s, next check in 1h
