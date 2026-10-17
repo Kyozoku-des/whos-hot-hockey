@@ -1,5 +1,5 @@
 <template>
-  <div class="player-list">
+  <div class="player-list stat-table" style="--stat-cols: 4">
     <div v-if="loading" class="loading">Loading...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else-if="players.length === 0" class="empty">No players found</div>
