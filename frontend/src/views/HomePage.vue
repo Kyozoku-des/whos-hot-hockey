@@ -129,19 +129,16 @@ const slideWidth = ref(0)
 const animateSlides = ref(false)
 
 // Mobile: the card lists grow to fill the screen, so the dots end just above
-// the fixed footer and scroll-down arrow instead of leaving dead space on
-// taller phones
+// the scroll-down arrow instead of leaving dead space on taller phones
 const { isMobile } = useIsMobile()
 const homePage = ref(null)
 const swipeDots = ref(null)
 const mobileListHeight = ref(null)
 const MIN_LIST_HEIGHT = 240
-// Room above the footer for the app's scroll-down arrowhead (0.75rem up,
-// 1.1rem tall). Kept small: any more and the links below would peek out above
-// the footer, which hides the arrow.
+// Room at the bottom of the screen for the app's scroll-down arrowhead
+// (0.75rem up, 1.1rem tall)
 const SCROLL_HINT_SPACE_REM = 1.75
 let layoutObserver = null
-let footerEl = null
 
 const updateMobileListHeight = () => {
   const lists = swipeContainer.value?.querySelectorAll('.card-content')
@@ -151,10 +148,10 @@ const updateMobileListHeight = () => {
   // Card padding and dots below the lists, which stay put as the lists grow
   const below = swipeDots.value.getBoundingClientRect().bottom - bottom
   const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
-  const footer = (footerEl?.offsetHeight ?? 0) + SCROLL_HINT_SPACE_REM * rem
+  const hintSpace = SCROLL_HINT_SPACE_REM * rem
   // clientHeight is the viewport with the browser bars shown, so the height
   // doesn't jump as they slide away while scrolling
-  const available = document.documentElement.clientHeight - footer - (top + window.scrollY) - below
+  const available = document.documentElement.clientHeight - hintSpace - (top + window.scrollY) - below
   mobileListHeight.value = Math.max(MIN_LIST_HEIGHT, Math.floor(available))
 }
 
@@ -362,12 +359,10 @@ onMounted(() => {
     requestAnimationFrame(() => requestAnimationFrame(() => { animateSlides.value = true }))
   })
   window.addEventListener('resize', updateSlideWidth)
-  // Re-measures as the score ticker, tables and footer text load in (the
-  // page has no min-height on mobile, so it grows with its content)
-  footerEl = document.querySelector('.app-footer')
+  // Re-measures as the score ticker and tables load in (the page has no
+  // min-height on mobile, so it grows with its content)
   layoutObserver = new ResizeObserver(updateMobileListHeight)
   layoutObserver.observe(homePage.value)
-  if (footerEl) layoutObserver.observe(footerEl)
   window.addEventListener('resize', updateMobileListHeight)
 })
 
