@@ -178,14 +178,21 @@ public class DynamicSchedulingService {
     /**
      * Schedules the next hourly check, or the first poll when the game window opens before that
      * check would. Decided after the preceding full sync has finished, so a slow sync cannot push the
-     * first poll past the opening or put another full sync in front of it.
+     * first poll past the opening. A check is never scheduled within the hour before an opening: it
+     * moves earlier, to an hour before, so its full sync finishes before the window opens.
      *
      * @return what was scheduled, for the log line
      */
     private String scheduleUntilWindow(LocalDateTime nextGame) {
         Instant now = clock.instant();
         if (!windowOpensWithinAnHour(nextGame)) {
-            schedule(this::hourlyCheck, now.plusSeconds(3600));
+            Instant nextCheck = now.plusSeconds(3600);
+            if (nextGame != null && windowOpening(nextGame).minusSeconds(3600).isBefore(nextCheck)) {
+                nextCheck = windowOpening(nextGame).minusSeconds(3600);
+                schedule(this::hourlyCheck, nextCheck);
+                return "next check at " + nextCheck + ", an hour before the game window opens";
+            }
+            schedule(this::hourlyCheck, nextCheck);
             return "next check in 1h";
         }
         Instant opening = windowOpening(nextGame);

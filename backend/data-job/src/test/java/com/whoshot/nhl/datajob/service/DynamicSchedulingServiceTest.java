@@ -15,6 +15,7 @@ import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -109,10 +110,27 @@ class DynamicSchedulingServiceTest {
     }
 
     @Test
-    void slowFinalSyncBeforeAShortGapStartsPollingAtTheWindowOpening() throws Exception {
-        // An afternoon game ends at 20:50 and the next starts at 22:00 (window opens 21:55, 65 minutes
-        // later). Each full sync takes 7 minutes, so an hourly check after the final sync would only
-        // start at 21:57 and add another full sync before the first poll.
+    void fullSyncsNeverDelayTheNextWindowOpening() {
+        // A game ends at 20:50 and the next starts 66 minutes to 3 hours later, so the window closes in
+        // between. Neither the final full sync nor a following hourly one may push the first poll of
+        // the next window past its opening, 5 minutes before the game.
+        for (int gap = 66; gap <= 180; gap++) {
+            for (int syncMinutes : new int[] {3, 7, 20}) {
+                LocalDateTime nextGame = LocalDateTime.parse("2026-10-17T20:50:00").plusMinutes(gap);
+                assertEquals(nextGame.minusMinutes(5).toInstant(ZoneOffset.UTC),
+                        firstPollOfNextWindow(nextGame, Duration.ofMinutes(syncMinutes)),
+                        "next game " + gap + " min after the last ended, full sync " + syncMinutes + " min");
+            }
+        }
+    }
+
+    /**
+     * Runs the daemon, with every full sync taking {@code fullSync}, through a game that ends at
+     * 20:50 and on to the first poll of the next window.
+     *
+     * @return when that poll started
+     */
+    private static Instant firstPollOfNextWindow(LocalDateTime nextGame, Duration fullSync) {
         var clock = new MutableClock(Instant.parse("2026-10-17T19:00:00Z"));
         var sync = mock(DataSyncService.class);
         var scheduler = mock(TaskScheduler.class);
@@ -124,28 +142,38 @@ class DynamicSchedulingServiceTest {
             return mock(ScheduledFuture.class);
         });
         doAnswer(invocation -> {
-            clock.advance(Duration.ofMinutes(7));
+            clock.advance(fullSync);
             return null;
         }).when(sync).syncPlayers();
-        when(sync.getNextGameStart()).thenReturn(
-                LocalDateTime.parse("2026-10-17T18:00:00"), LocalDateTime.parse("2026-10-17T22:00:00"));
-        when(sync.getActiveGames()).thenReturn(List.of(game("NJD", "WSH")), List.of());
+        when(sync.getNextGameStart()).thenReturn(LocalDateTime.parse("2026-10-17T18:00:00"), nextGame);
+        var polls = new AtomicInteger();
+        when(sync.getActiveGames()).thenAnswer(invocation ->
+                polls.incrementAndGet() == 1 ? List.of(game("NJD", "WSH")) : List.of());
         var daemon = new DynamicSchedulingService(scheduler, sync, TestSeasonLocks.available(),
                 mock(ScoreboardSyncService.class), mock(SyncStatusRecorder.class), clock);
         daemon.init();
-        tasks.remove().run(); // hourly check opens the window for the live game
-        times.clear();
-        clock.set(Instant.parse("2026-10-17T20:40:00Z"));
-        tasks.remove().run(); // game live
+        runNext(tasks, times, clock); // hourly check opens the window for the live game
+        runNext(tasks, times, clock); // game live
         clock.set(Instant.parse("2026-10-17T20:50:00Z"));
-        tasks.remove().run(); // game ended: final full sync until 20:57, window closes
+        runNext(tasks, times, clock); // game ended: final full sync, window closes
+        for (int i = 0; i < 10; i++) {
+            int pollsBefore = polls.get();
+            Instant started = runNext(tasks, times, clock);
+            if (polls.get() > pollsBefore) {
+                daemon.stop();
+                return started;
+            }
+        }
+        throw new AssertionError("no poll after the window closed");
+    }
 
-        assertEquals(Instant.parse("2026-10-17T21:55:00Z"), times.getLast());
-        clock.set(times.getLast());
-        tasks.remove().run(); // the first poll of the next window, without another full sync
-        verify(sync, times(2)).syncPlayers();
-        verify(sync, times(3)).getActiveGames();
-        daemon.stop();
+    /** Runs the next scheduled task once its time has come; returns when it started. */
+    private static Instant runNext(ArrayDeque<Runnable> tasks, ArrayDeque<Instant> times, MutableClock clock) {
+        Instant due = times.remove();
+        if (due.isAfter(clock.instant())) clock.set(due);
+        Instant started = clock.instant();
+        tasks.remove().run();
+        return started;
     }
 
     @Test
