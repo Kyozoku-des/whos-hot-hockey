@@ -48,10 +48,9 @@ class DataJobShutdownTest {
     void closingContextCancelsFutureGameTask() throws Exception {
         var sync = mock(DataSyncService.class);
         var scheduled = new CountDownLatch(1);
-        when(sync.getFirstGameTimeForToday()).thenReturn(LocalDateTime.now(ZoneOffset.UTC).plusHours(2));
-        when(sync.getLastGameTimeForToday()).thenAnswer(invocation -> {
+        when(sync.getNextGameStart()).thenAnswer(invocation -> {
             scheduled.countDown();
-            return LocalDateTime.now(ZoneOffset.UTC).plusHours(4);
+            return LocalDateTime.now(ZoneOffset.UTC).plusHours(2);
         });
         try (var context = context(sync)) {
             var scheduler = context.getBean(ThreadPoolTaskScheduler.class);
@@ -67,7 +66,7 @@ class DataJobShutdownTest {
     void noGameDayKeepsDaemonRunningAndSchedulesNextCheck() throws Exception {
         var sync = mock(DataSyncService.class);
         var finished = new CountDownLatch(1);
-        when(sync.getLastGameTimeForToday()).thenAnswer(invocation -> {
+        when(sync.getNextGameStart()).thenAnswer(invocation -> {
             finished.countDown();
             return null;
         });

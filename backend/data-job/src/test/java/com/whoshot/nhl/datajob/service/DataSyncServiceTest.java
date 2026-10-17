@@ -50,29 +50,52 @@ class DataSyncServiceTest {
                 List.of(new SeasonDto(), current), LocalDateTime.parse("2026-09-07T18:05:00")));
     }
 
-    @Test
-    void gameWindowSkipsLastNightsFinishedGames() {
-        var games = List.of(
-                game("2026-10-15T00:30:00Z", GameState.OFF),
-                game("2026-10-15T23:00:00Z", GameState.FUT),
-                game("2026-10-15T23:30:00Z", GameState.FUT),
-                game("2026-10-16T02:00:00Z", GameState.FUT));
+    /** The 2026-10-16 and 2026-10-17 game nights; both have games on the UTC date 2026-10-17. */
+    private static final List<GameDto> TWO_GAME_NIGHTS = List.of(
+            game("2026-10-17T01:00:00Z", GameState.OFF),
+            game("2026-10-17T02:00:00Z", GameState.OFF),
+            game("2026-10-17T17:00:00Z", GameState.FUT),
+            game("2026-10-17T23:00:00Z", GameState.FUT),
+            game("2026-10-18T02:00:00Z", GameState.FUT));
 
-        assertEquals(
-                List.of(LocalDateTime.parse("2026-10-15T23:00:00"), LocalDateTime.parse("2026-10-15T23:30:00")),
-                DataSyncService.remainingGameTimesToday(games, LocalDateTime.parse("2026-10-15T04:30:00")));
+    @Test
+    void nextGameSkipsLastNightsFinishedGames() {
+        assertEquals(LocalDateTime.parse("2026-10-17T17:00:00"),
+                DataSyncService.nextGameStart(TWO_GAME_NIGHTS, LocalDateTime.parse("2026-10-17T04:43:00")));
     }
 
     @Test
-    void gameWindowKeepsGamesInProgressOrWithoutState() {
+    void nextGameIsNotLimitedToTheUtcDate() {
+        var games = List.of(game("2026-10-17T02:00:00Z", GameState.OFF), game("2026-10-18T22:00:00Z", GameState.FUT));
+        assertEquals(LocalDateTime.parse("2026-10-18T22:00:00"),
+                DataSyncService.nextGameStart(games, LocalDateTime.parse("2026-10-17T04:43:00")));
+    }
+
+    @Test
+    void nextGameKeepsGamesInProgressOrWithoutState() {
         var games = List.of(
                 game("2026-10-15T00:30:00Z", GameState.LIVE),
                 game("2026-10-15T01:00:00Z", GameState.OVER),
                 game("2026-10-15T02:00:00Z", null));
 
-        assertEquals(
-                List.of(LocalDateTime.parse("2026-10-15T00:30:00"), LocalDateTime.parse("2026-10-15T02:00:00")),
-                DataSyncService.remainingGameTimesToday(games, LocalDateTime.parse("2026-10-15T01:30:00")));
+        assertEquals(LocalDateTime.parse("2026-10-15T00:30:00"),
+                DataSyncService.nextGameStart(games, LocalDateTime.parse("2026-10-15T03:30:00")));
+        assertEquals(LocalDateTime.parse("2026-10-15T02:00:00"),
+                DataSyncService.nextGameStart(games.subList(1, 3), LocalDateTime.parse("2026-10-15T02:30:00")));
+    }
+
+    @Test
+    void nextGameIgnoresGamesThatNeverStarted() {
+        var games = List.of(game("2026-10-15T00:30:00Z", GameState.FUT), game("2026-10-16T23:00:00Z", GameState.FUT));
+        assertEquals(LocalDateTime.parse("2026-10-15T00:30:00"),
+                DataSyncService.nextGameStart(games, LocalDateTime.parse("2026-10-15T01:00:00")));
+        assertEquals(LocalDateTime.parse("2026-10-16T23:00:00"),
+                DataSyncService.nextGameStart(games, LocalDateTime.parse("2026-10-15T01:31:00")));
+    }
+
+    @Test
+    void noNextGameWhenAllHaveFinished() {
+        assertNull(DataSyncService.nextGameStart(TWO_GAME_NIGHTS.subList(0, 2), LocalDateTime.parse("2026-10-17T04:43:00")));
     }
 
     private static GameDto game(String startTimeUTC, GameState state) {

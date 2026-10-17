@@ -58,20 +58,19 @@ public class DataSyncService {
         this.metrics = metrics;
     }
     private SeasonDto season;
+    /** Start of the earliest game still to finish, as of the last schedule read; null when none. */
     @Getter
-    private LocalDateTime firstGameTimeForToday;
-    @Getter
-    private LocalDateTime lastGameTimeForToday;
+    private LocalDateTime nextGameStart;
 
     /**
-     * Refreshes the active season and daily game window for live sync only.
+     * Refreshes the active season and the next game start for live sync only.
      * Called explicitly by the scheduler; constructing this bean for backfill has no side effects.
      */
     public void initialize() {
         checkInterrupted();
         setSeason();
         checkInterrupted();
-        setFirstAndLastGameTimesForToday();
+        nextGameStart = nextGameStart(nhlApiService.getLeagueSchedule(), LocalDateTime.now(ZoneOffset.UTC));
     }
 
     /** Retains the most recently started season during playoffs and the offseason. */
@@ -95,36 +94,28 @@ public class DataSyncService {
     }
 
     /**
-     * Fetches today's game schedule and determines the earliest and latest start times of the
-     * games still to finish.
+     * Start time of the earliest game that has not finished, on any date. A game night crosses UTC
+     * midnight, so games are not grouped by calendar date: the scheduler closes the game window
+     * whenever no game is live and the next one is still far off. A game that has not begun an
+     * hour after its start time (postponed) is ignored so it cannot hold the window open.
      */
-    public void setFirstAndLastGameTimesForToday() {
-        List<LocalDateTime> todayGameTimes = remainingGameTimesToday(
-                nhlApiService.getLeagueSchedule(), LocalDateTime.now(ZoneOffset.UTC));
-
-        firstGameTimeForToday = todayGameTimes.stream()
+    static LocalDateTime nextGameStart(List<GameDto> games, LocalDateTime now) {
+        LocalDateTime overdue = now.minusHours(1);
+        return games.stream()
+                .filter(game -> game.getGameState() == null || !game.getGameState().isCompleted())
+                .filter(game -> isActive(game) || !startTime(game).isBefore(overdue))
+                .map(DataSyncService::startTime)
                 .min(LocalDateTime::compareTo)
-                .orElse(null);
-
-        lastGameTimeForToday = todayGameTimes.stream()
-                .max(LocalDateTime::compareTo)
                 .orElse(null);
     }
 
-    /**
-     * Start times of the games on the current UTC date that have not finished. Last night's late
-     * North American games also fall on this date; counting them would open the game window in the
-     * early morning and hold off hourly full syncs until tonight's games end.
-     */
-    static List<LocalDateTime> remainingGameTimesToday(List<GameDto> games, LocalDateTime now) {
-        LocalDateTime todayStart = now.toLocalDate().atStartOfDay();
-        LocalDateTime todayEnd = todayStart.plusDays(1);
+    private static LocalDateTime startTime(GameDto game) {
+        return LocalDateTime.parse(game.getStartTimeUTC(), DateTimeFormatter.ISO_DATE_TIME);
+    }
 
-        return games.stream()
-                .filter(game -> game.getGameState() == null || !game.getGameState().isCompleted())
-                .map(game -> LocalDateTime.parse(game.getStartTimeUTC(), DateTimeFormatter.ISO_DATE_TIME))
-                .filter(time -> !time.isBefore(todayStart) && time.isBefore(todayEnd))
-                .toList();
+    private static boolean isActive(GameDto game) {
+        return game.getGameState() == GameState.LIVE || game.getGameState() == GameState.CRIT
+                || game.getGameState() == GameState.PRE;
     }
 
     /**
@@ -398,12 +389,13 @@ public class DataSyncService {
     }
 
     /**
-     * Returns the games currently in pre-game or in progress.
+     * Returns the games currently in pre-game or in progress, and refreshes
+     * {@link #getNextGameStart()} from the same schedule read.
      */
     public List<GameDto> getActiveGames() {
-        return nhlApiService.getLeagueSchedule().stream()
-                .filter(game -> game.getGameState() == GameState.LIVE || game.getGameState() == GameState.CRIT || game.getGameState() == GameState.PRE)
-                .toList();
+        List<GameDto> schedule = nhlApiService.getLeagueSchedule();
+        nextGameStart = nextGameStart(schedule, LocalDateTime.now(ZoneOffset.UTC));
+        return schedule.stream().filter(DataSyncService::isActive).toList();
     }
 
     private static void checkInterrupted() {
