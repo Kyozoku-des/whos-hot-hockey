@@ -348,10 +348,17 @@ html:root:not([data-theme="retro"]) .stat-key {
     }
 
     /* Too narrow for the names beside the stats: the stats go on a second
-       line, starting under the name (past the 32px logo and its gap) */
-    @container stat-table (max-width: 440px) {
+       line, closer together and smaller, as on phones. In em so the widths
+       follow the browser's font size. */
+    @container stat-table (max-width: 27.5em) {
       html:root .stat-table > :is(.players-grid, .teams-grid) {
         grid-template-columns: repeat(var(--stat-cols), auto) minmax(0, 1fr);
+        column-gap: 0.75rem;
+        padding-right: var(--row-hover-shift);
+      }
+
+      html:root .stat-table :is(.player-item, .team-item) {
+        padding: 0.6rem 0.75rem;
       }
 
       html:root .stat-table :is(.player-main, .team-main) {
@@ -362,8 +369,19 @@ html:root:not([data-theme="retro"]) .stat-key {
         row-gap: 0.35rem;
       }
 
-      html:root .stat-table .stat-item:first-child {
-        margin-left: calc(32px + 0.75rem);
+      html:root .stat-table .stat-item {
+        font-size: 0.8rem;
+      }
+    }
+
+    /* Narrower still, five late-season team stats (GP: 82 … PTS: 110) no
+       longer fit on one line: the stats wrap instead of lining up */
+    @container stat-table (max-width: 22em) {
+      html:root .stat-table :is(.player-stats, .team-stats) {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem 0.75rem;
+        grid-column: 1 / -1;
       }
     }
   }
