@@ -36,7 +36,7 @@ STATEMENTS = {
         "at container start; it opens no sockets and parses no input. Fixed when the official "
         "image rebuilds gosu."),
     "alloy": (
-        "grafana/alloy:v1.20.1-distroless is the newest release. Alloy listens on loopback "
+        "grafana/alloy:v1.21.0-distroless is the newest release. Alloy listens on loopback "
         "and the Compose networks only and pushes outbound to Grafana Cloud. Fixed in an "
         "upstream release."),
     "frontend-build-npm": (
@@ -88,8 +88,8 @@ RULES = {
         _os("postgres:17", "debian", "postgres-os", require_unfixed=True),
         _binary("usr/local/bin/gosu", "postgres-gosu"),
     ],
-    "grafana_alloy_v1.20.1-distroless": [
-        _os("grafana/alloy:v1.20.1-distroless", "ubuntu", "alloy", require_unfixed=False),
+    "grafana_alloy_v1.21.0-distroless": [
+        _os("grafana/alloy:v1.21.0-distroless", "ubuntu", "alloy", require_unfixed=False),
         _binary("usr/bin/alloy", "alloy"),
     ],
     "scan_frontend-build": [
