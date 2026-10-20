@@ -134,4 +134,11 @@ docker compose ps
 
 ## License
 
-This project is for educational purposes.
+[MIT](LICENSE). The license covers this project's code only. Statistics, logos and
+headshots come from the NHL's undocumented web endpoints (`api-web.nhle.com`,
+`api.nhle.com`, `assets.nhle.com`). This project is not affiliated with or endorsed
+by the NHL; NHL and team names and logos are trademarks of their respective owners.
+Endpoint documentation by the community
+[NHL API Reference](https://github.com/Zmalski/NHL-API-Reference) was a helpful guide.
+
+Report security issues as described in [SECURITY.md](SECURITY.md).
