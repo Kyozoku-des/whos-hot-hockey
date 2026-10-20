@@ -232,7 +232,7 @@ services:
   alloy:
     # Distroless: same binary, entrypoint and user as the Ubuntu variant, without the
     # Ubuntu packages (and their advisories) or a shell (issue #58).
-    image: grafana/alloy:v1.20.1-distroless
+    image: grafana/alloy:v1.21.0-distroless
     profiles:
       - prod
     command:
