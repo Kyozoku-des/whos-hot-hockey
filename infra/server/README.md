@@ -120,6 +120,12 @@ re-runs provisioning at the next deploy. Keep the PostgreSQL distribution/locale
 unchanged when upgrading an existing data directory; a Debian-to-Alpine image
 swap is not a safe vulnerability fix without a separate migration rehearsal.
 
+PostgreSQL runs from `whos-hot-nhl-postgres`, built by CI from `postgres:17` with
+gosu removed and the postgres user as the image user (`infra/database/Dockerfile`).
+It uses the same Debian base, so existing volumes start unchanged; the first deploy
+with it only recreates the database container. Rolling back to a build from before
+this image uses `postgres:17` again with the same volume.
+
 The completed migration/provisioning containers retain their configured secret
 environment until removed. Restrict host Docker access to administrators; a
 diagnostic agent must not have the Docker socket or Docker-group membership.

@@ -86,7 +86,7 @@ jobs:
       - uses: actions/checkout@v7
       - name: Build images
         run: |
-          docker compose --profile prod build --pull backend-api data-job frontend caddy
+          docker compose --profile prod build --pull postgres backend-api data-job frontend caddy
           docker build -q -t scan/api-build --target api-build backend
           docker build -q -t scan/datajob-build --target datajob-build backend
           docker build -q -t scan/frontend-build --target build frontend

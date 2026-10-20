@@ -92,6 +92,10 @@ passwords must be distinct, non-default and at least 20 characters. See the
 Local direct JVM runs retain their development defaults; use the runtime role
 credentials and disable Flyway when connecting them to a provisioned database.
 
+The database runs from the official `postgres:17` image rebuilt without gosu
+([`infra/database/Dockerfile`](infra/database/Dockerfile)). It starts directly as
+the postgres user instead of starting as root and dropping privileges.
+
 ## Caddy rebuild
 
 The release builds the standard Caddy modules from the committed Go module lock
