@@ -28,13 +28,9 @@ TESTCONTAINERS_SHADED = re.compile(
 
 STATEMENTS = {
     "postgres-os": (
-        "postgres:17 (Debian): no Debian fix released yet. PostgreSQL is reachable only from "
-        "the Compose network and the host's loopback; these are OS libraries and tools, not "
-        "the server itself."),
-    "postgres-gosu": (
-        "postgres:17 gosu, built by upstream with an old Go. gosu only drops privileges once "
-        "at container start; it opens no sockets and parses no input. Fixed when the official "
-        "image rebuilds gosu."),
+        "postgres:17 (Debian) base of whos-hot-nhl-postgres: no Debian fix released yet. "
+        "PostgreSQL is reachable only from the Compose network and the host's loopback; these "
+        "are OS libraries and tools, not the server itself."),
     "alloy": (
         "grafana/alloy:v1.21.0-distroless is the newest release. Alloy listens on loopback "
         "and the Compose networks only and pushes outbound to Grafana Cloud. Fixed in an "
@@ -84,9 +80,9 @@ def _package(pkg_type, path_pattern, name_prefix, category):
 
 # Report name (image reference with "/" and ":" replaced by "_") -> accepted findings.
 RULES = {
-    "postgres_17": [
-        _os("postgres:17", "debian", "postgres-os", require_unfixed=True),
-        _binary("usr/local/bin/gosu", "postgres-gosu"),
+    # Built from postgres:17 without gosu (infra/database/Dockerfile): Debian packages only.
+    "ghcr.io_kyozoku-des_whos-hot-nhl-postgres_local": [
+        _os("ghcr.io/kyozoku-des/whos-hot-nhl-postgres:local", "debian", "postgres-os", require_unfixed=True),
     ],
     "grafana_alloy_v1.21.0-distroless": [
         _os("grafana/alloy:v1.21.0-distroless", "ubuntu", "alloy", require_unfixed=False),

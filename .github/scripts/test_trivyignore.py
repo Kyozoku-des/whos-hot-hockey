@@ -7,6 +7,8 @@ import unittest
 import trivyignore
 
 NPM_UNDICI = "usr/local/lib/node_modules/npm/node_modules/undici/package.json"
+POSTGRES_REF = "ghcr.io/kyozoku-des/whos-hot-nhl-postgres:local"
+POSTGRES = "ghcr.io_kyozoku-des_whos-hot-nhl-postgres_local"
 DOCKER_JAVA = ("root/.m2/repository/com/github/docker-java/docker-java-transport-zerodep/3.7.1/"
                "docker-java-transport-zerodep-3.7.1.jar")
 
@@ -34,10 +36,8 @@ def policies(image, *results):
 class AcceptedFindings(unittest.TestCase):
     def test_each_category_is_scoped_to_its_image_and_location(self):
         cases = [
-            ("postgres_17", os_result("postgres:17 (debian 13.7)", "debian"),
-             "postgres:17 (debian 13.7)"),
-            ("postgres_17", lang_result("gobinary", "usr/local/bin/gosu", "stdlib"),
-             "usr/local/bin/gosu"),
+            (POSTGRES, os_result(f"{POSTGRES_REF} (debian 13.7)", "debian"),
+             f"{POSTGRES_REF} (debian 13.7)"),
             ("grafana_alloy_v1.21.0-distroless",
              os_result("grafana/alloy:v1.21.0-distroless (ubuntu 24.04)", "ubuntu", fixed="3.1"),
              "grafana/alloy:v1.21.0-distroless (ubuntu 24.04)"),
@@ -82,15 +82,16 @@ class RejectedFindings(unittest.TestCase):
         self.assert_rejected("scan_frontend-build", os_result(
             "scan/frontend-build (alpine 3.24.2)", "alpine", fixed="1.3.2-r1"))
 
-    def test_other_go_binary_in_postgres(self):
-        self.assert_rejected("postgres_17", lang_result("gobinary", "usr/local/bin/other", "stdlib"))
+    def test_any_go_binary_in_postgres(self):
+        # gosu is removed from the image; a Go binary there must not be accepted again.
+        self.assert_rejected(POSTGRES, lang_result("gobinary", "usr/local/bin/gosu", "stdlib"))
 
     def test_debian_package_with_a_fix_in_postgres(self):
-        self.assert_rejected("postgres_17", os_result(
-            "postgres:17 (debian 13.7)", "debian", fixed="2.9.14-2.1+deb13u4"))
+        self.assert_rejected(POSTGRES, os_result(
+            f"{POSTGRES_REF} (debian 13.7)", "debian", fixed="2.9.14-2.1+deb13u4"))
 
     def test_os_findings_of_another_image(self):
-        self.assert_rejected("postgres_17", os_result("postgres:18 (debian 13.7)", "debian"))
+        self.assert_rejected(POSTGRES, os_result("postgres:17 (debian 13.7)", "debian"))
 
     def test_jar_outside_shaded_testcontainers_transport(self):
         self.assert_rejected("scan_api-build", lang_result(

@@ -9,7 +9,10 @@ name: whos-hot-nhl
 
 services:
   postgres:
-    image: postgres:17
+    # postgres:17 without gosu, running as the postgres user (infra/database/Dockerfile).
+    image: ghcr.io/kyozoku-des/whos-hot-nhl-postgres:${IMAGE_TAG:-local}
+    build:
+      context: ./infra/database
     mem_limit: 1g
     memswap_limit: 1g
     cpus: 1.0
@@ -51,7 +54,9 @@ services:
     restart: "no"
 
   db-roles:
-    image: postgres:17
+    image: ghcr.io/kyozoku-des/whos-hot-nhl-postgres:${IMAGE_TAG:-local}
+    build:
+      context: ./infra/database
     mem_limit: 128m
     memswap_limit: 128m
     cpus: 0.5
