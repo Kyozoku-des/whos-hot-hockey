@@ -7,7 +7,7 @@ variable "hcloud_token" {
 variable "server_name" {
   description = "Server name in Hetzner Cloud"
   type        = string
-  default     = "whos-hot-nhl"
+  default     = "whos-hot-hockey"
 }
 
 variable "server_type" {

@@ -29,7 +29,7 @@ variable "loki_datasource_uid" {
 variable "compose_project" {
   description = "Compose project name on the server; container metrics and logs carry it as the project label"
   type        = string
-  default     = "whos-hot-nhl"
+  default     = "whos-hot-hockey"
 }
 
 variable "expected_services" {

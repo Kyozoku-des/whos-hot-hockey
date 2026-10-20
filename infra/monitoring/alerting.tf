@@ -190,7 +190,7 @@ locals {
       datasource = "prometheus"
       # Share of successful probes across all locations: one failing location alone
       # (0, 1, 1 -> 0.67) doesn't fire, most locations failing (0, 0, 1 -> 0.33) does.
-      expr      = "avg by (job) (avg_over_time(probe_success{job=~\"whos-hot-nhl-(site|api)\"}[5m]))"
+      expr      = "avg by (job) (avg_over_time(probe_success{job=~\"whos-hot-hockey-(site|api)\"}[5m]))"
       op        = "lt"
       threshold = 0.5
       for       = "2m"
@@ -208,7 +208,7 @@ locals {
 
 resource "grafana_rule_group" "production" {
   name             = "Production"
-  folder_uid       = grafana_folder.whos_hot_nhl.uid
+  folder_uid       = grafana_folder.whos_hot_hockey.uid
   interval_seconds = 60
 
   dynamic "rule" {

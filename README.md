@@ -63,7 +63,7 @@ podman-compose down
 ## Project Structure
 
 ```
-whos-hot-nhl/
+whos-hot-hockey/
 ├── backend/
 │   ├── domain/              # Shared JPA entities & repositories
 │   ├── api/                 # REST API (port 8080)

@@ -6,7 +6,7 @@
 #
 # The token (stdin) is only used to pull from GHCR and is logged out afterwards. Every
 # file the release runs with (compose.yaml, Caddyfile, Alloy config) comes from the
-# whos-hot-nhl-deploy image CI built for that commit, never from the caller, so a
+# whos-hot-hockey-deploy image CI built for that commit, never from the caller, so a
 # leaked key can only redeploy a build CI already pushed.
 #
 # Installed by cloud-init from infra/server/files/whoshot-deploy. To update it on a
@@ -48,7 +48,7 @@ release="$APP_DIR/releases/$sha"
 staging="$(mktemp -d "$APP_DIR/releases/.staging.XXXXXX")"
 
 log "fetching release files for $sha"
-bundle="$REGISTRY/whos-hot-nhl-deploy:$sha"
+bundle="$REGISTRY/whos-hot-hockey-deploy:$sha"
 docker pull --quiet "$bundle" >/dev/null
 container="$(docker create "$bundle" /none)"
 docker cp "$container:/bundle/." "$staging" >/dev/null

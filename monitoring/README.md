@@ -29,7 +29,7 @@ alert rules and uptime checks live in Grafana Cloud and are defined as Terraform
 Uptime checks have to run outside the server: a server that is down can't report it.
 
 Everything is labelled `environment="prod"`; container metrics and logs also carry the
-Compose `project` (`whos-hot-nhl` in production), so a second stack on the same machine
+Compose `project` (`whos-hot-hockey` in production), so a second stack on the same machine
 stays separate. Host and container metrics are filtered in
 `alloy/config.alloy` to what is used, to stay well inside the free tier (10k metric series,
 50 GB logs, 14-day retention).

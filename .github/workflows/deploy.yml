@@ -89,8 +89,8 @@ jobs:
           # No attestation manifests: they would show up as extra package versions.
           provenance: false
           tags: |
-            ${{ env.REGISTRY }}/whos-hot-nhl-${{ matrix.image }}:${{ github.sha }}
-            ${{ env.REGISTRY }}/whos-hot-nhl-${{ matrix.image }}:latest
+            ${{ env.REGISTRY }}/whos-hot-hockey-${{ matrix.image }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/whos-hot-hockey-${{ matrix.image }}:latest
           # Public values baked into the frontend bundle; ignored by the other images.
           build-args: |
             VITE_WEB3FORMS_ACCESS_KEY=${{ vars.VITE_WEB3FORMS_ACCESS_KEY }}
@@ -170,7 +170,7 @@ jobs:
         image: [api, data-job, frontend, caddy, postgres, deploy]
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      PACKAGE: whos-hot-nhl-${{ matrix.image }}
+      PACKAGE: whos-hot-hockey-${{ matrix.image }}
       KEEP_BUILDS: 10
     steps:
       - uses: actions/checkout@v7

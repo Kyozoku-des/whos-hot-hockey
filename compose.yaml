@@ -1,4 +1,4 @@
-name: whos-hot-nhl
+name: whos-hot-hockey
 
 # One file for local development and production (issues #21, #23).
 #   Local:      docker compose up -d --build        builds the images from source.
@@ -10,7 +10,7 @@ name: whos-hot-nhl
 services:
   postgres:
     # postgres:17 without gosu, running as the postgres user (infra/database/Dockerfile).
-    image: ghcr.io/kyozoku-des/whos-hot-nhl-postgres:${IMAGE_TAG:-local}
+    image: ghcr.io/kyozoku-des/whos-hot-hockey-postgres:${IMAGE_TAG:-local}
     build:
       context: ./infra/database
     mem_limit: 1g
@@ -35,7 +35,7 @@ services:
   # Administrative credentials exist only in short-lived provisioning services.
   # Nothing changes the old whoshot owner/password, so older releases can roll back.
   migrate:
-    image: ghcr.io/kyozoku-des/whos-hot-nhl-api:${IMAGE_TAG:-local}
+    image: ghcr.io/kyozoku-des/whos-hot-hockey-api:${IMAGE_TAG:-local}
     mem_limit: 768m
     memswap_limit: 768m
     cpus: 1.0
@@ -54,7 +54,7 @@ services:
     restart: "no"
 
   db-roles:
-    image: ghcr.io/kyozoku-des/whos-hot-nhl-postgres:${IMAGE_TAG:-local}
+    image: ghcr.io/kyozoku-des/whos-hot-hockey-postgres:${IMAGE_TAG:-local}
     build:
       context: ./infra/database
     mem_limit: 128m
@@ -78,7 +78,7 @@ services:
     restart: "no"
 
   backend-api:
-    image: ghcr.io/kyozoku-des/whos-hot-nhl-api:${IMAGE_TAG:-local}
+    image: ghcr.io/kyozoku-des/whos-hot-hockey-api:${IMAGE_TAG:-local}
     mem_limit: 768m
     memswap_limit: 768m
     cpus: 1.0
@@ -113,7 +113,7 @@ services:
     restart: unless-stopped
 
   data-job:
-    image: ghcr.io/kyozoku-des/whos-hot-nhl-data-job:${IMAGE_TAG:-local}
+    image: ghcr.io/kyozoku-des/whos-hot-hockey-data-job:${IMAGE_TAG:-local}
     mem_limit: 1g
     memswap_limit: 1g
     cpus: 1.0
@@ -144,7 +144,7 @@ services:
   # One-off historical season load. Not started by `up`; run explicitly:
   #   podman-compose run --rm -e BACKFILL_SEASON=20242025 backfill
   backfill:
-    image: ghcr.io/kyozoku-des/whos-hot-nhl-data-job:${IMAGE_TAG:-local}
+    image: ghcr.io/kyozoku-des/whos-hot-hockey-data-job:${IMAGE_TAG:-local}
     mem_limit: 1g
     memswap_limit: 1g
     cpus: 1.0
@@ -171,7 +171,7 @@ services:
     restart: "no"
 
   frontend:
-    image: ghcr.io/kyozoku-des/whos-hot-nhl-frontend:${IMAGE_TAG:-local}
+    image: ghcr.io/kyozoku-des/whos-hot-hockey-frontend:${IMAGE_TAG:-local}
     mem_limit: 128m
     memswap_limit: 128m
     cpus: 0.5
@@ -204,7 +204,7 @@ services:
   # TLS and the public entry point (issue #21). Production only. Certificates live in
   # the caddy_data volume; keep it, Let's Encrypt rate-limits new certificates.
   caddy:
-    image: ghcr.io/kyozoku-des/whos-hot-nhl-caddy:${IMAGE_TAG:-local}
+    image: ghcr.io/kyozoku-des/whos-hot-hockey-caddy:${IMAGE_TAG:-local}
     mem_limit: 256m
     memswap_limit: 256m
     cpus: 0.5

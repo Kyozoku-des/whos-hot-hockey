@@ -15,7 +15,7 @@ internet ─▶ Hetzner firewall (22, 80, 443) ─▶ caddy (TLS) ─▶ fronten
   pushes them to GHCR (private) tagged with the commit SHA, and deploys over SSH.
 - The **deploy script** (`files/whoshot-deploy`) is the only thing the CI key can run.
   It pulls the images and the release files (compose, Caddyfile, Alloy config, packed in
-  the `whos-hot-nhl-deploy` image) for one SHA and starts them.
+  the `whos-hot-hockey-deploy` image) for one SHA and starts them.
 
 There are **no database backups**: data is re-derivable with a backfill. The server is
 protected against replacement (`prevent_destroy`, Hetzner delete protection).
@@ -120,7 +120,7 @@ re-runs provisioning at the next deploy. Keep the PostgreSQL distribution/locale
 unchanged when upgrading an existing data directory; a Debian-to-Alpine image
 swap is not a safe vulnerability fix without a separate migration rehearsal.
 
-PostgreSQL runs from `whos-hot-nhl-postgres`, built by CI from `postgres:17` with
+PostgreSQL runs from `whos-hot-hockey-postgres`, built by CI from `postgres:17` with
 gosu removed and the postgres user as the image user (`infra/database/Dockerfile`).
 It uses the same Debian base, so existing volumes start unchanged; the first deploy
 with it only recreates the database container. Rolling back to a build from before

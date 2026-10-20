@@ -20,7 +20,7 @@ locals {
 resource "grafana_synthetic_monitoring_check" "uptime" {
   for_each = local.uptime_checks
 
-  job       = "whos-hot-nhl-${each.key}"
+  job       = "whos-hot-hockey-${each.key}"
   target    = each.value
   enabled   = true
   probes    = local.probe_ids

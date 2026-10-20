@@ -17,7 +17,7 @@ class PublicHttpLimitTest(unittest.TestCase):
         cls.directory = tempfile.TemporaryDirectory(prefix="whoshot-http-limits-")
         cls.addClassCleanup(cls.directory.cleanup)
         cls.name = "whoshot-http-limits-" + uuid.uuid4().hex[:12]
-        cls.image = os.environ.get("CADDY_TEST_IMAGE", "ghcr.io/kyozoku-des/whos-hot-nhl-caddy:local")
+        cls.image = os.environ.get("CADDY_TEST_IMAGE", "ghcr.io/kyozoku-des/whos-hot-hockey-caddy:local")
         config = (Path(__file__).resolve().parents[1] / "Caddyfile").read_text()
         # Local CA only: no public DNS, ACME request, or host certificate installation.
         replacements = (

@@ -31,7 +31,7 @@ class AccessLogTest(unittest.TestCase):
             self.assertIn(original, config, f"Caddy fixture replacement did not match: {original!r}")
             config = config.replace(original, replacement)
         name = "whoshot-access-test-" + uuid.uuid4().hex[:12]
-        image = os.environ.get("CADDY_TEST_IMAGE", "ghcr.io/kyozoku-des/whos-hot-nhl-caddy:local")
+        image = os.environ.get("CADDY_TEST_IMAGE", "ghcr.io/kyozoku-des/whos-hot-hockey-caddy:local")
         marker = "UNTRUSTED_ACCESS_LOG_MARKER"
 
         def docker(*args):

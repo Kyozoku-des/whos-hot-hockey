@@ -6,7 +6,7 @@
 
     <parent>
         <groupId>com.whoshot.nhl</groupId>
-        <artifactId>whos-hot-nhl</artifactId>
+        <artifactId>whos-hot-hockey</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 

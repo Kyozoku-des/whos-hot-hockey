@@ -7,8 +7,8 @@ import unittest
 import trivyignore
 
 NPM_UNDICI = "usr/local/lib/node_modules/npm/node_modules/undici/package.json"
-POSTGRES_REF = "ghcr.io/kyozoku-des/whos-hot-nhl-postgres:local"
-POSTGRES = "ghcr.io_kyozoku-des_whos-hot-nhl-postgres_local"
+POSTGRES_REF = "ghcr.io/kyozoku-des/whos-hot-hockey-postgres:local"
+POSTGRES = "ghcr.io_kyozoku-des_whos-hot-hockey-postgres_local"
 DOCKER_JAVA = ("root/.m2/repository/com/github/docker-java/docker-java-transport-zerodep/3.7.1/"
                "docker-java-transport-zerodep-3.7.1.jar")
 
@@ -103,7 +103,7 @@ class RejectedFindings(unittest.TestCase):
             "jar", "Java", "com.fasterxml.jackson.core:jackson-databind", DOCKER_JAVA))
 
     def test_any_finding_in_an_application_runtime_image(self):
-        self.assert_rejected("ghcr.io_kyozoku-des_whos-hot-nhl-api_local", lang_result(
+        self.assert_rejected("ghcr.io_kyozoku-des_whos-hot-hockey-api_local", lang_result(
             "jar", "Java", "org.apache.httpcomponents.core5:httpcore5", DOCKER_JAVA))
 
 

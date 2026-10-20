@@ -22,7 +22,7 @@ Override application settings with `DB_URL`, `DB_USER`, and `DB_PASSWORD`.
 Compose also reads `DB_PASSWORD` when first initializing its volume; changing it
 later does not change an existing PostgreSQL role's password.
 
-Data persists in the `whos-hot-nhl_postgres_data` Docker volume.
+Data persists in the `whos-hot-hockey_postgres_data` Docker volume.
 `docker compose stop` stops the database. `docker compose down` removes the
 container but retains its data. Do not add `--volumes` unless you intend to erase it.
 

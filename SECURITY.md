@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 Please report vulnerabilities privately through GitHub's
-[private vulnerability reporting](https://github.com/Kyozoku-des/whos-hot-nhl/security/advisories/new) (Security tab →
+[private vulnerability reporting](https://github.com/Kyozoku-des/whos-hot-hockey/security/advisories/new) (Security tab →
 Report a vulnerability). Do not open a public issue. Include the affected
 component, steps to reproduce and the impact you expect. Reports are handled on a
 best-effort basis; this is a personal project with no bug bounty.

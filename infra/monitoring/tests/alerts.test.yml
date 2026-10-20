@@ -16,11 +16,11 @@ tests:
   - name: one of three probe locations failing does not page
     interval: 1m
     input_series:
-      - series: 'probe_success{job="whos-hot-nhl-site", probe="Frankfurt"}'
+      - series: 'probe_success{job="whos-hot-hockey-site", probe="Frankfurt"}'
         values: '0x15'
-      - series: 'probe_success{job="whos-hot-nhl-site", probe="London"}'
+      - series: 'probe_success{job="whos-hot-hockey-site", probe="London"}'
         values: '1x15'
-      - series: 'probe_success{job="whos-hot-nhl-site", probe="NorthVirginia"}'
+      - series: 'probe_success{job="whos-hot-hockey-site", probe="NorthVirginia"}'
         values: '1x15'
     alert_rule_test:
       - eval_time: 10m
@@ -30,18 +30,18 @@ tests:
   - name: two of three probe locations failing pages
     interval: 1m
     input_series:
-      - series: 'probe_success{job="whos-hot-nhl-site", probe="Frankfurt"}'
+      - series: 'probe_success{job="whos-hot-hockey-site", probe="Frankfurt"}'
         values: '0x15'
-      - series: 'probe_success{job="whos-hot-nhl-site", probe="London"}'
+      - series: 'probe_success{job="whos-hot-hockey-site", probe="London"}'
         values: '0x15'
-      - series: 'probe_success{job="whos-hot-nhl-site", probe="NorthVirginia"}'
+      - series: 'probe_success{job="whos-hot-hockey-site", probe="NorthVirginia"}'
         values: '1x15'
     alert_rule_test:
       - eval_time: 10m
         alertname: SiteDown
         exp_alerts:
           - exp_labels:
-              job: whos-hot-nhl-site
+              job: whos-hot-hockey-site
 
   # --- Absence: one alert for a dead server, specific alerts otherwise ---------------
 
@@ -54,15 +54,15 @@ tests:
         values: '1x40'
       - series: 'ingestion_last_success{environment="prod", mode="players-full"}'
         values: '0+60x40'
-      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="caddy"}'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-hockey", service="caddy"}'
         values: '1x40'
-      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="frontend"}'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-hockey", service="frontend"}'
         values: '1x40'
-      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="backend-api"}'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-hockey", service="backend-api"}'
         values: '1x40'
-      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="data-job"}'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-hockey", service="data-job"}'
         values: '1x40'
-      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="postgres"}'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-hockey", service="postgres"}'
         values: '1x40'
     alert_rule_test:
       - eval_time: 30m
@@ -84,15 +84,15 @@ tests:
         values: '1x10 _x30'
       - series: 'ingestion_last_success{environment="prod", mode="players-full"}'
         values: '0+60x10 _x30'
-      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="caddy"}'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-hockey", service="caddy"}'
         values: '1x10 _x30'
-      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="frontend"}'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-hockey", service="frontend"}'
         values: '1x10 _x30'
-      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="backend-api"}'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-hockey", service="backend-api"}'
         values: '1x10 _x30'
-      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="data-job"}'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-hockey", service="data-job"}'
         values: '1x10 _x30'
-      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="postgres"}'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-hockey", service="postgres"}'
         values: '1x10 _x30'
     alert_rule_test:
       - eval_time: 30m
@@ -117,15 +117,15 @@ tests:
         values: '1x40'
       - series: 'ingestion_last_success{environment="prod", mode="players-full"}'
         values: '0+60x40'
-      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="caddy"}'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-hockey", service="caddy"}'
         values: '1x40'
-      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="frontend"}'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-hockey", service="frontend"}'
         values: '1x40'
-      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="backend-api"}'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-hockey", service="backend-api"}'
         values: '1x40'
-      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="data-job"}'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-hockey", service="data-job"}'
         values: '1x40'
-      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="postgres"}'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-hockey", service="postgres"}'
         values: '1x5 _x35'
     alert_rule_test:
       - eval_time: 20m
@@ -133,7 +133,7 @@ tests:
         exp_alerts:
           - exp_labels:
               environment: prod
-              project: whos-hot-nhl
+              project: whos-hot-hockey
               service: postgres
       - eval_time: 20m
         alertname: ServerSilent
@@ -151,15 +151,15 @@ tests:
         values: '1x40'
       - series: 'ingestion_last_success{environment="prod", mode="players-full"}'
         values: '0+60x5 _x35'
-      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="caddy"}'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-hockey", service="caddy"}'
         values: '1x40'
-      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="frontend"}'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-hockey", service="frontend"}'
         values: '1x40'
-      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="backend-api"}'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-hockey", service="backend-api"}'
         values: '1x40'
-      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="data-job"}'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-hockey", service="data-job"}'
         values: '1x40'
-      - series: 'container_last_seen{environment="prod", project="whos-hot-nhl", service="postgres"}'
+      - series: 'container_last_seen{environment="prod", project="whos-hot-hockey", service="postgres"}'
         values: '1x40'
     alert_rule_test:
       - eval_time: 30m
@@ -179,7 +179,7 @@ tests:
   - name: one restart from a deploy does not alert
     interval: 1m
     input_series:
-      - series: 'container_start_time_seconds{environment="prod", project="whos-hot-nhl", service="backend-api"}'
+      - series: 'container_start_time_seconds{environment="prod", project="whos-hot-hockey", service="backend-api"}'
         values: '100x5 400x20'
     alert_rule_test:
       - eval_time: 10m
@@ -189,7 +189,7 @@ tests:
   - name: a crash loop alerts
     interval: 1m
     input_series:
-      - series: 'container_start_time_seconds{environment="prod", project="whos-hot-nhl", service="backend-api"}'
+      - series: 'container_start_time_seconds{environment="prod", project="whos-hot-hockey", service="backend-api"}'
         values: '100x3 300x3 500x3 700x20'
     alert_rule_test:
       - eval_time: 12m

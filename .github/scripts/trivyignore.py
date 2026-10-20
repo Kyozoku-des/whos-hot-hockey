@@ -28,7 +28,7 @@ TESTCONTAINERS_SHADED = re.compile(
 
 STATEMENTS = {
     "postgres-os": (
-        "postgres:17 (Debian) base of whos-hot-nhl-postgres: no Debian fix released yet. "
+        "postgres:17 (Debian) base of whos-hot-hockey-postgres: no Debian fix released yet. "
         "PostgreSQL is reachable only from the Compose network and the host's loopback; these "
         "are OS libraries and tools, not the server itself."),
     "alloy": (
@@ -81,8 +81,8 @@ def _package(pkg_type, path_pattern, name_prefix, category):
 # Report name (image reference with "/" and ":" replaced by "_") -> accepted findings.
 RULES = {
     # Built from postgres:17 without gosu (infra/database/Dockerfile): Debian packages only.
-    "ghcr.io_kyozoku-des_whos-hot-nhl-postgres_local": [
-        _os("ghcr.io/kyozoku-des/whos-hot-nhl-postgres:local", "debian", "postgres-os", require_unfixed=True),
+    "ghcr.io_kyozoku-des_whos-hot-hockey-postgres_local": [
+        _os("ghcr.io/kyozoku-des/whos-hot-hockey-postgres:local", "debian", "postgres-os", require_unfixed=True),
     ],
     "grafana_alloy_v1.21.0-distroless": [
         _os("grafana/alloy:v1.21.0-distroless", "ubuntu", "alloy", require_unfixed=False),

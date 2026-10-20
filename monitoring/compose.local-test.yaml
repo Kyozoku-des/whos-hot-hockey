@@ -6,7 +6,7 @@
 #
 #   $env:FRONTEND_PORT=13000; $env:API_PORT=18080; $env:DB_PORT=15432; $env:EDGE_NET='172.30.251'
 #   $env:SITE_DOMAIN='localhost'
-#   docker compose -p whos-hot-nhl-montest -f compose.yaml -f monitoring/compose.local-test.yaml --profile prod up -d --build
+#   docker compose -p whos-hot-hockey-montest -f compose.yaml -f monitoring/compose.local-test.yaml --profile prod up -d --build
 #
 # After a minute or two:
 #   Prometheus  http://localhost:19090   e.g. up, container_memory_working_set_bytes,
@@ -14,7 +14,7 @@
 #   Loki        http://localhost:13100/loki/api/v1/label/service/values
 #
 # Clean up (removes only this test project's containers and volumes):
-#   docker compose -p whos-hot-nhl-montest -f compose.yaml -f monitoring/compose.local-test.yaml --profile prod down -v
+#   docker compose -p whos-hot-hockey-montest -f compose.yaml -f monitoring/compose.local-test.yaml --profile prod down -v
 
 services:
   prometheus:
