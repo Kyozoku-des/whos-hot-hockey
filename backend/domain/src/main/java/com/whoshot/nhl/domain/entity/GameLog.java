@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 /**
  * Entity representing a player's performance in a specific game.
  * Used for calculating point streaks and hot/cold ratings.
@@ -29,7 +31,7 @@ public class GameLog {
     private Long gameId;
 
     @Column(nullable = false)
-    private String gameDate;
+    private LocalDate gameDate; // Local game date
 
     @Column
     private String opponentTeamCode;

@@ -14,6 +14,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -111,7 +113,7 @@ class TeamControllerTest {
         String season = "20252026";
 
         TeamGameLogDto game = new TeamGameLogDto(
-                2025020001L, "2025-10-10", "BOS", true,
+                2025020001L, LocalDate.parse("2025-10-10"), "BOS", true,
                 4, 2, true, false, "Regular", 1
         );
 
@@ -130,7 +132,7 @@ class TeamControllerTest {
     @Test
     void getNextGames_returns200WithNextOpponents() throws Exception {
         TeamNextGameDto next = new TeamNextGameDto(
-                "TOR", "BOS", false, "2026-10-11", "2026-10-11T23:00:00Z", "FUT");
+                "TOR", "BOS", false, LocalDate.parse("2026-10-11"), Instant.parse("2026-10-11T23:00:00Z"), "FUT");
 
         when(teamService.getNextGames(null)).thenReturn(List.of(next));
 

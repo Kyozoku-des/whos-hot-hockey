@@ -12,6 +12,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -101,7 +102,7 @@ class PlayerControllerTest {
         String season = "20252026";
 
         PlayerGameLogDto gameLog = new PlayerGameLogDto(
-                2025020100L, "2025-10-15", "CGY", true,
+                2025020100L, LocalDate.parse("2025-10-15"), "CGY", true,
                 2, 1, 3, 2, 5, 1200, true, 1
         );
 

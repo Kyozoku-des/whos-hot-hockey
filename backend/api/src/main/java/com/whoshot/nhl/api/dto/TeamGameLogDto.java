@@ -1,11 +1,13 @@
 package com.whoshot.nhl.api.dto;
 
+import java.time.LocalDate;
+
 /**
  * DTO representing a single game in a team's game log.
  */
 public record TeamGameLogDto(
         Long gameId,
-        String gameDate,
+        LocalDate gameDate,
         String opponentTeamCode,
         Boolean homeGame,
         Integer goalsFor,

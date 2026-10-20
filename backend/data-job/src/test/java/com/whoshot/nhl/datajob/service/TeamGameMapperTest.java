@@ -6,6 +6,8 @@ import com.whoshot.nhl.domain.entity.TeamGame;
 import com.whoshot.nhl.domain.entity.TeamNextGame;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,7 +54,7 @@ class TeamGameMapperTest {
 
         assertEquals(1L, teamGame.getGameId());
         assertEquals("COL", teamGame.getTeamCode());
-        assertEquals("2025-01-15", teamGame.getGameDate());
+        assertEquals(LocalDate.parse("2025-01-15"), teamGame.getGameDate());
         assertEquals("MTL", teamGame.getOpponentTeamCode());
         assertTrue(teamGame.getHomeGame());
         assertEquals(3, teamGame.getGoalsFor());
@@ -125,7 +127,7 @@ class TeamGameMapperTest {
 
         TeamGame mapped = GameLogWriter.toTeamGame(new TeamGame(), "COL", "20242025", evening, 1);
 
-        assertEquals("2024-10-09", mapped.getGameDate());
+        assertEquals(LocalDate.parse("2024-10-09"), mapped.getGameDate());
     }
 
     @Test
@@ -162,8 +164,8 @@ class TeamGameMapperTest {
         assertEquals("COL", next.getTeamCode());
         assertEquals("20242025", next.getSeasonId());
         assertEquals(5L, next.getGameId());
-        assertEquals("2025-01-03", next.getGameDate());
-        assertEquals("2025-01-04T00:00:00Z", next.getStartTimeUtc());
+        assertEquals(LocalDate.parse("2025-01-03"), next.getGameDate());
+        assertEquals(Instant.parse("2025-01-04T00:00:00Z"), next.getStartTimeUtc());
         assertEquals("FUT", next.getGameState());
         assertEquals("TOR", next.getOpponentTeamCode());
         assertFalse(next.getHomeGame());

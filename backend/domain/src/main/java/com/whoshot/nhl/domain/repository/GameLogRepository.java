@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 
@@ -37,7 +38,7 @@ public interface GameLogRepository extends JpaRepository<GameLog, Long> {
      *
      * @param playerIds NHL player identifiers
      * @param seasonId  season identifier
-     * @param gameDate  local game date ({@code yyyy-MM-dd}); only earlier games are considered
+     * @param gameDate  local game date; only earlier games are considered
      * @return at most one game log per player
      */
     @Query(value = """
@@ -48,5 +49,5 @@ public interface GameLogRepository extends JpaRepository<GameLog, Long> {
             """, nativeQuery = true)
     List<GameLog> findPreviousGames(@Param("playerIds") Collection<Long> playerIds,
                                     @Param("seasonId") String seasonId,
-                                    @Param("gameDate") String gameDate);
+                                    @Param("gameDate") LocalDate gameDate);
 }

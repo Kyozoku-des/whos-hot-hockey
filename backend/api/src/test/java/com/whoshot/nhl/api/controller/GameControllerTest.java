@@ -10,6 +10,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -32,15 +34,16 @@ class GameControllerTest {
         var goal = new ScoreboardDto.Goal(1, 1, "REG", "09:19", "DET", 0, 1, "pp",
                 new ScoreboardDto.Point(8478042L, "V. Arvidsson", true, false),
                 List.of(new ScoreboardDto.Point(8482078L, "L. Raymond", false, true)));
-        var game = new ScoreboardDto.Game(2026020066L, "OFF", "2026-10-09T23:00:00Z",
+        var game = new ScoreboardDto.Game(2026020066L, "OFF", Instant.parse("2026-10-09T23:00:00Z"),
                 "SEA", 6, "DET", 3, "REG", List.of(goal));
         when(scoreboardService.getLatestScoreboard())
-                .thenReturn(new ScoreboardDto("2026-10-09", false, List.of(game)));
+                .thenReturn(new ScoreboardDto(LocalDate.parse("2026-10-09"), false, List.of(game)));
 
         mockMvc.perform(get("/api/games/latest"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.gameDate").value("2026-10-09"))
                 .andExpect(jsonPath("$.live").value(false))
+                .andExpect(jsonPath("$.games[0].startTimeUtc").value("2026-10-09T23:00:00Z"))
                 .andExpect(jsonPath("$.games", hasSize(1)))
                 .andExpect(jsonPath("$.games[0].awayTeamCode").value("SEA"))
                 .andExpect(jsonPath("$.games[0].awayScore").value(6))

@@ -19,6 +19,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -89,7 +90,7 @@ class SeasonScopedGameLogIT {
         List<TeamGameLogDto> log = teamService.getTeamGameLog("COL", PAST_SEASON);
 
         assertEquals(List.of("2024-10-12", "2024-10-10", "2024-10-08"),
-                log.stream().map(TeamGameLogDto::gameDate).toList());
+                log.stream().map(game -> game.gameDate().toString()).toList());
     }
 
     @Test
@@ -104,12 +105,12 @@ class SeasonScopedGameLogIT {
     }
 
     private static GameLog gameLog(long playerId, long gameId, String date, String season, int number) {
-        return new GameLog(null, playerId, gameId, date, "MTL", true,
+        return new GameLog(null, playerId, gameId, LocalDate.parse(date), "MTL", true,
                 1, 0, 1, 1, 3, 1080, true, season, number);
     }
 
     private static TeamGame teamGame(String team, long gameId, String date, String season, int number) {
-        return new TeamGame(null, gameId, team, date, "MTL", true,
+        return new TeamGame(null, gameId, team, LocalDate.parse(date), "MTL", true,
                 3, 2, true, false, "2", season, number);
     }
 }

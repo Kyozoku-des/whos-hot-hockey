@@ -11,6 +11,7 @@ import com.whoshot.nhl.domain.repository.ScoreboardGameRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
@@ -38,7 +39,7 @@ class ScoreboardWriterIT extends PostgresIntegrationTestBase {
 
         assertThat(writer.writeGames(List.of(live, future), null)).isEqualTo(1);
 
-        List<ScoreboardGame> games = repository.findByGameDateOrderByStartTimeUtcAscGameIdAsc("2026-10-09");
+        List<ScoreboardGame> games = repository.findByGameDateOrderByStartTimeUtcAscGameIdAsc(LocalDate.parse("2026-10-09"));
         assertThat(games).singleElement().satisfies(game -> {
             assertThat(game.getGameState()).isEqualTo("LIVE");
             assertThat(game.getGoals()).extracting(ScoreboardGoal::getGoalNumber).containsExactly(1, 2);
@@ -60,13 +61,13 @@ class ScoreboardWriterIT extends PostgresIntegrationTestBase {
         writer.writeGames(List.of(
                 game(2L, "2026-10-08", GameState.OFF, goal("REG", 22L, "D. Four", 0, 1))), "2026-10-08");
 
-        assertThat(repository.findByGameDateOrderByStartTimeUtcAscGameIdAsc("2026-10-07")).isEmpty();
-        assertThat(repository.findByGameDateOrderByStartTimeUtcAscGameIdAsc("2026-10-08"))
+        assertThat(repository.findByGameDateOrderByStartTimeUtcAscGameIdAsc(LocalDate.parse("2026-10-07"))).isEmpty();
+        assertThat(repository.findByGameDateOrderByStartTimeUtcAscGameIdAsc(LocalDate.parse("2026-10-08")))
                 .singleElement().satisfies(game -> {
                     assertThat(game.getGameState()).isEqualTo("OFF");
                     assertThat(game.getGoals()).extracting(ScoreboardGoal::getScorerId).containsExactly(22L);
                 });
-        assertThat(repository.findLatestGameDateWithState(List.of("OFF"))).isEqualTo("2026-10-08");
+        assertThat(repository.findLatestGameDateWithState(List.of("OFF"))).isEqualTo(LocalDate.parse("2026-10-08"));
     }
 
     private static ScoreResponseDto.ScoreGame game(Long id, String date, GameState state, ScoreResponseDto.Goal... goals) {
