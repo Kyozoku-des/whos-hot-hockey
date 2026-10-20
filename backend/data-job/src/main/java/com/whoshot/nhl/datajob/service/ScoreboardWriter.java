@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +51,7 @@ public class ScoreboardWriter {
         }
         scoreboardGameRepository.saveAll(rows);
         if (keepFromDate != null) {
-            scoreboardGameRepository.deleteByGameDateBefore(keepFromDate);
+            scoreboardGameRepository.deleteByGameDateBefore(LocalDate.parse(keepFromDate));
         }
         return rows.size();
     }
@@ -60,9 +62,9 @@ public class ScoreboardWriter {
 
     static ScoreboardGame toScoreboardGame(ScoreboardGame row, ScoreResponseDto.ScoreGame game, LocalDateTime now) {
         row.setGameId(game.getId());
-        row.setGameDate(game.getGameDate());
+        row.setGameDate(LocalDate.parse(game.getGameDate()));
         row.setSeasonId(game.getSeason() != null ? game.getSeason().toString() : null);
-        row.setStartTimeUtc(game.getStartTimeUTC());
+        row.setStartTimeUtc(game.getStartTimeUTC() != null ? Instant.parse(game.getStartTimeUTC()) : null);
         row.setGameState(game.getGameState().name());
         row.setAwayTeamCode(game.getAwayTeam().getAbbrev());
         row.setAwayScore(game.getAwayTeam().getScore());

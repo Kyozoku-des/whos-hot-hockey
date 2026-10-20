@@ -32,7 +32,7 @@ class SearchControllerTest {
         String season = "20252026";
         when(searchService.getSearchIndex(season)).thenReturn(new SearchIndexDto(season, 2, List.of(
                 new SearchResultDto("TEAM", "TOR", "Toronto Maple Leafs", "TOR", "TOR", "https://logo.png"),
-                new SearchResultDto("PLAYER", "8478402", "Connor McDavid", "C", "EDM", "https://headshot.jpg")
+                new SearchResultDto("PLAYER", "8478402", "Connor McDavid", "C", "EDM", null)
         )));
 
         mockMvc.perform(get("/api/search/all").param("season", season))

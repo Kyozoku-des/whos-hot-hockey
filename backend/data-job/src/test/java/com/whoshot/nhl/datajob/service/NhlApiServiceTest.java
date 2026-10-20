@@ -92,8 +92,6 @@ class NhlApiServiceTest {
         assertThat(info.isActive()).isTrue();
         assertThat(info.getFirstName().getName()).isEqualTo("Connor");
         assertThat(info.getLastName().getName()).isEqualTo("McDavid");
-        assertThat(info.getHeadshotUrl()).isEqualTo("h.png");
-        assertThat(info.getTeamLogoUrl()).isEqualTo("t.svg");
         assertThat(info.getCurrentTeamAbbrev()).isEqualTo("EDM");
     }
 

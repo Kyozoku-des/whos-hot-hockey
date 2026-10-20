@@ -34,6 +34,11 @@ live in `domain/src/main/resources/db/migration`, available to both modules.
 `V2__drop_unpopulated_columns.sql` drops columns that no ingestion path ever wrote.
 `V3__consistent_season_and_timestamp_columns.sql` names the season column `season_id` in every
 table and stores every `last_updated` as a timestamp.
+`V8__drop_derived_columns_and_enforce_natural_keys.sql` drops columns the application derives
+(player full name and team logo, team goal differential) or no longer uses (headshots), and adds
+unique indexes on the game tables' natural keys. Builds from before V8 cannot run against it.
+`V9__typed_game_dates_and_start_times.sql` stores game dates as `DATE` and start times as
+`TIMESTAMPTZ` instead of text; the API still serializes them as `yyyy-MM-dd` and ISO-8601 UTC.
 Hibernate uses `ddl-auto=validate` and never creates or alters tables itself.
 
 Add future changes as `V4__description.sql`, `V5__description.sql`, etc. Never edit

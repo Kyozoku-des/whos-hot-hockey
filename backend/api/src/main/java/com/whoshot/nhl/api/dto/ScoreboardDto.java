@@ -1,5 +1,7 @@
 package com.whoshot.nhl.api.dto;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -9,7 +11,7 @@ import java.util.List;
  * @param live     whether any game of that day is in progress
  */
 public record ScoreboardDto(
-        String gameDate,
+        LocalDate gameDate,
         boolean live,
         List<Game> games
 ) {
@@ -26,7 +28,7 @@ public record ScoreboardDto(
     public record Game(
             Long gameId,
             String gameState,
-            String startTimeUtc,
+            Instant startTimeUtc,
             String awayTeamCode,
             Integer awayScore,
             String homeTeamCode,

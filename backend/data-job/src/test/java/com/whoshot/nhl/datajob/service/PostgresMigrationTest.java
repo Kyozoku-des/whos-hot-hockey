@@ -46,9 +46,10 @@ class PostgresMigrationTest extends PostgresIntegrationTestBase {
                     (player_id, season, first_name, last_name, points, penalty_minutes, shots, hot)
                 VALUES (1, '20242025', 'Test', 'Player', 42, 10, 100, true)
                 """);
+        // A duplicate of the same player and game: V8 keeps the most recently inserted row.
         jdbcTemplate.execute("""
                 INSERT INTO upgrade_test.game_logs (player_id, game_id, game_date, shots)
-                VALUES (1, 2024020001, '2024-10-04', 5)
+                VALUES (1, 2024020001, '2024-10-04', 4), (1, 2024020001, '2024-10-04', 5)
                 """);
         jdbcTemplate.execute("""
                 INSERT INTO upgrade_test.teams (team_code, season, team_name, last_updated)
@@ -61,7 +62,7 @@ class PostgresMigrationTest extends PostgresIntegrationTestBase {
 
         Flyway upgrade = Flyway.configure().dataSource(dataSource).defaultSchema("upgrade_test")
                 .locations("classpath:db/migration").load();
-        assertEquals(6, upgrade.migrate().migrationsExecuted);
+        assertEquals(8, upgrade.migrate().migrationsExecuted);
         upgrade.validate();
         assertEquals(0, upgrade.migrate().migrationsExecuted);
 
@@ -79,7 +80,12 @@ class PostgresMigrationTest extends PostgresIntegrationTestBase {
         assertEquals(0, jdbcTemplate.queryForObject("""
                 SELECT count(*) FROM information_schema.columns
                 WHERE table_schema = 'upgrade_test' AND table_name = 'players'
-                  AND column_name IN ('season', 'penalty_minutes', 'shots', 'shooting_percentage', 'hot')
+                  AND column_name IN ('season', 'penalty_minutes', 'shots', 'shooting_percentage', 'hot',
+                                      'headshot_url', 'team_logo_url', 'full_name')
+                """, Integer.class));
+        assertEquals(0, jdbcTemplate.queryForObject("""
+                SELECT count(*) FROM information_schema.columns
+                WHERE table_schema = 'upgrade_test' AND table_name = 'teams' AND column_name = 'goal_differential'
                 """, Integer.class));
     }
 

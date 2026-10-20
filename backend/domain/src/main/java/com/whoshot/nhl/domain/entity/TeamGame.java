@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 /**
  * Entity representing a team's game result.
  * Used for calculating win/loss streaks.
@@ -29,7 +31,7 @@ public class TeamGame {
     private String teamCode;
 
     @Column(nullable = false)
-    private String gameDate;
+    private LocalDate gameDate; // Local game date
 
     @Column
     private String opponentTeamCode;

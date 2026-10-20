@@ -17,16 +17,11 @@ public class PlayerInfoDto {
     @JsonProperty("isActive")
     private boolean isActive;
 
-    @JsonProperty("headshot")
-    private String headshotUrl;
-
     @JsonProperty("firstName")
     private NameDto firstName;
     @JsonProperty("lastName")
     private NameDto lastName;
     private String currentTeamAbbrev;
-    @JsonProperty("teamLogo")
-    private String teamLogoUrl;
     private String position;
 
     /**

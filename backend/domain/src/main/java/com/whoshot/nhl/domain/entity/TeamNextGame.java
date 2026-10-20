@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -30,10 +32,10 @@ public class TeamNextGame {
     private Long gameId;
 
     @Column(nullable = false)
-    private String gameDate; // Local game date (yyyy-MM-dd)
+    private LocalDate gameDate; // Local game date
 
     @Column
-    private String startTimeUtc;
+    private Instant startTimeUtc;
 
     @Column
     private String gameState; // NHL game state, e.g. FUT, LIVE

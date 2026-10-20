@@ -6,6 +6,7 @@ import com.whoshot.nhl.domain.entity.GameLog;
 import com.whoshot.nhl.domain.entity.TeamGame;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -127,7 +128,7 @@ class GameLogMapperTest {
 
         assertEquals(8478402L, mapped.getPlayerId());
         assertEquals(42L, mapped.getGameId());
-        assertEquals("2025-03-01", mapped.getGameDate());
+        assertEquals(LocalDate.parse("2025-03-01"), mapped.getGameDate());
         assertEquals("BOS", mapped.getOpponentTeamCode());
         assertEquals(2, mapped.getGoals());
         assertEquals(1, mapped.getAssists());

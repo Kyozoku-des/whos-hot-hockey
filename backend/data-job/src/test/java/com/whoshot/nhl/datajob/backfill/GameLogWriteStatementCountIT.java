@@ -72,7 +72,6 @@ class GameLogWriteStatementCountIT extends PostgresIntegrationTestBase {
                 .id(new Player.PlayerId(PLAYER_ID, SEASON_ID))
                 .firstName("Test")
                 .lastName("Player")
-                .fullName("Test Player")
                 .build();
     }
 }

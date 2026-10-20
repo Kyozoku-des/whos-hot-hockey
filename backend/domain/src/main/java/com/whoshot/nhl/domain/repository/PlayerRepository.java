@@ -80,7 +80,7 @@ public interface PlayerRepository extends JpaRepository<Player, Player.PlayerId>
      */
     @Query("SELECT new com.whoshot.nhl.domain.entity.SearchResult('PLAYER', " +
            "CAST(p.id.playerId AS string), CONCAT(p.firstName, ' ', p.lastName), " +
-           "p.positionCode, p.teamCode, p.headshotUrl) " +
+           "p.positionCode, p.teamCode, CAST(NULL AS String)) " +
            "FROM Player p WHERE p.id.seasonId = :seasonId " +
            "ORDER BY p.lastName, p.firstName")
     List<SearchResult> findAllForSearch(@Param("seasonId") String seasonId);

@@ -14,7 +14,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -218,6 +222,24 @@ public class GameLogWriter {
                 throw new IllegalArgumentException("game log missing game id or date");
             }
             try {
+                LocalDate.parse(dto.getGameDate());
+            } catch (DateTimeParseException e) {
+                throw new IllegalArgumentException("invalid game date '" + dto.getGameDate() + "' in game "
+                        + dto.getGameId(), e);
+            }
+            try {
+                LocalDate.parse(dto.getGameDate());
+            } catch (DateTimeParseException e) {
+                throw new IllegalArgumentException("invalid game date '" + dto.getGameDate() + "' in game "
+                        + dto.getGameId(), e);
+            }
+            try {
+                LocalDate.parse(dto.getGameDate());
+            } catch (DateTimeParseException e) {
+                throw new IllegalArgumentException("invalid game date '" + dto.getGameDate() + "' in game "
+                        + dto.getGameId(), e);
+            }
+            try {
                 toiSeconds(dto.getToi());
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException(e.getMessage() + " in game " + dto.getGameId(), e);
@@ -236,9 +258,7 @@ public class GameLogWriter {
 
         target.setGameId(game.getId());
         target.setTeamCode(teamCode);
-        // Upstream's local game date, matching game_logs.game_date; the UTC start time of an
-        // evening game falls on the next calendar day.
-        target.setGameDate(game.getGameDate() != null ? game.getGameDate() : datePart(game.getStartTimeUTC()));
+        target.setGameDate(gameDate(game));
         target.setOpponentTeamCode(opponent);
         target.setHomeGame(homeGame);
         target.setGoalsFor(goalsFor);
@@ -256,8 +276,8 @@ public class GameLogWriter {
         target.setTeamCode(teamCode);
         target.setSeasonId(seasonId);
         target.setGameId(game.getId());
-        target.setGameDate(game.getGameDate() != null ? game.getGameDate() : datePart(game.getStartTimeUTC()));
-        target.setStartTimeUtc(game.getStartTimeUTC());
+        target.setGameDate(gameDate(game));
+        target.setStartTimeUtc(game.getStartTimeUTC() != null ? Instant.parse(game.getStartTimeUTC()) : null);
         target.setGameState(game.getGameState().name());
         target.setOpponentTeamCode(homeGame ? game.getAwayTeam().getAbbrev() : game.getHomeTeam().getAbbrev());
         target.setHomeGame(homeGame);
@@ -269,7 +289,7 @@ public class GameLogWriter {
                               int gameNumber, Boolean gameWon) {
         target.setPlayerId(playerId);
         target.setGameId(dto.getGameId());
-        target.setGameDate(dto.getGameDate());
+        target.setGameDate(LocalDate.parse(dto.getGameDate()));
         target.setOpponentTeamCode(dto.getOpponentAbbrev());
         target.setHomeGame("H".equals(dto.getHomeRoadFlag()));
         target.setGoals(dto.getGoals());
@@ -284,7 +304,13 @@ public class GameLogWriter {
         return target;
     }
 
-    private static String datePart(String startTimeUTC) {
-        return startTimeUTC.length() >= 10 ? startTimeUTC.substring(0, 10) : startTimeUTC;
+    /**
+     * Upstream's local game date, matching game_logs.game_date, or the UTC start date when upstream
+     * omits it; the UTC start time of an evening game falls on the next calendar day.
+     */
+    private static LocalDate gameDate(GameDto game) {
+        return game.getGameDate() != null
+                ? LocalDate.parse(game.getGameDate())
+                : Instant.parse(game.getStartTimeUTC()).atOffset(ZoneOffset.UTC).toLocalDate();
     }
 }

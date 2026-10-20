@@ -71,6 +71,26 @@ class TeamServiceTest {
         assertThat(detail.projectedPoints()).isEqualTo(120);
     }
 
+    @Test
+    void teamDetail_derivesGoalDifferentialAndRosterNames() {
+        Team team = new Team();
+        team.setTeamCode("EDM");
+        team.setGoalsFor(70);
+        team.setGoalsAgainst(82);
+        when(teamRepository.findByTeamCodeAndSeasonId("EDM", SEASON)).thenReturn(Optional.of(team));
+        Player player = player(97L, 1, 2, 3);
+        player.setFirstName("Connor");
+        player.setLastName("McDavid");
+        when(playerRepository.findRosterPlayers("EDM", SEASON)).thenReturn(List.of(player));
+
+        var detail = teamService.getTeamDetail("EDM", SEASON);
+
+        assertThat(detail.goalDifferential()).isEqualTo(-12);
+        assertThat(detail.roster()).singleElement()
+                .satisfies(entry -> assertThat(entry.fullName()).isEqualTo("Connor McDavid"));
+        assertThat(new Team().getGoalDifferential()).isNull();
+    }
+
     private static Player player(long id, int goals, int assists, int points) {
         return Player.builder().id(new Player.PlayerId(id, SEASON))
                 .goals(goals).assists(assists).points(points).build();

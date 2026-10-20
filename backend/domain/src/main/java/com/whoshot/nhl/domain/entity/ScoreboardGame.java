@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,13 +26,13 @@ public class ScoreboardGame {
     private Long gameId;
 
     @Column(nullable = false)
-    private String gameDate;
+    private LocalDate gameDate; // Local game date
 
     @Column
     private String seasonId;
 
     @Column
-    private String startTimeUtc;
+    private Instant startTimeUtc;
 
     @Column
     private String gameState; // NHL game state, e.g. LIVE, OFF

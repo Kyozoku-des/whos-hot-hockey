@@ -58,9 +58,6 @@ public class Team {
     private Integer goalsAgainst;
 
     @Column
-    private Integer goalDifferential;
-
-    @Column
     private String conferenceName;
 
     @Column
@@ -82,6 +79,15 @@ public class Team {
 
     @Column
     private LocalDateTime lastUpdated;
+
+    /**
+     * Goal differential, derived rather than stored.
+     *
+     * @return goals for minus goals against, or null until both are known
+     */
+    public Integer getGoalDifferential() {
+        return goalsFor == null || goalsAgainst == null ? null : goalsFor - goalsAgainst;
+    }
 
     /**
      * Composite key class for Team entity.

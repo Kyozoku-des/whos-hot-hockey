@@ -30,7 +30,6 @@ public class TeamStandingsDto {
     private String divisionName;
     private Integer goalFor;
     private Integer goalAgainst;
-    private Integer goalDifferential;
 
     /**
      * Localized NHL API field that stores its primary value under the "default" key.

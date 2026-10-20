@@ -47,7 +47,7 @@ class BackfillSeasonIsolationIT extends PostgresIntegrationTestBase {
         // Seed pre-existing current-season data and the active-season marker.
         Player currentSeasonPlayer = Player.builder()
                 .id(new Player.PlayerId(PLAYER_ID, CURRENT_SEASON_ID))
-                .firstName("Connor").lastName("McDavid").fullName("Connor McDavid")
+                .firstName("Connor").lastName("McDavid")
                 .gamesPlayed(10).points(20).goals(10).assists(10)
                 .build();
         playerRepository.save(currentSeasonPlayer);

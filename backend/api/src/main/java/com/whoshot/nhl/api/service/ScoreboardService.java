@@ -11,6 +11,7 @@ import com.whoshot.nhl.domain.repository.ScoreboardGameRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,8 +54,8 @@ public class ScoreboardService {
      * @return that day's games with their goals, or an empty scoreboard when there are none
      */
     public ScoreboardDto getLatestScoreboard() {
-        String liveDate = scoreboardGameRepository.findLatestGameDateWithState(LIVE_STATES);
-        String gameDate = liveDate != null
+        LocalDate liveDate = scoreboardGameRepository.findLatestGameDateWithState(LIVE_STATES);
+        LocalDate gameDate = liveDate != null
                 ? liveDate
                 : scoreboardGameRepository.findLatestGameDateWithState(COMPLETED_STATES);
         if (gameDate == null) {
@@ -69,7 +70,7 @@ public class ScoreboardService {
     }
 
     /** Streak and hot flags of every player with a point on the day, looked up in two queries per season. */
-    private PlayerFlags playerFlags(List<ScoreboardGame> games, String gameDate) {
+    private PlayerFlags playerFlags(List<ScoreboardGame> games, LocalDate gameDate) {
         Map<String, Set<Long>> playerIdsBySeason = new HashMap<>();
         for (ScoreboardGame game : games) {
             Set<Long> ids = playerIdsBySeason.computeIfAbsent(game.getSeasonId(), season -> new HashSet<>());

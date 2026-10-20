@@ -8,7 +8,7 @@ package com.whoshot.nhl.domain.entity;
  * @param name          player full name or team name
  * @param secondaryInfo player position or team code
  * @param teamCode      the player's team code, or the team's own code
- * @param imageUrl      headshot or logo
+ * @param imageUrl      the team's logo; null for players
  */
 public record SearchResult(
         String type,

@@ -21,6 +21,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -112,7 +114,7 @@ class ScoreboardServiceIT {
                 // Secondary assist: only today's game is logged, so no previous game.
                 gameLog(SECONDARY, 20L, "2026-10-09", 1),
                 // A previous season's game never extends this season's streak.
-                new GameLog(null, SECONDARY, 3L, "2026-04-10", "MTL", true, 1, 0, 1, 0, 1, 900, true, "20252026", 82)));
+                new GameLog(null, SECONDARY, 3L, LocalDate.parse("2026-04-10"), "MTL", true, 1, 0, 1, 0, 1, 900, true, "20252026", 82)));
 
         ScoreboardDto.Goal goal = service.getLatestScoreboard().games().getFirst().goals().getFirst();
 
@@ -134,9 +136,9 @@ class ScoreboardServiceIT {
     private static ScoreboardGame game(Long gameId, String date, String state, ScoreboardGoal... goals) {
         var game = new ScoreboardGame();
         game.setGameId(gameId);
-        game.setGameDate(date);
+        game.setGameDate(LocalDate.parse(date));
         game.setSeasonId(SEASON);
-        game.setStartTimeUtc(date + "T23:00:" + (gameId % 60) + "Z");
+        game.setStartTimeUtc(Instant.parse(date + "T23:00:00Z").plusSeconds(gameId % 60));
         game.setGameState(state);
         game.setAwayTeamCode("SEA");
         game.setHomeTeamCode("DET");
@@ -161,7 +163,7 @@ class ScoreboardServiceIT {
     }
 
     private static GameLog gameLog(long playerId, long gameId, String date, int points) {
-        return new GameLog(null, playerId, gameId, date, "MTL", true,
+        return new GameLog(null, playerId, gameId, LocalDate.parse(date), "MTL", true,
                 points, 0, points, 0, 1, 900, true, SEASON, (int) gameId);
     }
 

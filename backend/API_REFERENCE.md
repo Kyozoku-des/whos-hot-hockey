@@ -13,6 +13,7 @@ Numeric fields are `null` when the data job has not computed them yet.
 ### GET /api/search/all
 
 Returns the full search index for one season: every team followed by every player.
+`imageUrl` is the team's logo for team entries and `null` for players.
 
 - **Query params**: `season` (optional)
 - **Description**: Clients fetch this once, cache it, and filter locally for autocomplete — there is no server-side query parameter. `season` on the envelope identifies which season the index belongs to, so a cached copy can be invalidated when the season rolls over; it is deliberately not repeated on each result.
@@ -38,7 +39,7 @@ Returns the full search index for one season: every team followed by every playe
       "name": "Connor McDavid",
       "secondaryInfo": "C",
       "teamCode": "EDM",
-      "imageUrl": "https://assets.nhle.com/mugs/nhl/20252026/EDM/8478402.png"
+      "imageUrl": null
     }
   ]
 }
@@ -59,7 +60,6 @@ The three list endpoints below return the same player row:
   "positionCode": "C",
   "teamCode": "EDM",
   "teamLogoUrl": "https://assets.nhle.com/logos/nhl/svg/EDM_light.svg",
-  "headshotUrl": "https://assets.nhle.com/mugs/nhl/20252026/EDM/8478402.png",
   "gamesPlayed": 60,
   "goals": 30,
   "assists": 50,
@@ -203,7 +203,6 @@ Team detail: the team row above plus the season's roster, `seasonGames` and `pro
   "fullName": "Connor McDavid",
   "positionCode": "C",
   "teamCode": "EDM",
-  "headshotUrl": "https://assets.nhle.com/mugs/nhl/20252026/EDM/8478402.png",
   "goals": 32,
   "assists": 68,
   "points": 100
