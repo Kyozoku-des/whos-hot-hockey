@@ -94,7 +94,6 @@ final class BackfillFixtures {
         dto.setActive(active);
         dto.setCurrentTeamAbbrev(teamCode);
         dto.setPosition("C");
-        dto.setHeadshotUrl("https://example.test/headshot.png");
         dto.setFirstName(name("Connor"));
         dto.setLastName(name("McDavid"));
         return dto;

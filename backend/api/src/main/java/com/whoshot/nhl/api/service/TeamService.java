@@ -191,7 +191,6 @@ public class TeamService {
                 player.getFullName(),
                 player.getPositionCode(),
                 player.getTeamCode(),
-                player.getHeadshotUrl(),
                 player.getGoals(),
                 player.getAssists(),
                 player.getPoints()

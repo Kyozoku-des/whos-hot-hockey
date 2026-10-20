@@ -64,7 +64,7 @@ class TeamControllerTest {
         String season = "20252026";
 
         RosterPlayerDto player = new RosterPlayerDto(
-                34L, "Auston Matthews", "C", "TOR", "https://headshot.png", 40, 35, 75
+                34L, "Auston Matthews", "C", "TOR", 40, 35, 75
         );
 
         TeamDetailDto detail = new TeamDetailDto(

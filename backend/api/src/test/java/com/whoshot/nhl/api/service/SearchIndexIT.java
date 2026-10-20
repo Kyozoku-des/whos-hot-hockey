@@ -56,13 +56,13 @@ class SearchIndexIT {
         playerRepository.save(Player.builder()
                 .id(new Player.PlayerId(8478402L, SEASON))
                 .firstName("Connor").lastName("McDavid")
-                .positionCode("C").teamCode("EDM").headshotUrl("https://headshot.png")
+                .positionCode("C").teamCode("EDM")
                 .build());
 
         SearchIndexDto index = searchService.getSearchIndex(SEASON);
 
         assertThat(index.results()).containsExactly(
                 new SearchResultDto("TEAM", "EDM", "Edmonton Oilers", "EDM", "EDM", "https://logo.svg"),
-                new SearchResultDto("PLAYER", "8478402", "Connor McDavid", "C", "EDM", "https://headshot.png"));
+                new SearchResultDto("PLAYER", "8478402", "Connor McDavid", "C", "EDM", null));
     }
 }

@@ -35,7 +35,7 @@ class PlayerControllerTest {
 
         PlayerStandingsDto player = new PlayerStandingsDto(
                 8478402L, "Connor", "McDavid", "Connor McDavid",
-                "C", "EDM", "https://logo.png", "https://headshot.jpg",
+                "C", "EDM", "https://logo.png",
                 50, 30, 45, 75, 1.5, 15, 2.0, 5, 0
         );
 
@@ -50,6 +50,7 @@ class PlayerControllerTest {
                 .andExpect(jsonPath("$[0].fullName").value("Connor McDavid"))
                 .andExpect(jsonPath("$[0].positionCode").value("C"))
                 .andExpect(jsonPath("$[0].teamCode").value("EDM"))
+                .andExpect(jsonPath("$[0].headshotUrl").doesNotExist())
                 .andExpect(jsonPath("$[0].points").value(75))
                 .andExpect(jsonPath("$[0].currentPointStreak").value(5));
     }
@@ -61,7 +62,7 @@ class PlayerControllerTest {
 
         PlayerDetailDto detail = new PlayerDetailDto(
                 playerId, "Connor", "McDavid", "Connor McDavid",
-                "C", "EDM", "https://logo.png", "https://headshot.jpg",
+                "C", "EDM", "https://logo.png",
                 50, 30, 45, 75, 1.5, 15,
                 5, 0, 2.0, 82, 123
         );

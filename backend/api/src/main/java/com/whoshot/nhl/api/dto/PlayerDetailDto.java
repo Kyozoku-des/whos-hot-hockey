@@ -11,7 +11,6 @@ public record PlayerDetailDto(
         String positionCode,
         String teamCode,
         String teamLogoUrl,
-        String headshotUrl,
         Integer gamesPlayed,
         Integer goals,
         Integer assists,

@@ -45,7 +45,6 @@ public class Player {
     @Column private Integer currentPointlessStreak;
     @Column private Double pointsPerLastNGames;
     @Column private LocalDateTime lastUpdated;
-    @Column private String headshotUrl;
 
     /**
      * Composite primary key for a player row scoped by season.

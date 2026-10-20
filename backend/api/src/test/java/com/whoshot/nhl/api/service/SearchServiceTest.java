@@ -34,7 +34,7 @@ class SearchServiceTest {
         when(teamRepository.findAllForSearch(season)).thenReturn(List.of(
                 new SearchResult("TEAM", "TOR", "Toronto Maple Leafs", "TOR", "TOR", "https://logo.png")));
         when(playerRepository.findAllForSearch(season)).thenReturn(List.of(
-                new SearchResult("PLAYER", "8478402", "Connor McDavid", "C", "EDM", "https://headshot.jpg")));
+                new SearchResult("PLAYER", "8478402", "Connor McDavid", "C", "EDM", null)));
 
         var index = searchService.getSearchIndex(season);
 

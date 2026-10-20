@@ -17,9 +17,6 @@ public class PlayerInfoDto {
     @JsonProperty("isActive")
     private boolean isActive;
 
-    @JsonProperty("headshot")
-    private String headshotUrl;
-
     @JsonProperty("firstName")
     private NameDto firstName;
     @JsonProperty("lastName")

@@ -49,7 +49,6 @@ public class PlayerFactory {
                 .positionCode(info.getPosition())
                 .teamCode(info.getCurrentTeamAbbrev())
                 .teamLogoUrl(info.getTeamLogoUrl())
-                .headshotUrl(info.getHeadshotUrl())
                 .gamesPlayed(statistics.gamesPlayed())
                 .points(statistics.points())
                 .goals(statistics.goals())
