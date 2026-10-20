@@ -2,6 +2,7 @@ package com.whoshot.nhl.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Formula;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -34,7 +35,9 @@ public class Player {
     @Column private String fullName;
     @Column private String positionCode;
     @Column private String teamCode;
-    @Column private String teamLogoUrl;
+    // The team's logo for this season, read from teams instead of being stored per player.
+    @Formula("(SELECT t.logo_url FROM teams t WHERE t.team_code = team_code AND t.season_id = season_id)")
+    private String teamLogoUrl;
     @Column private Integer gamesPlayed;
     @Column private Integer goals;
     @Column private Integer assists;
