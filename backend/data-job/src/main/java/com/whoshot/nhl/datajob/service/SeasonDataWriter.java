@@ -162,7 +162,6 @@ public class SeasonDataWriter {
         team.setPointPercentage(standing.getPointPctg());
         team.setGoalsFor(standing.getGoalFor());
         team.setGoalsAgainst(standing.getGoalAgainst());
-        team.setGoalDifferential(standing.getGoalDifferential());
         team.setConferenceName(standing.getConferenceName());
         team.setDivisionName(standing.getDivisionName());
 

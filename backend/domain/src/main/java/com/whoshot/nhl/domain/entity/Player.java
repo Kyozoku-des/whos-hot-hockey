@@ -32,7 +32,6 @@ public class Player {
     @Column(nullable = false)
     private String lastName;
 
-    @Column private String fullName;
     @Column private String positionCode;
     @Column private String teamCode;
     // The team's logo for this season, read from teams instead of being stored per player.
@@ -48,6 +47,15 @@ public class Player {
     @Column private Integer currentPointlessStreak;
     @Column private Double pointsPerLastNGames;
     @Column private LocalDateTime lastUpdated;
+
+    /**
+     * Display name, derived rather than stored.
+     *
+     * @return first and last name separated by a space
+     */
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
 
     /**
      * Composite primary key for a player row scoped by season.

@@ -45,7 +45,6 @@ public class PlayerFactory {
                 .id(new Player.PlayerId(info.getPlayerId(), seasonId))
                 .firstName(info.getFirstName().getName())
                 .lastName(info.getLastName().getName())
-                .fullName(info.getFirstName().getName() + " " + info.getLastName().getName())
                 .positionCode(info.getPosition())
                 .teamCode(info.getCurrentTeamAbbrev())
                 .gamesPlayed(statistics.gamesPlayed())
