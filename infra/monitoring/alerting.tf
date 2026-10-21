@@ -8,6 +8,12 @@ resource "grafana_contact_point" "email" {
     single_email            = true
     disable_resolve_message = false
   }
+
+  # A new name replaces the contact point, and Grafana refuses to delete one that the
+  # notification policy still uses: create the new one and repoint the policy first.
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # The stack's notification policy tree (a singleton). Firing alerts are grouped per
