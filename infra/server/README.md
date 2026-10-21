@@ -97,39 +97,6 @@ Docker as described in `infra/monitoring/README.md`.
 
 ## Deploys and rollback
 
-### Before deploying the issue #58 database-role change
-
-Install this branch's `whoshot-deploy` script using the commands under **Changing
-the server later**, then add `API_DB_PASSWORD` and `INGEST_DB_PASSWORD` to
-`/opt/whoshot/app.env`. Each must be at least 20 characters; they must differ from
-each other and `DB_PASSWORD`. Do this **before merging/deploying** this change.
-The updated script rejects missing/default/shared passwords before touching
-running containers. The provisioning service also rejects them independently.
-Do not paste these values into an agent session or commit them.
-
-Compose runs `migrate` using the existing database owner, then `db-roles` grants
-the API SELECT access and ingestion/backfill data-write access. Only after both
-exit successfully do the runtime services start. Serving services have Flyway
-disabled and never receive the administrative password. The bundled role script
-works on existing volumes as well as fresh databases and is safe to rerun.
-
-No database objects or existing data are dropped. The `whoshot` owner and its
-password remain unchanged, so rollback to a pre-change image still works; the
-additional runtime roles can remain. Changing a runtime password in `app.env`
-re-runs provisioning at the next deploy. Keep the PostgreSQL distribution/locale
-unchanged when upgrading an existing data directory; a Debian-to-Alpine image
-swap is not a safe vulnerability fix without a separate migration rehearsal.
-
-PostgreSQL runs from `whos-hot-hockey-postgres`, built by CI from `postgres:17` with
-gosu removed and the postgres user as the image user (`infra/database/Dockerfile`).
-It uses the same Debian base, so existing volumes start unchanged; the first deploy
-with it only recreates the database container. Rolling back to a build from before
-this image uses `postgres:17` again with the same volume.
-
-The completed migration/provisioning containers retain their configured secret
-environment until removed. Restrict host Docker access to administrators; a
-diagnostic agent must not have the Docker socket or Docker-group membership.
-
 - Every merge to `master`: tests, frontend build, nginx rate limit tests, image builds,
   deploy, then a smoke test (site and `/api` return 200 through Caddy, and a burst of
   requests gets rate limited).

@@ -87,8 +87,8 @@ The read-only API connection default is additional protection; permission tests
 also disable that default to verify the actual database grants.
 
 The owner/password is retained for migrations and rollback. Production runtime
-passwords must be distinct, non-default and at least 20 characters. See the
-[deployment prerequisites](infra/server/README.md#before-deploying-the-issue-58-database-role-change).
+passwords must be distinct, non-default and at least 20 characters; see
+[`infra/server/app.env.example`](infra/server/app.env.example).
 Local direct JVM runs retain their development defaults; use the runtime role
 credentials and disable Flyway when connecting them to a provisioned database.
 
