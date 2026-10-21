@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploys one commit's images (issue #23). The CI deploy key is pinned to this script
+# Deploys one commit's images. The CI deploy key is pinned to this script
 # in authorized_keys, so it is all that key can run:
 #
 #   printf '%s\n' "$GITHUB_TOKEN" | ssh deploy@server deploy <40-char commit SHA>

@@ -34,7 +34,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 /**
- * Retry policy of {@link ApiClient} (issue #29): which failures retry, how many times, how long it
+ * Retry policy of {@link ApiClient}: which failures retry, how many times, how long it
  * waits, and that cancellation and deadlines stop it.
  */
 class ApiClientRetryTest {

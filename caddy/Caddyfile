@@ -1,4 +1,4 @@
-# Public entry point in production (issue #21): TLS, security headers and access logs,
+# Public entry point in production: TLS, security headers and access logs,
 # in front of the frontend's nginx, which serves the SPA and proxies /api/.
 # SITE_DOMAIN comes from the server's .env through compose.
 
@@ -51,7 +51,7 @@ http:// {
 	log {
 		output stdout
 		# Keep status, duration and sizes, but discard client-controlled request
-		# text and response headers before logs leave the process (issue #58).
+		# text and response headers before logs leave the process.
 		format filter {
 			wrap json
 			fields {

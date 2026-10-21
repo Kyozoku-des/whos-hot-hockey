@@ -1,6 +1,6 @@
 name: ci
 
-# Pull request checks (issue #23): backend tests, frontend build and the production
+# Pull request checks: backend tests, frontend build and the production
 # compose and Caddy configuration. The deploy workflow runs the same checks before
 # building images for master.
 

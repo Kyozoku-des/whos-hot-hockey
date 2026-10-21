@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 /**
- * Bounded, time-limited cache of player profiles ({@code /landing}) for game-time polls (issue #29).
+ * Bounded, time-limited cache of player profiles ({@code /landing}) for game-time polls.
  * <p>
  * A game-time poll needs a profile only to confirm a stored roster player is still active and on a
  * playing team; that rarely changes within a game window, so a poll reuses a profile fetched within

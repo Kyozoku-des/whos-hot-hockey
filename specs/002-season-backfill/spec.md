@@ -3,7 +3,7 @@
 **Feature Branch**: `002-season-backfill`
 **Created**: 2026-09-13
 **Status**: Draft
-**Input**: GitHub issue #17 — "Script for loading a season": *"Script for loading a given season is needed. It should load player and team stats into the database. This is needed as for example the previous season will never load into the database by the backend. While the previous season is needed for comparison in game log graphs of players and teams."*
+**Input**: Original request — "Script for loading a season": *"Script for loading a given season is needed. It should load player and team stats into the database. This is needed as for example the previous season will never load into the database by the backend. While the previous season is needed for comparison in game log graphs of players and teams."*
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -28,7 +28,7 @@ A maintainer of the Who's Hot NHL deployment needs data from a season that the a
 
 A site visitor viewing a player's or team's game-log graph wants a reference line for how that player or team performed in the previous season, so they can judge whether current form is hot or cold relative to their own baseline.
 
-**Why this priority**: This is the motivating use case from issue #17, but it is only reachable once P1 has put the data in place. It is also the story that defines *which* fields the backfill must produce — anything the comparison view needs must be loaded, not just the headline totals.
+**Why this priority**: This is the motivating use case from the original request, but it is only reachable once P1 has put the data in place. It is also the story that defines *which* fields the backfill must produce — anything the comparison view needs must be loaded, not just the headline totals.
 
 **Independent Test**: With a past season loaded, request a player's and a team's season-over-season comparison data and confirm both seasons' values are returned and are internally consistent (totals match the sum of the per-game logs).
 

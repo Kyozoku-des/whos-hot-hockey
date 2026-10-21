@@ -133,7 +133,7 @@ are limited by their socket address. The official nginx image renders
 `nginx/realip.conf.template` at startup; changing the environment requires
 recreating the frontend container.
 
-When adding the production stack from issues #21/#23, give Caddy a fixed IP on
+When adding the production stack, give Caddy a fixed IP on
 a dedicated proxy network and pass **that exact IP** to the frontend container.
 For example, these are fragments for the production Compose file, not an
 override for the local file:

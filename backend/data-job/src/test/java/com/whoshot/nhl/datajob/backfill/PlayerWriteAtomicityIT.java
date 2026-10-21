@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doThrow;
 
 /**
- * A player and their game logs are one persistence unit (issue #29): a database failure part-way
+ * A player and their game logs are one persistence unit: a database failure part-way
  * through the logs must not leave the player committed without them, and rewriting converges.
  */
 class PlayerWriteAtomicityIT extends PostgresIntegrationTestBase {

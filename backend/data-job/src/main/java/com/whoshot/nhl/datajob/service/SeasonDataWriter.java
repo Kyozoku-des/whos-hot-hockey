@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Short, atomic persistence units for ingestion (issue #29). Each public method is one transaction
+ * Short, atomic persistence units for ingestion. Each public method is one transaction
  * that performs no network calls, so fetch work never holds a transaction open and a failure rolls
  * back exactly one unit:
  * <ul>

@@ -1,5 +1,5 @@
 # The files a release runs with on the server, versioned with the application images
-# (issue #23). The deploy script copies them out; nothing runs this image.
+# The deploy script copies them out; nothing runs this image.
 # Build from the repository root:
 #   docker build -f infra/server/bundle.Dockerfile .
 FROM scratch

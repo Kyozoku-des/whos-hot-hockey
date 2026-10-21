@@ -1,6 +1,6 @@
 # Monitoring
 
-Production monitoring for issue #70: traffic, CPU and memory, failures, and alerts when the
+Production monitoring: traffic, CPU and memory, failures, and alerts when the
 site is down. It runs on **Grafana Cloud** (free tier). One small agent on the server,
 [Grafana Alloy](https://grafana.com/docs/alloy/latest/), ships everything there; dashboards,
 alert rules and uptime checks live in Grafana Cloud and are defined as Terraform in
@@ -18,7 +18,7 @@ alert rules and uptime checks live in Grafana Cloud and are defined as Terraform
 
 ## What is collected
 
-| Need (#70) | Source | Where to look |
+| Need | Source | Where to look |
 |---|---|---|
 | Traffic | Caddy request metrics (`caddy_http_requests_total`, status codes, latency) and Caddy access logs (paths, referrers) | Metrics and Loki |
 | CPU, memory, disk | Host: `node_*` (CPU, memory, swap, load, filesystem, disk IO, pressure). Containers: `container_*` per Compose `project` and `service` (CPU, memory, restarts, OOM) | Metrics |
@@ -58,12 +58,12 @@ GRAFANA_CLOUD_API_TOKEN=glc_...
 ```
 
 The token is a secret: keep it with the other server secrets, never in the repository.
-Provisioning (#21) and deploys (#23) place the `.env`; the agent is part of the `prod`
+Provisioning and deploys place the `.env`; the agent is part of the `prod`
 profile, so `docker compose --profile prod up -d` starts it with everything else.
 
 ### 3. Caddy
 
-`caddy/Caddyfile` (#21) serves metrics on the internal port 2019 (not published by
+`caddy/Caddyfile` serves metrics on the internal port 2019 (not published by
 compose; the admin API is off so it doesn't take that port) and logs requests as JSON
 to stdout.
 

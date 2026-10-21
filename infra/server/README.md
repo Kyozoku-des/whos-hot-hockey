@@ -1,6 +1,6 @@
 # Production server (Terraform) and deploys
 
-Issues #21 and #23. One Hetzner Cloud **CX23** (2 vCPU, 4 GB) runs the whole stack with
+One Hetzner Cloud **CX23** (2 vCPU, 4 GB) runs the whole stack with
 Docker Compose:
 
 ```

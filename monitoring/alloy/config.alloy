@@ -1,4 +1,4 @@
-// Grafana Alloy agent for the production server (issue #70).
+// Grafana Alloy agent for the production server.
 //
 // Collects host and container resource usage, application metrics, Caddy traffic
 // metrics and every container's logs, and ships them to Grafana Cloud, where the

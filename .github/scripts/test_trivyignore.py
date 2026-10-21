@@ -1,4 +1,4 @@
-"""Exception boundaries of trivyignore.py (issue #58).
+"""Exception boundaries of trivyignore.py.
 
 Run: python -m unittest discover -s .github/scripts -v
 """

@@ -37,7 +37,7 @@ import java.util.function.Function;
  * {@code (teamCode, gameId)} — so re-running a load converges without duplicates (FR-006).
  * <p>
  * Each write loads the existing rows for that player or team and season in one query and saves
- * them together, rather than looking up every game separately (issue #29). A game id encodes its
+ * them together, rather than looking up every game separately. A game id encodes its
  * season, so the season-scoped preload sees every row the per-game lookup would have found.
  */
 @Service

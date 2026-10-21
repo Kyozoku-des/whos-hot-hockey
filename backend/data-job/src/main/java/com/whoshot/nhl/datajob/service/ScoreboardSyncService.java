@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Refreshes the score ticker (issue #42): the current game day's started games and, on a full
+ * Refreshes the score ticker: the current game day's started games and, on a full
  * sync, the previous game day's. A failure is logged and skipped so it never holds up the
  * player and team sync; the next sync retries.
  */

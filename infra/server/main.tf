@@ -1,7 +1,7 @@
-# One VPS running the whole stack under Docker Compose (issue #21).
+# One VPS running the whole stack under Docker Compose.
 #
 # Terraform only creates the machine. cloud-init installs Docker and the deploy script;
-# the application itself is deployed by CI (issue #23). There are no database backups,
+# the application itself is deployed by CI. There are no database backups,
 # so the server must never be replaced: see the lifecycle block.
 
 resource "hcloud_ssh_key" "admin" {

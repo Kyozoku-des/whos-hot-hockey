@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Admission control shared by every outbound request (issue #29): in-flight cap, start-rate budget,
+ * Admission control shared by every outbound request: in-flight cap, start-rate budget,
  * host cooldowns, circuit breaking, deadlines and cancellation.
  */
 class RequestThrottleTest {

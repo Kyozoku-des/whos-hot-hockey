@@ -1,6 +1,6 @@
 # Grafana Cloud monitoring (Terraform)
 
-Part 2 of issue #70. The agent in `monitoring/` ships metrics and logs to Grafana Cloud;
+The agent in `monitoring/` ships metrics and logs to Grafana Cloud;
 this module sets up what you see and get notified about there:
 
 - **Alert rules** (`alerting.tf`), sent by email

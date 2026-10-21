@@ -1,6 +1,6 @@
 # Ingestion throughput and request policy
 
-How `data-job` fetches from the NHL API in parallel without overloading it (issue #29). This
+How `data-job` fetches from the NHL API in parallel without overloading it. This
 covers the initial load, the live daemon (hourly full sync and game-time polls) and backfill.
 
 ## How a run works

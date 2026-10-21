@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Service providing the homepage score ticker (issue #42).
+ * Service providing the homepage score ticker.
  */
 @Service
 public class ScoreboardService {

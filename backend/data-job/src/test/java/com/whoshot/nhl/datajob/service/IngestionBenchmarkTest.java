@@ -46,7 +46,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Latency-bound benchmark of a full player sync at 1, 2, 4 and 8 fetch workers (issue #29).
+ * Latency-bound benchmark of a full player sync at 1, 2, 4 and 8 fetch workers.
  * <p>
  * Every profile and game-log request is a real HTTP call, through the production
  * {@link RestClientConfig} request factory, {@link ApiClient} and {@link RequestThrottle}, to a

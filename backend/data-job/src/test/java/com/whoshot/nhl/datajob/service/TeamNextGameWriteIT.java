@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * {@link GameLogWriter#writeTeamGames} against PostgreSQL: the team's next game is stored,
- * replaced as the schedule advances, and removed once no game is left (issue #44).
+ * replaced as the schedule advances, and removed once no game is left.
  */
 class TeamNextGameWriteIT extends PostgresIntegrationTestBase {
 

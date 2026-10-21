@@ -1,4 +1,4 @@
-# Weekly update PRs for every dependency source (issue #58). The security workflow
+# Weekly update PRs for every dependency source. The security workflow
 # fails on vulnerable versions; these PRs keep the fixes coming.
 # Majors get their own group so a green minor/patch PR is never held back by a
 # breaking upgrade that CI cannot fully verify.

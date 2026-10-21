@@ -9,7 +9,7 @@ import java.time.Duration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Metric labels stay low-cardinality and run counts land where dashboards expect them (issue #29).
+ * Metric labels stay low-cardinality and run counts land where dashboards expect them.
  */
 class IngestionMetricsTest {
 

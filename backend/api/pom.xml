@@ -81,7 +81,7 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
         <dependency>
-            <!-- /actuator/prometheus, scraped by the Grafana Alloy agent (issue #70) -->
+            <!-- /actuator/prometheus, scraped by the Grafana Alloy agent -->
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>

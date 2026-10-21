@@ -46,7 +46,7 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
         <dependency>
-            <!-- Pushes the ingestion metrics to the Grafana Alloy agent (issue #70) -->
+            <!-- Pushes the ingestion metrics to the Grafana Alloy agent -->
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-otlp</artifactId>
         </dependency>

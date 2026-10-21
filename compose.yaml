@@ -1,6 +1,6 @@
 name: whos-hot-hockey
 
-# One file for local development and production (issues #21, #23).
+# One file for local development and production.
 #   Local:      docker compose up -d --build        builds the images from source.
 #   Production: docker compose --profile prod ...   pulls the images CI pushed to GHCR,
 #               tagged with the commit SHA (IMAGE_TAG), and adds Caddy and Alloy.
@@ -201,7 +201,7 @@ services:
       - backend-api
     restart: unless-stopped
 
-  # TLS and the public entry point (issue #21). Production only. Certificates live in
+  # TLS and the public entry point. Production only. Certificates live in
   # the caddy_data volume; keep it, Let's Encrypt rate-limits new certificates.
   caddy:
     image: ghcr.io/kyozoku-des/whos-hot-hockey-caddy:${IMAGE_TAG:-local}
@@ -231,12 +231,12 @@ services:
       - frontend
     restart: unless-stopped
 
-  # Monitoring agent (issue #70): ships host/container usage, app metrics and logs to
+  # Monitoring agent: ships host/container usage, app metrics and logs to
   # Grafana Cloud. Production only: `docker compose --profile prod up -d`.
   # See monitoring/README.md.
   alloy:
     # Distroless: same binary, entrypoint and user as the Ubuntu variant, without the
-    # Ubuntu packages (and their advisories) or a shell (issue #58).
+    # Ubuntu packages (and their advisories) or a shell.
     image: grafana/alloy:v1.21.0-distroless
     profiles:
       - prod

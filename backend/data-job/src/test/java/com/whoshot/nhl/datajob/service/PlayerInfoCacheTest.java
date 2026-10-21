@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Game-time profile cache (issue #29): reuse within the TTL, refresh after it, explicit
+ * Game-time profile cache: reuse within the TTL, refresh after it, explicit
  * invalidation, and a bounded size.
  */
 class PlayerInfoCacheTest {

@@ -1,6 +1,6 @@
 name: security
 
-# Dependency and image vulnerability scans (issue #58). Fails on any medium or higher
+# Dependency and image vulnerability scans. Fails on any medium or higher
 # finding, including those without a published fix, unless the image's own policy in
 # security/trivyignore/ accepts that exact package version and location with a reason
 # and an expiry date. Images without a policy (the application runtime images) accept

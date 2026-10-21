@@ -16,7 +16,7 @@ import javax.sql.DataSource;
  * Guards against two concurrent writers of the same season corrupting each other's writes
  * (FR-014, research R-011), using a Postgres session-level advisory lock keyed on the season id.
  * Every writer of season data takes it: backfill, initial load, and the live daemon's full syncs
- * and game-time polls (issue #29). Because the lock lives in Postgres it also excludes writers in
+ * and game-time polls. Because the lock lives in Postgres it also excludes writers in
  * other data-job processes; backfills of other seasons are unaffected.
  * <p>
  * An advisory lock is preferred over a status table because it releases automatically if the

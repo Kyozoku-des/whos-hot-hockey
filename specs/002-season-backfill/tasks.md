@@ -221,8 +221,8 @@ Task: "Exit code IT in .../backfill/BackfillExitCodeIT.java"
 ### Incremental Delivery
 
 1. Setup + Foundational → live sync unchanged, no construction-time side effects
-2. + US1 → a named season loads (MVP, closes issue #17's literal ask)
-3. + US2 → graphs render the comparison (closes issue #17's motivation)
+2. + US1 → a named season loads (MVP, closes the original request's literal ask)
+3. + US2 → graphs render the comparison (closes the original request's motivation)
 4. + US3 → operationally safe to re-run
 
 ### Notes

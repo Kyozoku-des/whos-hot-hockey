@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
- * Ingestion and outbound-request metrics (issue #29), published through Micrometer and summarised
+ * Ingestion and outbound-request metrics, published through Micrometer and summarised
  * in one log line per run.
  * <p>
  * Labels stay low-cardinality: an endpoint category (never a player or team id), an outcome, an

@@ -42,7 +42,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Full player sync over a four-worker {@link FetchPipeline} (issue #29): writes stay in standings
+ * Full player sync over a four-worker {@link FetchPipeline}: writes stay in standings
  * order whatever order fetches finish in, record-level failures skip only their record, and a lost
  * database stops the sync.
  */

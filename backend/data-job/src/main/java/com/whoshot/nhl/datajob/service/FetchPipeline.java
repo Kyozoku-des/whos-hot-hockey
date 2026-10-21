@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Bounded parallel fetching with a single, ordered persistence consumer (issue #29).
+ * Bounded parallel fetching with a single, ordered persistence consumer.
  * <p>
  * A dedicated pool of {@code ingestion.fetch.concurrency} platform threads runs fetch tasks, which
  * must only make HTTP calls and build plain values: never touch JPA or shared mutable state. The

@@ -22,7 +22,7 @@ import static com.whoshot.nhl.datajob.backfill.BackfillFixtures.SEASON_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Measures database round trips for one player write (issue #29) instead of assuming that
+ * Measures database round trips for one player write instead of assuming that
  * {@code saveAll} or {@code hibernate.jdbc.batch_size} reduce them.
  */
 @TestPropertySource(properties = "spring.jpa.properties.hibernate.generate_statistics=true")

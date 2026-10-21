@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Bounded parallel fetching with an ordered single consumer (issue #29): bounds, ordering,
+ * Bounded parallel fetching with an ordered single consumer: bounds, ordering,
  * backpressure, failure isolation, cancellation and shutdown.
  */
 class FetchPipelineTest {

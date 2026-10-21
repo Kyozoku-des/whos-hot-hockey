@@ -1,4 +1,4 @@
-# The official PostgreSQL image without gosu (issue #58).
+# The official PostgreSQL image without gosu.
 #
 # The upstream entrypoint starts as root, fixes data directory ownership and then
 # re-executes itself through gosu as the postgres user. gosu is built by upstream with

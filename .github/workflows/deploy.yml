@@ -1,6 +1,6 @@
 name: deploy
 
-# Build and deploy master to the production server (issue #23).
+# Build and deploy master to the production server.
 #
 #   push to master   checks -> build images (tagged with the commit SHA) -> deploy -> smoke test
 #   manual run       with a SHA: redeploy that build (rollback), no build
