@@ -44,7 +44,7 @@ class MetricsExportTest {
         assertThat(environment.getProperty("management.otlp.metrics.export.enabled")).isEqualTo("false");
         assertThat(environment.getProperty("management.otlp.metrics.export.url"))
                 .isEqualTo("http://alloy:4318/v1/metrics");
-        assertThat(environment.getProperty("management.metrics.tags.application")).isEqualTo("nhl-data-job");
+        assertThat(environment.getProperty("management.metrics.tags.application")).isEqualTo("whos-hot-hockey-data-job");
         assertThat(environment.getProperty("management.metrics.enable.http.client.requests")).isEqualTo("false");
     }
 

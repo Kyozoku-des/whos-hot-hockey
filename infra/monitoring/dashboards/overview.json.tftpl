@@ -81,7 +81,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (status) (rate(http_server_requests_seconds_count{environment=\"prod\", job=\"nhl-api\", uri!~\"/actuator.*\"}[5m]))",
+          "expr": "sum by (status) (rate(http_server_requests_seconds_count{environment=\"prod\", job=\"whos-hot-hockey-api\", uri!~\"/actuator.*\"}[5m]))",
           "legendFormat": "{{status}}",
           "datasource": {
             "type": "prometheus",
@@ -119,7 +119,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (uri) (rate(http_server_requests_seconds_sum{environment=\"prod\", job=\"nhl-api\", uri!~\"/actuator.*\"}[5m])) / sum by (uri) (rate(http_server_requests_seconds_count{environment=\"prod\", job=\"nhl-api\", uri!~\"/actuator.*\"}[5m]))",
+          "expr": "sum by (uri) (rate(http_server_requests_seconds_sum{environment=\"prod\", job=\"whos-hot-hockey-api\", uri!~\"/actuator.*\"}[5m])) / sum by (uri) (rate(http_server_requests_seconds_count{environment=\"prod\", job=\"whos-hot-hockey-api\", uri!~\"/actuator.*\"}[5m]))",
           "legendFormat": "{{uri}}",
           "datasource": {
             "type": "prometheus",

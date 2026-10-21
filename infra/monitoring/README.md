@@ -18,7 +18,7 @@ provisioning planned in #21.
 |---|---|---|
 | Site down | critical | an uptime check fails from most probe locations (needs `site_url`) |
 | Server silent | critical | no metrics from the server for 10 min: server, network or agent down |
-| Scrape target down | critical | the agent can't reach `host`, `containers`, `nhl-api` or `caddy` for 5 min |
+| Scrape target down | critical | the agent can't reach `host`, `containers`, `whos-hot-hockey-api` or `caddy` for 5 min |
 | Service missing | critical | `caddy`, `frontend`, `backend-api`, `data-job` or `postgres` not running for 5 min |
 | Data job silent | critical | the data job hasn't pushed metrics for 15 min |
 | Container restarting | warning | a service restarted more than once in 15 min (a deploy restarts each once) |

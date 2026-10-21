@@ -143,7 +143,7 @@ locals {
       severity   = "warning"
       datasource = "prometheus"
       # Share of API requests failing with 5xx, only once there is some traffic.
-      expr      = "(sum(rate(http_server_requests_seconds_count{${local.prod}, job=\"nhl-api\", outcome=\"SERVER_ERROR\"}[10m])) / sum(rate(http_server_requests_seconds_count{${local.prod}, job=\"nhl-api\"}[10m]))) and on() (sum(rate(http_server_requests_seconds_count{${local.prod}, job=\"nhl-api\"}[10m])) > 0.02)"
+      expr      = "(sum(rate(http_server_requests_seconds_count{${local.prod}, job=\"whos-hot-hockey-api\", outcome=\"SERVER_ERROR\"}[10m])) / sum(rate(http_server_requests_seconds_count{${local.prod}, job=\"whos-hot-hockey-api\"}[10m]))) and on() (sum(rate(http_server_requests_seconds_count{${local.prod}, job=\"whos-hot-hockey-api\"}[10m])) > 0.02)"
       op        = "gt"
       threshold = 0.05
       for       = "5m"

@@ -171,7 +171,7 @@ prometheus.scrape "api" {
 		__address__ = "backend-api:8081",
 		service     = "backend-api",
 	}]
-	job_name        = "nhl-api"
+	job_name        = "whos-hot-hockey-api"
 	metrics_path    = "/actuator/prometheus"
 	scrape_interval = "60s"
 	forward_to      = [prometheus.remote_write.cloud.receiver]

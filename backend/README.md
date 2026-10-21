@@ -147,7 +147,7 @@ never written there, so a running score can't be recorded as a result.
 Each step logs one summary line prefixed `[game-sync]`:
 
 ```powershell
-podman logs nhl-data-job 2>&1 | Select-String "\[game-sync\]"
+podman-compose logs data-job 2>&1 | Select-String "\[game-sync\]"
 ```
 
 ```

@@ -47,7 +47,7 @@ class ActuatorEndpointsIT {
         assertThat(metrics.statusCode()).isEqualTo(200);
         assertThat(metrics.body())
                 .contains("jvm_memory_used_bytes")
-                .contains("application=\"nhl-api\"");
+                .contains("application=\"whos-hot-hockey-api\"");
     }
 
     @Test

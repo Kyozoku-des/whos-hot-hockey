@@ -41,7 +41,7 @@ variable "expected_services" {
 variable "scrape_jobs" {
   description = "Scrape jobs whose up series must be 1 (the data job pushes and has none)"
   type        = list(string)
-  default     = ["host", "containers", "nhl-api", "caddy"]
+  default     = ["host", "containers", "whos-hot-hockey-api", "caddy"]
 }
 
 # --- Uptime checks (optional until the site has a domain) ---------------------------
