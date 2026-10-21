@@ -17,7 +17,7 @@
     <packaging>pom</packaging>
 
     <name>Who's Hot</name>
-    <description>NHL Statistics - Multi-module project</description>
+    <description>Hockey Statistics - Multi-module project</description>
 
     <modules>
         <module>domain</module>

@@ -1,4 +1,4 @@
-# Who's Hot - NHL Statistics Backend
+# Who's Hot - Hockey Statistics Backend
 
 A Spring Boot backend that provides REST APIs for NHL statistics with a focus on identifying "hot" and "cold" players and teams based on recent performance.
 
