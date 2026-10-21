@@ -1,6 +1,6 @@
 # Rebuild the standard Caddy distribution with patched Go and x/net versions.
 # Keep go.mod/go.sum in sync when updating Caddy or its security dependencies.
-FROM golang:1.27.2-alpine AS build
+FROM golang:1.27.3-alpine AS build
 ENV GOTOOLCHAIN=local
 RUN apk upgrade --no-cache
 WORKDIR /src

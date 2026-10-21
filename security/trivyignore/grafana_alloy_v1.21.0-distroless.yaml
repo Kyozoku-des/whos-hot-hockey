@@ -16,6 +16,13 @@ vulnerabilities:
       - "pkg:deb/ubuntu/dash@0.5.12-6ubuntu5?arch=amd64&distro=ubuntu-24.04"
     statement: "grafana/alloy:v1.21.0-distroless is the newest release. Alloy listens on loopback and the Compose networks only and pushes outbound to Grafana Cloud. Fixed in an upstream release."
     expired_at: 2026-11-30
+  - id: CVE-2026-111943
+    paths:
+      - "usr/bin/alloy"
+    purls:
+      - "pkg:golang/stdlib@v1.27.2"
+    statement: "grafana/alloy:v1.21.0-distroless is the newest release. Alloy listens on loopback and the Compose networks only and pushes outbound to Grafana Cloud. Fixed in an upstream release."
+    expired_at: 2026-11-30
   - id: CVE-2026-18374
     paths:
       - "grafana/alloy:v1.21.0-distroless (ubuntu 24.04)"
