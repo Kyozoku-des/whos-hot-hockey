@@ -34,9 +34,9 @@
 - **Single app with profiles**: Use `@Profile` annotations to enable/disable data-job scheduling. Possible but still couples deployment. Rejected for not meeting independence requirement.
 
 **Implementation**:
-- Create `ApiApplication.java` in `backend/api/src/main/java/com/whoshot/nhl/api/`
+- Create `ApiApplication.java` in `backend/api/src/main/java/com/whoshothockey/api/`
 - API module depends only on `domain` module (not `data-job`)
-- Scan entities from `com.whoshot.nhl.domain.entity` and repositories from `com.whoshot.nhl.domain.repository`
+- Scan entities from `com.whoshothockey.domain.entity` and repositories from `com.whoshothockey.domain.repository`
 - API runs on port 8080 (existing), data-job doesn't need a web port
 
 ## R-003: Points Percentage Calculation for Last 10 Games

@@ -5,7 +5,7 @@
 
 ## Entity Overview
 
-All entities exist in the shared `domain` module (`com.whoshot.nhl.domain.entity`). The data-job writes to them; the API reads from them. Both applications share the same PostgreSQL database.
+All entities exist in the shared `domain` module (`com.whoshothockey.domain.entity`). The data-job writes to them; the API reads from them. Both applications share the same PostgreSQL database.
 
 ```
 ┌──────────────────┐     ┌──────────────────┐

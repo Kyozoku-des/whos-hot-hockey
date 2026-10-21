@@ -11,7 +11,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.whoshot.nhl</groupId>
+    <groupId>com.whoshothockey</groupId>
     <artifactId>whos-hot-hockey</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
@@ -60,7 +60,7 @@
         <dependencies>
             <!-- Common module dependency for other modules -->
             <dependency>
-                <groupId>com.whoshot.nhl</groupId>
+                <groupId>com.whoshothockey</groupId>
                 <artifactId>domain</artifactId>
                 <version>${project.version}</version>
             </dependency>

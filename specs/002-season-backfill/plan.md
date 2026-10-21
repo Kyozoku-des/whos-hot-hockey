@@ -87,13 +87,13 @@ specs/002-season-backfill/
 
 ```text
 backend/
-├── domain/src/main/java/com/whoshot/nhl/domain/
+├── domain/src/main/java/com/whoshothockey/domain/
 │   ├── entity/                       # UNCHANGED — Player, Team, GameLog, TeamGame, CurrentSeason
 │   └── repository/
 │       ├── GameLogRepository.java    # + findByPlayerIdAndGameId
 │       └── TeamGameRepository.java   # + findByTeamCodeAndGameId, findBySeasonId
 │
-├── data-job/src/main/java/com/whoshot/nhl/datajob/
+├── data-job/src/main/java/com/whoshothockey/datajob/
 │   ├── config/
 │   │   └── BackfillRunner.java       # NEW  @Profile("backfill") CommandLineRunner, exit codes
 │   ├── dto/nhlapi/
@@ -110,7 +110,7 @@ backend/
 │   └── util/
 │       └── SeasonValidator.java      # reused; dead getCurrentSeason() removed
 │
-└── data-job/src/test/java/com/whoshot/nhl/datajob/
+└── data-job/src/test/java/com/whoshothockey/datajob/
     ├── service/                      # unit tests (mocked NhlApiService)
     └── backfill/                     # Testcontainers integration tests
 

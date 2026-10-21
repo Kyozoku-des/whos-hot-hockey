@@ -6,7 +6,7 @@ No new tables. The feature writes four existing tables, adds finder methods to t
 
 ## Persisted entities
 
-### `players` — `com.whoshot.nhl.domain.entity.Player`
+### `players` — `com.whoshothockey.domain.entity.Player`
 
 **Unchanged.** Already season-scoped by `@EmbeddedId PlayerId(playerId, season)`.
 
@@ -21,7 +21,7 @@ No new tables. The feature writes four existing tables, adds finder methods to t
 
 `hot` / `cold` are left as the live sync leaves them — the backfill does not compute them, because "hot" is a statement about current form and is meaningless for a completed season.
 
-### `teams` — `com.whoshot.nhl.domain.entity.Team`
+### `teams` — `com.whoshothockey.domain.entity.Team`
 
 **Unchanged.**
 
@@ -32,7 +32,7 @@ No new tables. The feature writes four existing tables, adds finder methods to t
 | Built by | Existing `DataSyncService.applyStandings(team, standing, seasonId)` — extracted for reuse |
 | Idempotency | find-or-new on the natural key, as today |
 
-### `game_logs` — `com.whoshot.nhl.domain.entity.GameLog`
+### `game_logs` — `com.whoshothockey.domain.entity.GameLog`
 
 **Unchanged schema; first writer in the codebase** (R-003). Unique on `(playerId, gameId)`.
 
@@ -49,7 +49,7 @@ No new tables. The feature writes four existing tables, adds finder methods to t
 | `seasonId` | requested season |
 | `gameNumber` | dense 1..N in chronological order for that player in that season (R-006) |
 
-### `team_games` — `com.whoshot.nhl.domain.entity.TeamGame`
+### `team_games` — `com.whoshothockey.domain.entity.TeamGame`
 
 **Unchanged schema; first writer in the codebase** (R-003). Unique on `(teamCode, gameId)`.
 
@@ -69,7 +69,7 @@ No new tables. The feature writes four existing tables, adds finder methods to t
 
 Only completed games are written; a game with a null score (scheduled, not yet played) is skipped.
 
-### `current_season` — `com.whoshot.nhl.domain.entity.CurrentSeason`
+### `current_season` — `com.whoshothockey.domain.entity.CurrentSeason`
 
 **Never written by the backfill** (FR-005, R-008). Listed here to make the exclusion explicit and testable: the `is_active` row and `last_updated` must be byte-identical before and after a backfill run (SC-006).
 

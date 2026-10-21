@@ -65,13 +65,13 @@ backend/
 ├── pom.xml                    # Parent POM (manages shared deps)
 ├── domain/                    # Shared entity + repository module
 │   ├── pom.xml
-│   └── src/main/java/com/whoshot/nhl/domain/
+│   └── src/main/java/com/whoshothockey/domain/
 │       ├── entity/            # JPA entities (Player, Team, GameLog, TeamGame, CurrentSeason)
 │       └── repository/        # Spring Data JPA repositories
 ├── api/                       # REST API application (port 8080)
 │   ├── pom.xml
 │   └── src/
-│       ├── main/java/com/whoshot/nhl/api/
+│       ├── main/java/com/whoshothockey/api/
 │       │   ├── ApiApplication.java        # NEW: own @SpringBootApplication
 │       │   ├── config/
 │       │   │   └── CorsConfig.java
@@ -83,19 +83,19 @@ backend/
 │       │   └── service/
 │       │       ├── PlayerService.java     # NEW
 │       │       └── TeamService.java       # NEW
-│       └── test/java/com/whoshot/nhl/api/
+│       └── test/java/com/whoshothockey/api/
 │           ├── controller/                # Controller tests
 │           └── service/                   # Service tests
 └── data-job/                  # Data sync application (standalone)
     ├── pom.xml
     └── src/
-        ├── main/java/com/whoshot/nhl/datajob/
+        ├── main/java/com/whoshothockey/datajob/
         │   ├── DataIngestionJob.java      # existing main class
         │   ├── service/
         │   │   ├── StatisticsCalculationService.java  # enhanced with team calcs
         │   │   └── ...
         │   └── ...
-        └── test/java/com/whoshot/nhl/datajob/
+        └── test/java/com/whoshothockey/datajob/
             └── service/
                 └── StatisticsCalculationServiceTest.java  # NEW: unit tests
 
