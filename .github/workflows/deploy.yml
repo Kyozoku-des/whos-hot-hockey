@@ -153,8 +153,12 @@ jobs:
         run: |
           # A burst well over nginx's allowance (10 r/s, burst 50) from this runner must
           # be partly refused. Only this runner's address is limited.
-          codes=$(for _ in $(seq 150); do echo "url = \"$SITE/api/games/latest\""; echo "output = /dev/null"; done \
-            | curl -sS --parallel --parallel-max 50 -K - -w '%{http_code}\n')
+          # Send every request at once: nginx refuses at arrival, but with fewer parallel
+          # slots each admitted request holds one for the backend's response time, and a
+          # slow (just started) backend paces the burst under the refill rate. Stay below
+          # limit_conn (128), whose 429s would hide a missing request limit.
+          codes=$(for _ in $(seq 100); do echo "url = \"$SITE/api/games/latest\""; echo "output = /dev/null"; done \
+            | curl -sS --parallel --parallel-max 100 -K - -w '%{http_code}\n')
           echo "$codes" | sort | uniq -c
           grep -qx 429 <<<"$codes" || { echo "::error::no 429 responses: rate limiting is not active"; exit 1; }
 
