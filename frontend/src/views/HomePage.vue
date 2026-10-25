@@ -21,6 +21,9 @@
     <!-- Latest game day's scores and point scorers -->
     <ScoreTicker />
 
+    <!-- Players and teams whose recent form stands out -->
+    <WatchTicker />
+
     <!-- Desktop: grid of cards, rearranged by dragging one onto another -->
     <div v-if="!isMobile" class="content-container desktop-content">
       <div class="cards-grid">
@@ -106,6 +109,7 @@ import TeamWinStreaksTable from '../components/TeamWinStreaksTable.vue'
 import TeamHotTable from '../components/TeamHotTable.vue'
 import SearchBar from '../components/SearchBar.vue'
 import ScoreTicker from '../components/ScoreTicker.vue'
+import WatchTicker from '../components/WatchTicker.vue'
 import FavoritesTable from '../components/FavoritesTable.vue'
 import CookieConsent from '../components/CookieConsent.vue'
 import { useFavorites } from '../composables/useFavorites'

@@ -142,3 +142,19 @@ export function useGameScores() {
     getLatestScoreboard
   }
 }
+
+export function useWatchlist() {
+  const { loading, error, fetchData } = useApi()
+
+  // Players and teams whose recent form stands out, highest score first
+  const getWatchlist = async () => {
+    const data = await fetchData(`/watchlist`)
+    return data || { season: null, items: [] }
+  }
+
+  return {
+    loading,
+    error,
+    getWatchlist
+  }
+}
