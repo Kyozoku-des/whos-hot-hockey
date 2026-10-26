@@ -8,6 +8,18 @@ WORKDIR /app
 COPY package*.json ./
 # Patch npm itself using the same version as CI.
 RUN npm install --global "$(node -p "require('./package.json').packageManager")" && npm cache clean --force
+# Every npm release so far bundles undici older than 6.29.1, which fixes
+# CVE-2026-109869 and CVE-2026-109924. Only npm's node-gyp uses it (range ^6.25.0),
+# so swap in the fixed release. The build fails once npm bundles it, so remove this then.
+ARG NPM_UNDICI=6.29.1
+RUN modules=/usr/local/lib/node_modules/npm/node_modules \
+ && node -e "const [b, f] = process.argv.slice(1), s = require('$modules/semver'); \
+      if (!s.lt(b, f)) { console.error('npm bundles undici ' + b + '; remove the undici swap'); process.exit(1); }" \
+      "$(node -p "require('$modules/undici/package.json').version")" "$NPM_UNDICI" \
+ && npm pack --silent --pack-destination /tmp "undici@$NPM_UNDICI" \
+ && rm -rf "$modules/undici" && mkdir "$modules/undici" \
+ && tar -xzf "/tmp/undici-$NPM_UNDICI.tgz" -C "$modules/undici" --strip-components=1 \
+ && rm "/tmp/undici-$NPM_UNDICI.tgz" && npm cache clean --force
 
 # Install dependencies
 RUN npm ci
