@@ -39,7 +39,7 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <!-- Not managed by Boot; the 3.1.x line targets Spring Boot 4.1 -->
-            <version>3.1.1</version>
+            <version>3.2.0</version>
         </dependency>
 
         <!-- Lombok -->
