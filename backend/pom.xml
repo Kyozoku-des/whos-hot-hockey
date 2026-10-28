@@ -50,8 +50,8 @@
              commons-io 2.11.0: CVE-2024-47554. commons-lang3 3.16.0: CVE-2025-48924.
              spring-boot-maven-plugin still pulls Jackson 3.1.5 through buildpack-platform.
              Remove each override once its plugin resolves an equal or newer compatible version. -->
-        <plugin.plexus-utils-3.version>3.6.2</plugin.plexus-utils-3.version>
-        <plugin.plexus-utils-4.version>4.0.3</plugin.plexus-utils-4.version>
+        <plugin.plexus-utils-3.version>4.1.0</plugin.plexus-utils-3.version>
+        <plugin.plexus-utils-4.version>4.1.0</plugin.plexus-utils-4.version>
         <plugin.commons-io.version>2.22.0</plugin.commons-io.version>
         <plugin.commons-lang3.version>3.21.0</plugin.commons-lang3.version>
     </properties>
