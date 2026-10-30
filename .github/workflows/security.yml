@@ -4,7 +4,8 @@ name: security
 # finding, including those without a published fix, unless the image's own policy in
 # security/trivyignore/ accepts that exact package version and location with a reason
 # and an expiry date. Images without a policy (the application runtime images) accept
-# nothing. Scan every Compose runtime image and the application build stages. Runs
+# nothing; Caddy's only accepts unfixed go-jose v3, briefly (trivyignore.py's
+# CATEGORY_EXPIRES). Scan every Compose runtime image and the application build stages. Runs
 # before every deploy and weekly, so new advisories and expired exceptions surface.
 
 on:
