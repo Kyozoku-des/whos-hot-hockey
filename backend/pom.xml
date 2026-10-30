@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.1.1</version>
+        <version>4.1.2</version>
         <relativePath/>
     </parent>
 
@@ -44,7 +44,7 @@
              still pulled in transitively by springdoc's swagger-core.
              OpenTelemetry 1.62.0: CVE-2026-118259 (fixed in 1.67.0); Boot 4.1.2 still manages 1.62.0. -->
         <tomcat.version>11.0.26</tomcat.version>
-        <jackson-bom.version>3.1.7</jackson-bom.version>
+        <jackson-bom.version>3.2.4</jackson-bom.version>
         <jackson-2-bom.version>2.21.7</jackson-2-bom.version>
         <opentelemetry.version>1.67.0</opentelemetry.version>
         <!-- Build-time only: libraries the Maven plugins load, not shipped in the jars.
