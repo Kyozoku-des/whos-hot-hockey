@@ -2,6 +2,24 @@
 # dependencies this build uses; go-offline also fetched unused legacy site tools.
 FROM maven:3.9-eclipse-temurin-25-alpine AS base
 RUN apk upgrade --no-cache
+# Maven 3.9.16, the newest 3.9 release, bundles Guava 33.6.0, which has CVE-2026-102554
+# (fixed in 33.7.2). Maven loads every jar in its lib directory and 33.7.2 needs the same
+# failureaccess 1.0.3, so swap in the fixed release. The build fails once Maven bundles it,
+# so remove this then.
+ARG MAVEN_GUAVA=33.7.2-jre
+ARG MAVEN_GUAVA_SHA256=b530942257fb935f8b2cfaa5f8eb5bd59c555fd8e8d01b8ce98912e077ea606c
+RUN lib="$MAVEN_HOME/lib" \
+ && set -- "$lib"/guava-*.jar \
+ && if [ "$#" -ne 1 ] || [ ! -f "$1" ]; then echo "expected one Guava jar in $lib" >&2; exit 1; fi \
+ && bundled=$(basename "$1" .jar | sed 's/^guava-//') \
+ && if ! java -cp "$(echo "$lib"/maven-artifact-*.jar)" \
+        org.apache.maven.artifact.versioning.ComparableVersion "$bundled" "$MAVEN_GUAVA" \
+        | grep -qF "$bundled < $MAVEN_GUAVA"; then \
+      echo "Maven bundles Guava $bundled; remove the Guava swap" >&2; exit 1; fi \
+ && wget -q -O "$lib/guava-$MAVEN_GUAVA.jar" \
+      "https://repo1.maven.org/maven2/com/google/guava/guava/$MAVEN_GUAVA/guava-$MAVEN_GUAVA.jar" \
+ && echo "$MAVEN_GUAVA_SHA256  $lib/guava-$MAVEN_GUAVA.jar" | sha256sum -c - \
+ && rm "$1"
 
 WORKDIR /app
 
