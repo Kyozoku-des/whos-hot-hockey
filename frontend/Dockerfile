@@ -1,5 +1,5 @@
 # Multi-stage build for NHL Stats Frontend
-FROM node:24.21-alpine AS build
+FROM node:24.22-alpine AS build
 RUN apk upgrade --no-cache
 
 WORKDIR /app
