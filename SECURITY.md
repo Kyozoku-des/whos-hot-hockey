@@ -110,7 +110,8 @@ deduplicates shared images, and also scans the API, ingestion, frontend and Cadd
 build stages. Trivy fails on MEDIUM/HIGH/CRITICAL findings unless an image-specific
 policy in [`security/trivyignore`](security/trivyignore) accepts that exact package
 version and location with a reason and expiry. Application runtime images have no
-exceptions. The workflow retains suppressed findings in its reports, tests the
+exceptions, except unfixed go-jose v3 in Caddy, accepted with a short expiry until a fixed
+release exists. The workflow retains suppressed findings in its reports, tests the
 policy boundaries, and uploads the inventory and JSON reports. npm audit checks the
 frontend lock file separately. Dependabot opens weekly update PRs for every
 dependency source.

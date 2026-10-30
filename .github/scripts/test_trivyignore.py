@@ -9,6 +9,8 @@ import trivyignore
 NPM_UNDICI = "usr/local/lib/node_modules/npm/node_modules/undici/package.json"
 POSTGRES_REF = "ghcr.io/kyozoku-des/whos-hot-hockey-postgres:local"
 POSTGRES = "ghcr.io_kyozoku-des_whos-hot-hockey-postgres_local"
+CADDY = "ghcr.io_kyozoku-des_whos-hot-hockey-caddy_local"
+GO_JOSE_V3 = "github.com/go-jose/go-jose/v3"
 DOCKER_JAVA = ("root/.m2/repository/com/github/docker-java/docker-java-transport-zerodep/3.7.1/"
                "docker-java-transport-zerodep-3.7.1.jar")
 
@@ -18,9 +20,9 @@ def os_result(target, distro, fixed=""):
             "Vulnerabilities": [vuln("CVE-2026-0001", "libxml2", fixed=fixed)]}
 
 
-def lang_result(pkg_type, target, name, path=""):
+def lang_result(pkg_type, target, name, path="", fixed=""):
     return {"Class": "lang-pkgs", "Type": pkg_type, "Target": target,
-            "Vulnerabilities": [vuln("CVE-2026-0002", name, path=path)]}
+            "Vulnerabilities": [vuln("CVE-2026-0002", name, path=path, fixed=fixed)]}
 
 
 def vuln(vuln_id, name, path="", fixed=""):
@@ -47,6 +49,8 @@ class AcceptedFindings(unittest.TestCase):
              NPM_UNDICI),
             ("scan_api-build", lang_result("jar", "Java", "org.apache.httpcomponents.core5:httpcore5",
                                            DOCKER_JAVA), DOCKER_JAVA),
+            (CADDY, lang_result("gobinary", "usr/bin/caddy", GO_JOSE_V3), "usr/bin/caddy"),
+            ("scan_caddy-build", lang_result("gobinary", "out/caddy", GO_JOSE_V3), "out/caddy"),
         ]
         for image, result, path in cases:
             with self.subTest(image=image, path=path):
@@ -63,6 +67,14 @@ class AcceptedFindings(unittest.TestCase):
         self.assertIn('purls:\n      - "pkg:generic/undici@1.0"', text)
         self.assertIn("expired_at: 2026-11-30", text)
         self.assertIn("frontend/package.json's packageManager field", text)
+
+    def test_caddy_go_jose_v3_expires_sooner_than_the_run_date(self):
+        entries = policies(CADDY, lang_result("gobinary", "usr/bin/caddy", GO_JOSE_V3))
+        text = trivyignore.render(CADDY, entries[CADDY], "2026-11-30")
+        self.assertIn(f"expired_at: {trivyignore.CATEGORY_EXPIRES['caddy-go-jose-v3']}", text)
+        self.assertNotIn("2026-11-30", text)
+        earlier = trivyignore.render(CADDY, entries[CADDY], "2026-11-01")
+        self.assertIn("expired_at: 2026-11-01", earlier)
 
 
 class RejectedFindings(unittest.TestCase):
@@ -101,6 +113,24 @@ class RejectedFindings(unittest.TestCase):
     def test_other_library_inside_shaded_transport(self):
         self.assert_rejected("scan_api-build", lang_result(
             "jar", "Java", "com.fasterxml.jackson.core:jackson-databind", DOCKER_JAVA))
+
+    def test_go_jose_v3_with_a_fix_in_caddy(self):
+        self.assert_rejected(CADDY, lang_result("gobinary", "usr/bin/caddy", GO_JOSE_V3, fixed="3.0.6"))
+
+    def test_other_go_module_in_caddy(self):
+        self.assert_rejected(CADDY, lang_result(
+            "gobinary", "usr/bin/caddy", "github.com/go-jose/go-jose/v4"))
+        self.assert_rejected(CADDY, lang_result("gobinary", "usr/bin/caddy", "stdlib"))
+
+    def test_go_jose_v3_in_another_binary_or_image(self):
+        self.assert_rejected(CADDY, lang_result("gobinary", "usr/bin/other", GO_JOSE_V3))
+        self.assert_rejected("scan_caddy-build", lang_result("gobinary", "usr/bin/caddy", GO_JOSE_V3))
+        self.assert_rejected("ghcr.io_kyozoku-des_whos-hot-hockey-frontend_local", lang_result(
+            "gobinary", "usr/bin/caddy", GO_JOSE_V3))
+
+    def test_alpine_package_in_caddy(self):
+        self.assert_rejected(CADDY, os_result(
+            "ghcr.io/kyozoku-des/whos-hot-hockey-caddy:local (alpine 3.23.7)", "alpine"))
 
     def test_any_finding_in_an_application_runtime_image(self):
         self.assert_rejected("ghcr.io_kyozoku-des_whos-hot-hockey-api_local", lang_result(

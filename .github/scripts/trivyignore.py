@@ -10,7 +10,9 @@ location (path) Trivy reported.
 
 Only the findings described in RULES can be accepted. Anything else, such as a package
 in a different location, a Debian package in postgres that has a fix, or any finding in
-an application runtime image, stops the script: fix it instead of accepting it.
+an application runtime image, stops the script: fix it instead of accepting it. The one
+exception in an image we build and deploy is unfixed go-jose v3 in Caddy, whose entries
+expire sooner (CATEGORY_EXPIRES).
 """
 import collections
 import glob
@@ -32,17 +34,28 @@ STATEMENTS = {
         "PostgreSQL is reachable only from the Compose network and the host's loopback; these "
         "are OS libraries and tools, not the server itself."),
     "alloy": (
-        "grafana/alloy:v1.21.0-distroless is the newest release. Alloy listens on loopback "
-        "and the Compose networks only and pushes outbound to Grafana Cloud. Fixed in an "
-        "upstream release."),
+        "Third-party grafana/alloy:v1.21.0-distroless, pinned in Compose; newer releases come "
+        "through Dependabot. Alloy listens on loopback and the Compose networks only and pushes "
+        "outbound to Grafana Cloud. Fixed in an upstream release."),
     "frontend-build-npm": (
         "Build stage only, never deployed: npm's own bundled dependencies, at the npm "
         "version pinned by frontend/package.json's packageManager field. They run once "
         "in CI on this repository's lockfile."),
+    "caddy-go-jose-v3": (
+        "No go-jose v3 release fixes these, and the newest go.step.sm/crypto still requires "
+        "v3.0.5. It reaches Caddy only through caddytls -> caddypki -> smallstep/certificates; "
+        "our Caddyfile configures no internal CA, ACME server or tls internal. Accepted briefly: "
+        "bump it as soon as a fixed release exists."),
     "backend-build-testcontainers": (
         "Build stage only, never deployed: HttpComponents shaded into Testcontainers 2.0.5's "
         "docker-java transport (newest release). Test scope; talks only to the local Docker "
         "socket."),
+}
+
+
+# Categories accepted for less time than the date the script is run with.
+CATEGORY_EXPIRES = {
+    "caddy-go-jose-v3": "2026-11-13",
 }
 
 
@@ -68,6 +81,16 @@ def _binary(path, category):
     return rule
 
 
+def _unfixed_go_module(path, module, category):
+    """A Go module without any fixed release, in one binary; once a fix exists it must be bumped."""
+    def rule(result, vuln):
+        if (result.get("Type") == "gobinary" and result.get("Target") == path
+                and vuln.get("PkgName") == module and not vuln.get("FixedVersion")):
+            return category, path
+        return None
+    return rule
+
+
 def _package(pkg_type, path_pattern, name_prefix, category):
     def rule(result, vuln):
         path = vuln.get("PkgPath") or ""
@@ -87,6 +110,13 @@ RULES = {
     "grafana_alloy_v1.21.0-distroless": [
         _os("grafana/alloy:v1.21.0-distroless", "ubuntu", "alloy", require_unfixed=False),
         _binary("usr/bin/alloy", "alloy"),
+    ],
+    # Unfixed go-jose v3 in the deployed Caddy binary and the build stage that compiles it.
+    "ghcr.io_kyozoku-des_whos-hot-hockey-caddy_local": [
+        _unfixed_go_module("usr/bin/caddy", "github.com/go-jose/go-jose/v3", "caddy-go-jose-v3"),
+    ],
+    "scan_caddy-build": [
+        _unfixed_go_module("out/caddy", "github.com/go-jose/go-jose/v3", "caddy-go-jose-v3"),
     ],
     "scan_frontend-build": [
         _package("node-pkg", NPM_BUNDLED, "", "frontend-build-npm"),
@@ -153,7 +183,8 @@ def render(image, entries, expires):
         lines.append("    purls:")
         lines += [f"      - {_quote(p)}" for p in sorted(purls)]
         lines.append(f"    statement: {_quote(STATEMENTS[category])}")
-        lines.append(f"    expired_at: {expires}")
+        # ISO dates order as strings
+        lines.append(f"    expired_at: {min(expires, CATEGORY_EXPIRES.get(category, expires))}")
     return "\n".join(lines) + "\n"
 
 
