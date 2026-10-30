@@ -314,6 +314,73 @@ Takes no parameters. Before any game has been played the response is
 
 ---
 
+## Watchlist
+
+### GET /api/watchlist
+
+Players and teams whose form over their last ten games (fewer early in the season) stands out, for
+the homepage's second ticker. Recent form is compared with three baselines:
+
+| `rule` | Baseline | Needs |
+| --- | --- | --- |
+| `LAST_SEASON` | The same player's points per game, or team's point percentage, last season | 20+ games last season |
+| `EARLIER_THIS_SEASON` | The same rate in this season's games before the recent ones | 10+ earlier games |
+| `LEAGUE` | The league rate this season: forwards and defensemen separately, all teams together | — |
+
+Each comparison gets a `score`: the difference in standard deviations of a ten-game average. A
+player's points per game is treated as a Poisson rate (`(recent − baseline) / √(baseline / games)`,
+with the baseline at least 0.15) and a team's point percentage as a proportion
+(`(recent − baseline) / √(p(1 − p) / games)`, with `p` the baseline clamped to .25–.75). Because every
+rule is on the same scale, a player or team is listed **once**, under the comparison with the highest
+score, and players and teams are ranked together.
+
+- Only comparisons scoring at least `watchlist.min-score` (default 2.0) count.
+- Players need 5+ games this season; goalies are left out. Teams need 5+ games.
+- `LEAGUE` lists players only upward. Below the league rate is where depth players always are, so it
+  says nothing about their form. Teams are listed both ways.
+- At most `watchlist.max-players` (12) players and `watchlist.max-teams` (4) teams.
+
+- **Query params**: `season` (optional)
+
+**Example response:**
+```json
+{
+  "season": "20262027",
+  "items": [
+    {
+      "type": "TEAM",
+      "id": "ANA",
+      "name": "Anaheim Ducks",
+      "teamCode": "ANA",
+      "direction": "UP",
+      "rule": "LAST_SEASON",
+      "recent": 0.875,
+      "baseline": 0.402,
+      "recentGames": 8,
+      "score": 2.73
+    },
+    {
+      "type": "PLAYER",
+      "id": "8480012",
+      "name": "Elias Pettersson",
+      "teamCode": "VAN",
+      "direction": "DOWN",
+      "rule": "LAST_SEASON",
+      "recent": 0.2,
+      "baseline": 1.02,
+      "recentGames": 10,
+      "score": 2.57
+    }
+  ]
+}
+```
+
+`id` is the NHL player ID for players and the team code for teams. `recent` and `baseline` are points
+per game for players and point percentage for teams. The last-season rule needs that season loaded
+(see "Backfilling a past season" in `README.md`); without it, the other two rules still apply.
+
+---
+
 ## Status
 
 ### GET /api/status
