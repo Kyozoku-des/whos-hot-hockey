@@ -42,7 +42,10 @@
           @dragend="onDragEnd"
         >
           <ExpandableCard :title="card.title" :class="{ 'favorites-card': card.key === 'favorites' }">
-            <component :is="card.component" />
+            <template v-if="card.key in positionFilters" #title-extra>
+              <PositionFilter v-model="positionFilters[card.key]" />
+            </template>
+            <component :is="card.component" v-bind="cardProps(card.key)" />
           </ExpandableCard>
         </div>
       </div>
@@ -65,7 +68,10 @@
         <div class="swipe-track" :class="{ dragging: isSwiping || !animateSlides }" :style="{ left: `${swipeOffset}px` }">
           <div v-for="(card, index) in mobileCards" :key="card.key" class="swipe-slide">
             <ExpandableCard :title="card.title" :class="{ 'favorites-card': card.key === 'favorites' }">
-              <component :is="card.component" />
+              <template v-if="card.key in positionFilters" #title-extra>
+                <PositionFilter v-model="positionFilters[card.key]" />
+              </template>
+              <component :is="card.component" v-bind="cardProps(card.key)" />
             </ExpandableCard>
           </div>
         </div>
@@ -92,15 +98,21 @@
 </template>
 
 <script>
+import { reactive } from 'vue'
+
 // Module-level so the mobile carousel reopens on the same card after visiting
 // a player or team page and coming back
 let lastCardKey = null
+
+// Position picked on each player card, kept the same way
+const positionFilters = reactive({ streaks: 'all', 'hot-players': 'all', standings: 'all' })
 </script>
 
 <script setup>
 import { HOME_DESCRIPTION } from '../seo.js'
 import { computed, onMounted, ref, onUnmounted, nextTick, watch, shallowRef } from 'vue'
 import ExpandableCard from '../components/ExpandableCard.vue'
+import PositionFilter from '../components/PositionFilter.vue'
 import TopPointsTable from '../components/TopPointsTable.vue'
 import PointStreaksTable from '../components/PointStreaksTable.vue'
 import HottestPlayersTable from '../components/HottestPlayersTable.vue'
@@ -176,6 +188,9 @@ const COMPONENTS = {
 }
 
 const CARDS = HOME_CARDS.map(card => ({ ...card, component: COMPONENTS[card.key] }))
+
+// Player cards get the position picked in their title
+const cardProps = (key) => (key in positionFilters ? { position: positionFilters[key] } : {})
 const cardByKey = (key) => CARDS.find(card => card.key === key)
 
 // The favorites card only shows once something has been favorited

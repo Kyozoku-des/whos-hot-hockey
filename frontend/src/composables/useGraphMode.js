@@ -1,4 +1,6 @@
 import { computed, ref } from 'vue'
+import { Interaction, Tooltip } from 'chart.js'
+import { getRelativePosition } from 'chart.js/helpers'
 import { useSettings } from './useSettings'
 import { colorSchemeFor } from '../themes/colorSchemes.js'
 
@@ -39,7 +41,8 @@ export function useGraphMode() {
 // Running total of a per-game series, e.g. [1, 0, 2] -> [1, 1, 3]
 export function toCumulative(values) {
   let total = 0
-  return values.map(value => (total += value))
+  // A game the player sat out (null) stays a gap; the total carries over it
+  return values.map(value => (value == null ? null : (total += value)))
 }
 
 // Single-point dataset marking the season total a player/team is on pace for
@@ -61,6 +64,32 @@ export function projectionMarker(projectedPoints, seasonGames) {
     pointBorderWidth: 2,
     pointHoverBorderWidth: 2
   }
+}
+
+// Like Chart.js's 'index' mode, but also keeps a game the player sat out. That
+// game is a null point, which 'index' skips both when finding the hovered game
+// and when listing it, so its tooltip could never say "Did not play". The game
+// is found from the pointer's x alone; datasets flag such games in `missed`.
+export const GAME_INDEX_MODE = 'gameIndex'
+
+Interaction.modes[GAME_INDEX_MODE] = (chart, e) => {
+  const { x } = getRelativePosition(e, chart)
+  const { left, right } = chart.chartArea
+  if (x < left || x > right) return []
+  const index = Math.round(chart.scales.x.getValueForPixel(x))
+  return chart.getSortedVisibleDatasetMetas().flatMap(meta => {
+    const element = meta.data[index]
+    const missed = chart.data.datasets[meta.index].missed?.[index]
+    return element && (!element.skip || missed) ? [{ element, datasetIndex: meta.index, index }] : []
+  })
+}
+
+// Chart.js's 'average' position, falling back to the hovered game's x and the
+// pointer's height when every listed point is a missed game, which has no y
+Tooltip.positioners[GAME_INDEX_MODE] = function (items, eventPosition) {
+  const average = Tooltip.positioners.average.call(this, items, eventPosition)
+  if (average || !items.length) return average
+  return { x: items[0].element.x, y: eventPosition.y }
 }
 
 // Tooltip color square: small and solid in the line color, like the legend

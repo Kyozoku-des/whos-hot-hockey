@@ -224,6 +224,16 @@ html:root:not([data-theme="retro"]) .stat-key {
   font-variant-numeric: tabular-nums;
 }
 
+/* An absent player's badge sits right after the name instead of at the far
+   end of the space the name would otherwise fill */
+html:root .player-name:has(+ .absent-badge) {
+  flex: 0 1 auto;
+}
+
+html:root .player-name + .absent-badge {
+  margin-right: auto;
+}
+
 /* Modern table rows have no outline, so a line separates each row from the
    one above it, centered in the row gap. Retro rows are outlined boxes. */
 :root:not([data-theme="retro"]) :is(.players-grid, .teams-grid, .favorites-grid)

@@ -12,7 +12,7 @@
 <script setup>
 import { computed } from 'vue'
 import GraphModeToggle from './GraphModeToggle.vue'
-import { useGraphMode, toCumulative, projectionMarker, tooltipColorBox, tooltipLabelColor, tapTooltipEvents, tapToggleTooltip, graphLineColors } from '../composables/useGraphMode'
+import { useGraphMode, toCumulative, projectionMarker, tooltipColorBox, tooltipLabelColor, tapTooltipEvents, tapToggleTooltip, graphLineColors, GAME_INDEX_MODE } from '../composables/useGraphMode'
 import { useIsMobile } from '../composables/useIsMobile'
 import { useSettings, themeFontFamily } from '../composables/useSettings'
 import { Line } from 'vue-chartjs'
@@ -88,6 +88,16 @@ const graphTitle = computed(() =>
     : 'Points Per Game - Season Comparison'
 )
 
+// A game the player sat out has no stats: null leaves a gap in the line
+const statOrGap = (game, stat) => (game.missed ? null : game[stat] || 0)
+
+// Lines have no dots, so a game between two gaps would not show at all: give it one
+const isolatedGameDot = (ctx) => {
+  const data = ctx.dataset.data
+  const i = ctx.dataIndex
+  return data[i] != null && data[i - 1] == null && data[i + 1] == null ? 2 : 0
+}
+
 // Check if we have any data
 const hasData = computed(() => {
   return (props.currentSeasonData && props.currentSeasonData.length > 0) ||
@@ -110,9 +120,9 @@ const combinedChartData = computed(() => {
 
   // Add previous season data (if available)
   if (props.previousSeasonData && props.previousSeasonData.length > 0) {
-    const previousPoints = props.previousSeasonData.map(game => game.points || 0)
-    const previousGoals = props.previousSeasonData.map(game => game.goals || 0)
-    const previousAssists = props.previousSeasonData.map(game => game.assists || 0)
+    const previousPoints = props.previousSeasonData.map(game => statOrGap(game, 'points'))
+    const previousGoals = props.previousSeasonData.map(game => statOrGap(game, 'goals'))
+    const previousAssists = props.previousSeasonData.map(game => statOrGap(game, 'assists'))
     datasets.push({
       label: `${previousSeasonLabel.value} (Previous)`,
       data: isCumulative.value ? toCumulative(previousPoints) : previousPoints,
@@ -120,11 +130,12 @@ const combinedChartData = computed(() => {
       totals: toCumulative(previousPoints),
       goals: previousGoals,
       assists: previousAssists,
+      missed: props.previousSeasonData.map(game => Boolean(game.missed)),
       borderColor: graphLineColors.value.previous,
       backgroundColor: graphLineColors.value.previousFill,
       borderWidth: 2,
       tension: 0.1,
-      pointRadius: 0,
+      pointRadius: isolatedGameDot,
       pointHoverRadius: 0,
       borderDash: [5, 5] // Dashed line for previous season
     })
@@ -132,9 +143,9 @@ const combinedChartData = computed(() => {
 
   // Add current season data (if available)
   if (props.currentSeasonData && props.currentSeasonData.length > 0) {
-    const currentPoints = props.currentSeasonData.map(game => game.points || 0)
-    const currentGoals = props.currentSeasonData.map(game => game.goals || 0)
-    const currentAssists = props.currentSeasonData.map(game => game.assists || 0)
+    const currentPoints = props.currentSeasonData.map(game => statOrGap(game, 'points'))
+    const currentGoals = props.currentSeasonData.map(game => statOrGap(game, 'goals'))
+    const currentAssists = props.currentSeasonData.map(game => statOrGap(game, 'assists'))
     datasets.push({
       label: `${currentSeasonLabel.value} (Current)`,
       data: isCumulative.value ? toCumulative(currentPoints) : currentPoints,
@@ -142,11 +153,12 @@ const combinedChartData = computed(() => {
       totals: toCumulative(currentPoints),
       goals: currentGoals,
       assists: currentAssists,
+      missed: props.currentSeasonData.map(game => Boolean(game.missed)),
       borderColor: graphLineColors.value.line,
       backgroundColor: graphLineColors.value.fill,
       borderWidth: 3,
       tension: 0.1,
-      pointRadius: 0,
+      pointRadius: isolatedGameDot,
       pointHoverRadius: 0
     })
   }
@@ -166,8 +178,9 @@ const chartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   ...(isMobile.value ? { events: tapTooltipEvents } : {}),
+  // Index mode that keeps games the player missed, see GAME_INDEX_MODE
   interaction: {
-    mode: 'index',
+    mode: GAME_INDEX_MODE,
     intersect: false
   },
   plugins: {
@@ -195,7 +208,8 @@ const chartOptions = computed(() => ({
       }
     },
     tooltip: {
-      mode: 'index',
+      mode: GAME_INDEX_MODE,
+      position: GAME_INDEX_MODE,
       intersect: false,
       titleFont: {
         family: fontFamily.value,
@@ -207,7 +221,7 @@ const chartOptions = computed(() => ({
       },
       ...tooltipColorBox,
       // The on-pace marker only has a value at the last game
-      filter: (item) => item.raw != null,
+      filter: (item) => item.raw != null || item.dataset.missed?.[item.dataIndex],
       callbacks: {
         labelColor: tooltipLabelColor,
         title: (context) => {
@@ -218,6 +232,9 @@ const chartOptions = computed(() => ({
           const dataset = context.dataset
           if (dataset.projected) {
             return `Projected points: ${context.raw}P`
+          }
+          if (dataset.missed?.[gameIndex]) {
+            return `${dataset.label}: Did not play`
           }
           const points = dataset.points?.[gameIndex] ?? 0
           const total = dataset.totals?.[gameIndex] ?? 0

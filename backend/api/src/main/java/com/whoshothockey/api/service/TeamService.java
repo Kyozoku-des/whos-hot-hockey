@@ -41,8 +41,9 @@ public class TeamService {
      */
     public List<TeamStandingsDto> getTeamStandings(String season) {
         String resolved = seasonResolver.resolve(season);
+        int seasonGames = SeasonPace.regularSeasonGames(resolved);
         return teamRepository.findBySeasonIdOrderByPointsDesc(resolved).stream()
-                .map(this::toStandingsDto)
+                .map(team -> toStandingsDto(team, seasonGames))
                 .toList();
     }
 
@@ -54,8 +55,9 @@ public class TeamService {
      */
     public List<TeamStandingsDto> getTeamWinStreaks(String season) {
         String resolved = seasonResolver.resolve(season);
+        int seasonGames = SeasonPace.regularSeasonGames(resolved);
         return teamRepository.findTeamsWithWinStreaks(resolved).stream()
-                .map(this::toStandingsDto)
+                .map(team -> toStandingsDto(team, seasonGames))
                 .toList();
     }
 
@@ -67,8 +69,9 @@ public class TeamService {
      */
     public List<TeamStandingsDto> getTeamLossStreaks(String season) {
         String resolved = seasonResolver.resolve(season);
+        int seasonGames = SeasonPace.regularSeasonGames(resolved);
         return teamRepository.findTeamsWithLossStreaks(resolved).stream()
-                .map(this::toStandingsDto)
+                .map(team -> toStandingsDto(team, seasonGames))
                 .toList();
     }
 
@@ -136,7 +139,7 @@ public class TeamService {
         );
     }
 
-    private TeamStandingsDto toStandingsDto(Team team) {
+    private TeamStandingsDto toStandingsDto(Team team, int seasonGames) {
         return new TeamStandingsDto(
                 team.getTeamCode(),
                 team.getTeamName(),
@@ -155,7 +158,9 @@ public class TeamService {
                 team.getCurrentWinStreak(),
                 team.getCurrentLossStreak(),
                 team.getLast10GamesPointPercentage(),
-                team.getLast10GamesPPG()
+                team.getLast10GamesPPG(),
+                team.getGamesPlayed() == null ? null : SeasonPace.projectedPointsAtRate(
+                        team.getPoints(), team.getLast10GamesPPG(), seasonGames - team.getGamesPlayed())
         );
     }
 

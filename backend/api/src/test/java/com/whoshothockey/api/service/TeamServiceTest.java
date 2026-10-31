@@ -72,6 +72,20 @@ class TeamServiceTest {
     }
 
     @Test
+    void teamStandings_projectSeasonPointsAtTheLast10Pace() {
+        Team team = new Team();
+        team.setTeamCode("EDM");
+        team.setGamesPlayed(20);
+        team.setPoints(30);
+        team.setLast10GamesPPG(1.5);
+        when(teamRepository.findBySeasonIdOrderByPointsDesc(SEASON)).thenReturn(List.of(team));
+
+        // 30 points + 1.5 a game over the 64 games left of an 84-game season
+        assertThat(teamService.getTeamStandings(SEASON)).singleElement()
+                .satisfies(dto -> assertThat(dto.projectedPointsLast10()).isEqualTo(126));
+    }
+
+    @Test
     void teamDetail_derivesGoalDifferentialAndRosterNames() {
         Team team = new Team();
         team.setTeamCode("EDM");

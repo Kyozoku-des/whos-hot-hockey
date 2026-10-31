@@ -22,5 +22,6 @@ public record TeamStandingsDto(
         Integer currentWinStreak,
         Integer currentLossStreak,
         Double last10GamesPointPercentage,
-        Double last10GamesPPG
+        Double last10GamesPPG,
+        Integer projectedPointsLast10
 ) {}

@@ -21,5 +21,6 @@ public record PlayerDetailDto(
         Integer currentPointlessStreak,
         Double pointsPerLastNGames,
         Integer seasonGames,
-        Integer projectedPoints
+        Integer projectedPoints,
+        Integer gamesMissedInARow
 ) {}

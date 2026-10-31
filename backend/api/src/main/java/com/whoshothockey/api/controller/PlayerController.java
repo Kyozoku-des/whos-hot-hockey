@@ -1,5 +1,6 @@
 package com.whoshothockey.api.controller;
 
+import com.whoshothockey.api.dto.MissedGameDto;
 import com.whoshothockey.api.dto.PlayerDetailDto;
 import com.whoshothockey.api.dto.PlayerGameLogDto;
 import com.whoshothockey.api.dto.PlayerStandingsDto;
@@ -39,6 +40,16 @@ public class PlayerController {
             @PathVariable long playerId,
             @RequestParam(required = false) String season) {
         return ResponseEntity.ok(playerService.getPlayerGameLog(playerId, season));
+    }
+
+    @GetMapping("/{playerId}/missed-games")
+    @Operation(summary = "Get player missed games",
+               description = "Returns the games the player's current team played without them since "
+                       + "their first game for it, oldest first")
+    public ResponseEntity<List<MissedGameDto>> getPlayerMissedGames(
+            @PathVariable long playerId,
+            @RequestParam(required = false) String season) {
+        return ResponseEntity.ok(playerService.getPlayerMissedGames(playerId, season));
     }
 
     @GetMapping("/standings")

@@ -44,7 +44,7 @@ class TeamControllerTest {
                 180, 150, 30,
                 "Eastern", "Atlantic",
                 3, 0,
-                0.8, 2.2
+                0.8, 2.2, 140
         );
 
         when(teamService.getTeamStandings(season)).thenReturn(List.of(team));
@@ -57,6 +57,7 @@ class TeamControllerTest {
                 .andExpect(jsonPath("$[0].wins").value(30))
                 .andExpect(jsonPath("$[0].points").value(65))
                 .andExpect(jsonPath("$[0].currentWinStreak").value(3))
+                .andExpect(jsonPath("$[0].projectedPointsLast10").value(140))
                 .andExpect(jsonPath("$[0].divisionName").value("Atlantic"))
                 .andExpect(jsonPath("$[0].last10GamesPointPercentage").value(0.8));
     }

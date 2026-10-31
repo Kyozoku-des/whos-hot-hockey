@@ -19,5 +19,9 @@ public record PlayerStandingsDto(
         Integer plusMinus,
         Double pointsPerLastNGames,
         Integer currentPointStreak,
-        Integer currentPointlessStreak
+        Integer currentPointlessStreak,
+        Integer lastNGamesPlayed,
+        Integer pointsInLastNGames,
+        Integer projectedPointsLastN,
+        Integer gamesMissedInARow
 ) {}
