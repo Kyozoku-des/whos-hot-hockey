@@ -46,6 +46,7 @@ class PlayerMissedGamesIT {
     private static final long TRADED_ID = 8480002L;
     private static final long HEALTHY_ID = 8480003L;
     private static final long UNPLAYED_ID = 8480004L;
+    private static final long FORMER_OPPONENT_ID = 8480005L;
 
     @Container
     @ServiceConnection
@@ -63,36 +64,41 @@ class PlayerMissedGamesIT {
 
     @BeforeEach
     void seed() {
-        // COL's five games, inserted out of order
+        // COL's five games, inserted out of order; game 2 was against Vancouver
         teamGameRepository.saveAll(List.of(
-                teamGame("COL", 5, "2025-10-16"),
-                teamGame("COL", 1, "2025-10-08"),
-                teamGame("COL", 3, "2025-10-12"),
-                teamGame("COL", 2, "2025-10-10"),
-                teamGame("COL", 4, "2025-10-14"),
-                teamGame("SEA", 100, "2025-10-09"),
-                teamGame("SEA", 101, "2025-10-11")));
+                teamGame("COL", 5, "2025-10-16", "MTL"),
+                teamGame("COL", 1, "2025-10-08", "MTL"),
+                teamGame("COL", 3, "2025-10-12", "MTL"),
+                teamGame("COL", 2, "2025-10-10", "VAN"),
+                teamGame("VAN", 2, "2025-10-10", "COL"),
+                teamGame("COL", 4, "2025-10-14", "MTL"),
+                teamGame("SEA", 100, "2025-10-09", "MTL"),
+                teamGame("SEA", 101, "2025-10-11", "MTL")));
 
         playerRepository.saveAll(List.of(
                 player(INJURED_ID, 3, 4, 4.0 / 3),
                 player(TRADED_ID, 3, 3, 1.0),
                 player(HEALTHY_ID, 5, 10, 2.0),
-                player(UNPLAYED_ID, 0, 0, null)));
+                player(UNPLAYED_ID, 0, 0, null),
+                player(FORMER_OPPONENT_ID, 2, 2, 1.0)));
 
         gameLogRepository.saveAll(List.of(
                 // Played the first three, out since
                 gameLog(INJURED_ID, 1, "2025-10-08"),
-                gameLog(INJURED_ID, 2, "2025-10-10"),
+                gameLog(INJURED_ID, 2, "2025-10-10", "VAN"),
                 gameLog(INJURED_ID, 3, "2025-10-12"),
                 // Two games for Seattle, then traded and played COL's game 4
                 gameLog(TRADED_ID, 100, "2025-10-09"),
                 gameLog(TRADED_ID, 101, "2025-10-11"),
                 gameLog(TRADED_ID, 4, "2025-10-14"),
                 gameLog(HEALTHY_ID, 1, "2025-10-08"),
-                gameLog(HEALTHY_ID, 2, "2025-10-10"),
+                gameLog(HEALTHY_ID, 2, "2025-10-10", "VAN"),
                 gameLog(HEALTHY_ID, 3, "2025-10-12"),
                 gameLog(HEALTHY_ID, 4, "2025-10-14"),
-                gameLog(HEALTHY_ID, 5, "2025-10-16")));
+                gameLog(HEALTHY_ID, 5, "2025-10-16"),
+                // Played against COL for Vancouver in game 2, traded, then COL's game 5
+                gameLog(FORMER_OPPONENT_ID, 2, "2025-10-10", "COL"),
+                gameLog(FORMER_OPPONENT_ID, 5, "2025-10-16")));
     }
 
     @Test
@@ -101,6 +107,7 @@ class PlayerMissedGamesIT {
         assertEquals(List.of(5L), gameIds(playerService.getPlayerMissedGames(TRADED_ID, SEASON)));
         assertEquals(List.of(), gameIds(playerService.getPlayerMissedGames(HEALTHY_ID, SEASON)));
         assertEquals(List.of(), gameIds(playerService.getPlayerMissedGames(UNPLAYED_ID, SEASON)));
+        assertEquals(List.of(), gameIds(playerService.getPlayerMissedGames(FORMER_OPPONENT_ID, SEASON)));
         assertEquals(List.of(), gameIds(playerService.getPlayerMissedGames(9999999L, SEASON)));
     }
 
@@ -151,12 +158,16 @@ class PlayerMissedGamesIT {
     }
 
     private static GameLog gameLog(long playerId, long gameId, String date) {
-        return new GameLog(null, playerId, gameId, LocalDate.parse(date), "MTL", true,
+        return gameLog(playerId, gameId, date, "MTL");
+    }
+
+    private static GameLog gameLog(long playerId, long gameId, String date, String opponent) {
+        return new GameLog(null, playerId, gameId, LocalDate.parse(date), opponent, true,
                 1, 0, 1, 1, 3, 1080, true, SEASON, 1);
     }
 
-    private static TeamGame teamGame(String team, long gameId, String date) {
-        return new TeamGame(null, gameId, team, LocalDate.parse(date), "MTL", true,
+    private static TeamGame teamGame(String team, long gameId, String date, String opponent) {
+        return new TeamGame(null, gameId, team, LocalDate.parse(date), opponent, true,
                 3, 2, true, false, "2", SEASON, 1);
     }
 }

@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -80,13 +80,11 @@ public class PlayerService {
         String resolved = seasonResolver.resolve(season);
         Player player = playerRepository.findById(new Player.PlayerId(playerId, resolved))
                 .orElseThrow(() -> new GlobalExceptionHandler.PlayerNotFoundException(playerId));
-        List<TeamGame> teamGames = teamGames(player);
-        Long latestGameId = gameLogRepository.findByPlayerIdAndSeasonId(playerId, resolved).stream()
+        GameLog latestGame = gameLogRepository.findByPlayerIdAndSeasonId(playerId, resolved).stream()
                 .max(Comparator.comparing(GameLog::getGameDate))
-                .map(GameLog::getGameId)
                 .orElse(null);
         return toDetailDto(player, SeasonPace.regularSeasonGames(resolved),
-                MissedGames.inARow(teamGames, latestGameId));
+                MissedGames.inARow(teamGames(player), latestGame));
     }
 
     /**
@@ -102,9 +100,7 @@ public class PlayerService {
         if (player == null) {
             return List.of();
         }
-        Set<Long> played = gameLogRepository.findByPlayerIdAndSeasonId(playerId, resolved).stream()
-                .map(GameLog::getGameId)
-                .collect(Collectors.toSet());
+        List<GameLog> played = gameLogRepository.findByPlayerIdAndSeasonId(playerId, resolved);
         return MissedGames.missed(teamGames(player), played).stream()
                 .map(game -> new MissedGameDto(
                         game.getGameId(),
@@ -182,18 +178,18 @@ public class PlayerService {
         Map<String, List<TeamGame>> teamGames = teamGameRepository.findBySeasonId(seasonId).stream()
                 .sorted(Comparator.comparing(TeamGame::getGameDate))
                 .collect(Collectors.groupingBy(TeamGame::getTeamCode));
-        Map<Long, Long> latestGameIds = gameLogRepository.findLatestGames(seasonId).stream()
-                .collect(Collectors.toMap(GameLog::getPlayerId, GameLog::getGameId, (a, b) -> a));
+        Map<Long, GameLog> latestGames = gameLogRepository.findLatestGames(seasonId).stream()
+                .collect(Collectors.toMap(GameLog::getPlayerId, Function.identity(), (a, b) -> a));
         int seasonGames = SeasonPace.regularSeasonGames(seasonId);
         return players.stream()
                 .map(player -> toStandingsDto(player,
                         teamGames.getOrDefault(player.getTeamCode(), List.of()),
-                        latestGameIds.get(player.getId().playerId()),
+                        latestGames.get(player.getId().playerId()),
                         seasonGames))
                 .toList();
     }
 
-    private PlayerStandingsDto toStandingsDto(Player player, List<TeamGame> teamGames, Long latestGameId,
+    private PlayerStandingsDto toStandingsDto(Player player, List<TeamGame> teamGames, GameLog latestGame,
                                               int seasonGames) {
         Integer lastNGames = player.getGamesPlayed() == null ? null
                 : Math.min(LAST_N_GAMES, player.getGamesPlayed());
@@ -223,7 +219,7 @@ public class PlayerService {
                 lastNPoints,
                 SeasonPace.projectedPointsAtRate(player.getPoints(), player.getPointsPerLastNGames(),
                         seasonGames - teamGamesPlayed),
-                MissedGames.inARow(teamGames, latestGameId)
+                MissedGames.inARow(teamGames, latestGame)
         );
     }
 }
