@@ -12,7 +12,7 @@
 <script setup>
 import { computed } from 'vue'
 import GraphModeToggle from './GraphModeToggle.vue'
-import { useGraphMode, toCumulative, projectionMarker, tooltipColorBox, tooltipLabelColor, tapTooltipEvents, tapToggleTooltip, graphLineColors } from '../composables/useGraphMode'
+import { useGraphMode, toCumulative, projectionMarker, tooltipColorBox, tooltipLabelColor, tapTooltipEvents, tapToggleTooltip, graphLineColors, GAME_INDEX_MODE } from '../composables/useGraphMode'
 import { useIsMobile } from '../composables/useIsMobile'
 import { useSettings, themeFontFamily } from '../composables/useSettings'
 import { Line } from 'vue-chartjs'
@@ -178,8 +178,9 @@ const chartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   ...(isMobile.value ? { events: tapTooltipEvents } : {}),
+  // Index mode that keeps games the player missed, see GAME_INDEX_MODE
   interaction: {
-    mode: 'index',
+    mode: GAME_INDEX_MODE,
     intersect: false
   },
   plugins: {
@@ -207,7 +208,8 @@ const chartOptions = computed(() => ({
       }
     },
     tooltip: {
-      mode: 'index',
+      mode: GAME_INDEX_MODE,
+      position: GAME_INDEX_MODE,
       intersect: false,
       titleFont: {
         family: fontFamily.value,
@@ -218,8 +220,7 @@ const chartOptions = computed(() => ({
         size: 12
       },
       ...tooltipColorBox,
-      // The on-pace marker only has a value at the last game; a missed game
-      // has none either but still says so
+      // The on-pace marker only has a value at the last game
       filter: (item) => item.raw != null || item.dataset.missed?.[item.dataIndex],
       callbacks: {
         labelColor: tooltipLabelColor,
