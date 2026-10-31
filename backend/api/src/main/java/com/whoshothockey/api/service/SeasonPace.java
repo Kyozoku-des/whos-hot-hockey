@@ -42,6 +42,21 @@ public final class SeasonPace {
         if (points == null || gamesPlayed == null || gamesPlayed <= 0) {
             return null;
         }
-        return (int) Math.round((double) points / gamesPlayed * seasonGames);
+        return projectedPointsAtRate(points, (double) points / gamesPlayed, seasonGames - gamesPlayed);
+    }
+
+    /**
+     * Points at the end of the season if a points-per-game rate holds for the games left.
+     *
+     * @param points points so far
+     * @param pointsPerGame rate to extend, e.g. the season or last-10 average
+     * @param gamesLeft games still to play; negative counts as none
+     * @return points plus the rate times the games left, or null without points or a rate
+     */
+    public static Integer projectedPointsAtRate(Integer points, Double pointsPerGame, int gamesLeft) {
+        if (points == null || pointsPerGame == null) {
+            return null;
+        }
+        return (int) Math.round(points + pointsPerGame * Math.max(0, gamesLeft));
     }
 }
