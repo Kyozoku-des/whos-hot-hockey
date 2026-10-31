@@ -39,7 +39,8 @@ export function useGraphMode() {
 // Running total of a per-game series, e.g. [1, 0, 2] -> [1, 1, 3]
 export function toCumulative(values) {
   let total = 0
-  return values.map(value => (total += value))
+  // A game the player sat out (null) stays a gap; the total carries over it
+  return values.map(value => (value == null ? null : (total += value)))
 }
 
 // Single-point dataset marking the season total a player/team is on pace for

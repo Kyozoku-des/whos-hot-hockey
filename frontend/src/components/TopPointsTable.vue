@@ -16,6 +16,7 @@
           <div class="player-main">
             <TeamLogo :logoUrl="player.teamLogoUrl" :teamCode="player.teamCode" size="small" />
             <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
+            <AbsentBadge :player="player" />
             <NextGameBadge :team-code="player.teamCode" />
           </div>
           <span class="player-stats">
@@ -41,23 +42,31 @@ import NextGameBadge from './NextGameBadge.vue'
 import { useNextGames } from '../composables/useNextGames'
 import FavoriteToggle from './FavoriteToggle.vue'
 import { useIncrementalList } from '../composables/useIncrementalList'
+import { matchesPosition } from '../composables/positions'
+import AbsentBadge from './AbsentBadge.vue'
+
+const props = defineProps({
+  // Position group picked in the card title: 'all', 'F' or 'D'
+  position: { type: String, default: 'all' }
+})
 
 const { showNextGame, hideNextGame } = useNextGames()
 const { loading, error, getTopScorers } = usePlayerStats()
 const searchStore = useSearchStore()
 const allPlayers = ref([])
 
-// Filter players based on search query
+// Filter players based on the position picked and the search query
 const players = computed(() => {
+  const inPosition = allPlayers.value.filter(player => matchesPosition(player, props.position))
   const query = searchStore.currentQuery.toLowerCase().trim()
-  if (!query) return allPlayers.value
+  if (!query) return inPosition
 
   // Find teams matching the query
   const matchingTeamCodes = searchStore.searchData
     .filter(item => item.type === 'TEAM' && item.name.toLowerCase().includes(query))
     .map(team => team.id)
 
-  return allPlayers.value.filter(player => {
+  return inPosition.filter(player => {
     // Check if player name matches
     const fullName = `${player.firstName} ${player.lastName}`.toLowerCase()
     if (fullName.includes(query)) return true

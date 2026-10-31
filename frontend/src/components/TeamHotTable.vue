@@ -1,5 +1,5 @@
 <template>
-  <div class="team-list stat-table" :class="{ 'stat-table-wide': isExpanded }" :style="{ '--stat-cols': isExpanded ? 7 : 4 }">
+  <div class="team-list stat-table" :class="{ 'stat-table-wide': isExpanded }" :style="{ '--stat-cols': isExpanded ? 8 : 5 }">
     <div v-if="loading" class="loading">Loading...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else-if="teams.length === 0" class="empty">No hot teams</div>
@@ -23,9 +23,11 @@
             <span class="stat-item">L: {{ team.losses }}</span>
             <span class="stat-item">OTL: {{ team.overtimeLosses }}</span>
             <span class="stat-item stat-key" title="Share of available standings points over the last 10 games (or all games played if fewer)">P%: {{ team.last10GamesPPG != null ? (team.last10GamesPPG / 2 * 100).toFixed(1) : 'N/A' }}</span>
-            <span v-if="isExpanded" class="stat-item">GP: {{ team.gamesPlayed }}</span>
+            <span class="stat-item" title="Season points if the last-10 points per game holds for the games left">Pace: {{ team.projectedPointsLast10 ?? '–' }}</span>
             <span v-if="isExpanded" class="stat-item">PTS: {{ team.points }}</span>
             <span v-if="isExpanded" class="stat-item">Streak: {{ team.currentWinStreak }}</span>
+            <!-- Only while the last 10 still covers fewer games: from then on it is always 10 -->
+            <span v-if="isExpanded && team.gamesPlayed < LAST_N_GAMES" class="stat-item">GP: {{ team.gamesPlayed }}</span>
           </span>
           <div class="tooltip">
             {{ formatPointPercentage(team.last10GamesPointPercentage) }} PTS%
@@ -45,6 +47,9 @@ import TeamLogo from './TeamLogo.vue'
 import NextGameBadge from './NextGameBadge.vue'
 import { useNextGames } from '../composables/useNextGames'
 import FavoriteToggle from './FavoriteToggle.vue'
+
+// Games the last-10 figures cover once the team has played that many
+const LAST_N_GAMES = 10
 
 const { showNextGame, hideNextGame } = useNextGames()
 const { loading, error, getStandings } = useTeamStats()

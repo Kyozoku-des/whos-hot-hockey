@@ -73,6 +73,15 @@ export function usePlayerStats() {
     return data || []
   }
 
+  // Team games the player sat out since their first game for the team
+  const getPlayerMissedGames = async (playerId, season = null) => {
+    const endpoint = season
+      ? `/players/${playerId}/missed-games?season=${season}`
+      : `/players/${playerId}/missed-games`
+    const data = await fetchData(endpoint)
+    return data || []
+  }
+
   return {
     loading,
     error,
@@ -81,7 +90,8 @@ export function usePlayerStats() {
     getPlayerStreaks,
     getHottestPlayers,
     getPlayerDetails,
-    getPlayerGameLog
+    getPlayerGameLog,
+    getPlayerMissedGames
   }
 }
 

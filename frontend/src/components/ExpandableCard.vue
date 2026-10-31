@@ -27,7 +27,11 @@
       <PixelIcon name="expand" />
     </div>
 
-    <h2 class="card-title">{{ title }}</h2>
+    <div class="card-header">
+      <h2 class="card-title">{{ title }}</h2>
+      <!-- Controls beside the title, e.g. a filter -->
+      <slot name="title-extra"></slot>
+    </div>
     <div class="card-content" :class="{ scrollable: isExpanded }" @click="handleContentClick">
       <slot></slot>
     </div>
@@ -182,17 +186,26 @@ onUnmounted(() => {
   }
 }
 
-.card-title {
-  font-size: var(--card-title-size);
-  line-height: 1.1;
+/* Title and its controls on one line, aligned like the title on its own */
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: var(--card-title-align);
+  gap: 0.75rem;
   margin-bottom: 0.75rem;
   /* Clear of the expand icon in the corner */
   padding: var(--card-title-padding);
+  flex-shrink: 0;
+}
+
+.card-title {
+  font-size: var(--card-title-size);
+  line-height: 1.1;
+  min-width: 0;
   text-align: var(--card-title-align);
   color: var(--color-text-primary);
   text-transform: uppercase;
   letter-spacing: calc(2 * var(--tracking));
-  flex-shrink: 0;
 }
 
 .card-content {
