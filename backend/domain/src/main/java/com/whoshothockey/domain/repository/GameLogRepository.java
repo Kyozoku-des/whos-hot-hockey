@@ -50,4 +50,25 @@ public interface GameLogRepository extends JpaRepository<GameLog, Long> {
     List<GameLog> findPreviousGames(@Param("playerIds") Collection<Long> playerIds,
                                     @Param("seasonId") String seasonId,
                                     @Param("gameDate") LocalDate gameDate);
+
+    /**
+     * Each stored player's most recent game in a season, one row per player.
+     * Players with no game in the season are absent.
+     *
+     * @param seasonId season identifier
+     * @return at most one game log per player
+     */
+    @Query(value = """
+            SELECT g.*
+            FROM players p
+            CROSS JOIN LATERAL (
+                SELECT *
+                FROM game_logs l
+                WHERE l.player_id = p.player_id AND l.season_id = p.season_id
+                ORDER BY l.game_date DESC
+                LIMIT 1
+            ) g
+            WHERE p.season_id = :seasonId
+            """, nativeQuery = true)
+    List<GameLog> findLatestGames(@Param("seasonId") String seasonId);
 }

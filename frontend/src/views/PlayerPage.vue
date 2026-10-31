@@ -9,6 +9,7 @@
           <div class="page-title">
             <TeamLogo :logoUrl="player?.teamLogoUrl" :teamCode="player?.teamCode" size="medium" />
             <h1 class="player-name">{{ player?.firstName }} {{ player?.lastName }}</h1>
+            <AbsentBadge :player="player" detailed />
           </div>
           <NextGameLine :team-code="player?.teamCode" />
           <FavoriteButton v-if="player" :item="playerFavorite(player)" />
@@ -25,6 +26,10 @@
         </div>
 
         <div class="section season-totals">
+          <div class="total">
+            <span class="total-label">Games</span>
+            <span class="total-value">{{ player?.gamesPlayed || 0 }}</span>
+          </div>
           <div class="total">
             <span class="total-label">Points</span>
             <span class="total-value">{{ player?.points || 0 }}</span>
@@ -54,12 +59,17 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="game in gameLogsReversed" :key="game.gameId">
+                <tr v-for="game in gameLogsReversed" :key="game.gameId" :class="{ 'missed-game': game.missed }">
                   <td>{{ formatDate(game.gameDate) }}</td>
-                  <td>{{ game.goals }}</td>
-                  <td>{{ game.assists }}</td>
-                  <td>{{ game.points }}</td>
-                  <td>{{ game.timeOnIce }}</td>
+                  <template v-if="game.missed">
+                    <td v-for="column in 4" :key="column" title="Did not play">–</td>
+                  </template>
+                  <template v-else>
+                    <td>{{ game.goals }}</td>
+                    <td>{{ game.assists }}</td>
+                    <td>{{ game.points }}</td>
+                    <td>{{ game.timeOnIce }}</td>
+                  </template>
                 </tr>
               </tbody>
             </table>
@@ -81,10 +91,12 @@ import FavoriteButton from '../components/FavoriteButton.vue'
 import NextGameLine from '../components/NextGameLine.vue'
 import TeamLogo from '../components/TeamLogo.vue'
 import { playerFavorite } from '../composables/useFavorites'
+import { withMissedGames } from '../composables/absence'
+import AbsentBadge from '../components/AbsentBadge.vue'
 
 const route = useRoute()
 const pagePath = route.path
-const { loading, error, status, getPlayerDetails, getPlayerGameLog } = usePlayerStats()
+const { loading, error, status, getPlayerDetails, getPlayerGameLog, getPlayerMissedGames } = usePlayerStats()
 
 const player = ref(null)
 const gameLogs = ref([])
@@ -148,19 +160,17 @@ onMounted(async () => {
 
   loadingGameLog.value = true
 
-  // Fetch current season game log
-  const gameLogData = await getPlayerGameLog(playerId)
-  if (gameLogData) {
-    gameLogs.value = gameLogData
-    // Reverse for table display (show most recent games first)
-    gameLogsReversed.value = [...gameLogData].reverse()
-  }
-
-  // Fetch previous season game log
-  const previousSeasonData = await getPlayerGameLog(playerId, previousSeason.value)
-  if (previousSeasonData) {
-    previousSeasonGameLogs.value = previousSeasonData
-  }
+  // Each season's games with the team games the player missed in between
+  const [gameLogData, missedGames, previousSeasonData, previousMissedGames] = await Promise.all([
+    getPlayerGameLog(playerId),
+    getPlayerMissedGames(playerId),
+    getPlayerGameLog(playerId, previousSeason.value),
+    getPlayerMissedGames(playerId, previousSeason.value)
+  ])
+  gameLogs.value = withMissedGames(gameLogData, missedGames)
+  // Reverse for table display (show most recent games first)
+  gameLogsReversed.value = [...gameLogs.value].reverse()
+  previousSeasonGameLogs.value = withMissedGames(previousSeasonData, previousMissedGames)
 
   loadingGameLog.value = false
   await nextTick()
@@ -309,6 +319,10 @@ onBeforeUnmount(() => {
 
 .game-log-table td {
   padding: 0.75rem;
+}
+
+.game-log-table .missed-game td {
+  color: var(--color-muted);
 }
 
 .loading,

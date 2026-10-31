@@ -43,4 +43,22 @@ class SeasonPaceTest {
         assertThat(SeasonPace.projectedPoints(0, 0, 84)).isNull();
         assertThat(SeasonPace.projectedPoints(null, null, 84)).isNull();
     }
+
+    @Test
+    void projectedPointsAtRate_addsTheRateTimesTheGamesLeft() {
+        assertThat(SeasonPace.projectedPointsAtRate(20, 1.2, 50)).isEqualTo(80);
+        assertThat(SeasonPace.projectedPointsAtRate(30, 1.25, 63)).isEqualTo(109);
+    }
+
+    @Test
+    void projectedPointsAtRate_withNoGamesLeft_isThePointsSoFar() {
+        assertThat(SeasonPace.projectedPointsAtRate(100, 2.0, 0)).isEqualTo(100);
+        assertThat(SeasonPace.projectedPointsAtRate(100, 2.0, -3)).isEqualTo(100);
+    }
+
+    @Test
+    void projectedPointsAtRate_withoutPointsOrRate_isNull() {
+        assertThat(SeasonPace.projectedPointsAtRate(null, 1.0, 10)).isNull();
+        assertThat(SeasonPace.projectedPointsAtRate(10, null, 10)).isNull();
+    }
 }

@@ -28,6 +28,7 @@
         <div class="player-main">
           <TeamLogo :logoUrl="player.teamLogoUrl" :teamCode="player.teamCode" size="small" />
           <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
+          <AbsentBadge :player="player" />
           <NextGameBadge :team-code="player.teamCode" />
         </div>
         <span class="player-stats">
@@ -85,6 +86,7 @@ import { useFavorites } from '../composables/useFavorites'
 import { usePlayerStats, useTeamStats } from '../composables/useApi'
 import TeamLogo from './TeamLogo.vue'
 import NextGameBadge from './NextGameBadge.vue'
+import AbsentBadge from './AbsentBadge.vue'
 import { useNextGames } from '../composables/useNextGames'
 import PixelIcon from './PixelIcon.vue'
 

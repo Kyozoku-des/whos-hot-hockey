@@ -1,6 +1,7 @@
 package com.whoshothockey.api.controller;
 
 import com.whoshothockey.api.config.GlobalExceptionHandler;
+import com.whoshothockey.api.dto.MissedGameDto;
 import com.whoshothockey.api.dto.PlayerDetailDto;
 import com.whoshothockey.api.dto.PlayerGameLogDto;
 import com.whoshothockey.api.dto.PlayerStandingsDto;
@@ -37,7 +38,8 @@ class PlayerControllerTest {
         PlayerStandingsDto player = new PlayerStandingsDto(
                 8478402L, "Connor", "McDavid", "Connor McDavid",
                 "C", "EDM", "https://logo.png",
-                50, 30, 45, 75, 1.5, 15, 2.0, 5, 0
+                50, 30, 45, 75, 1.5, 15, 2.0, 5, 0,
+                10, 20, 139, 0
         );
 
         when(playerService.getPlayerStandings(season)).thenReturn(List.of(player));
@@ -53,7 +55,10 @@ class PlayerControllerTest {
                 .andExpect(jsonPath("$[0].teamCode").value("EDM"))
                 .andExpect(jsonPath("$[0].headshotUrl").doesNotExist())
                 .andExpect(jsonPath("$[0].points").value(75))
-                .andExpect(jsonPath("$[0].currentPointStreak").value(5));
+                .andExpect(jsonPath("$[0].currentPointStreak").value(5))
+                .andExpect(jsonPath("$[0].pointsInLastNGames").value(20))
+                .andExpect(jsonPath("$[0].projectedPointsLastN").value(139))
+                .andExpect(jsonPath("$[0].gamesMissedInARow").value(0));
     }
 
     @Test
@@ -65,7 +70,7 @@ class PlayerControllerTest {
                 playerId, "Connor", "McDavid", "Connor McDavid",
                 "C", "EDM", "https://logo.png",
                 50, 30, 45, 75, 1.5, 15,
-                5, 0, 2.0, 82, 123
+                5, 0, 2.0, 82, 123, 2
         );
 
         when(playerService.getPlayerDetail(playerId, season)).thenReturn(detail);
@@ -79,7 +84,8 @@ class PlayerControllerTest {
                 .andExpect(jsonPath("$.currentPointStreak").value(5))
                 .andExpect(jsonPath("$.pointsPerLastNGames").value(2.0))
                 .andExpect(jsonPath("$.seasonGames").value(82))
-                .andExpect(jsonPath("$.projectedPoints").value(123));
+                .andExpect(jsonPath("$.projectedPoints").value(123))
+                .andExpect(jsonPath("$.gamesMissedInARow").value(2));
     }
 
     @Test
@@ -94,6 +100,24 @@ class PlayerControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Player not found"))
                 .andExpect(jsonPath("$.playerId").value(9999999));
+    }
+
+    @Test
+    void getPlayerMissedGames_returns200WithMissedGames() throws Exception {
+        long playerId = 8478402L;
+        String season = "20252026";
+
+        MissedGameDto missed = new MissedGameDto(2025020110L, LocalDate.parse("2025-10-17"), "VAN", false);
+
+        when(playerService.getPlayerMissedGames(playerId, season)).thenReturn(List.of(missed));
+
+        mockMvc.perform(get("/api/players/{playerId}/missed-games", playerId).param("season", season))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].gameId").value(2025020110L))
+                .andExpect(jsonPath("$[0].gameDate").value("2025-10-17"))
+                .andExpect(jsonPath("$[0].opponentTeamCode").value("VAN"))
+                .andExpect(jsonPath("$[0].homeGame").value(false));
     }
 
     @Test
