@@ -65,10 +65,17 @@ vulnerabilities:
       - "pkg:npm/ip-address@10.5.0"
     statement: "Build stage only, never deployed: npm's own bundled dependencies, at the npm version pinned by frontend/package.json's packageManager field. They run once in CI on this repository's lockfile."
     expired_at: 2026-11-30
-  - id: CVE-2026-93748
+  - id: CVE-2026-118764
     paths:
-      - "usr/local/lib/node_modules/npm/node_modules/http-cache-semantics/package.json"
+      - "usr/local/lib/node_modules/npm/node_modules/minimatch/package.json"
     purls:
-      - "pkg:npm/http-cache-semantics@4.2.0"
+      - "pkg:npm/minimatch@10.2.5"
+    statement: "Build stage only, never deployed: npm's own bundled dependencies, at the npm version pinned by frontend/package.json's packageManager field. They run once in CI on this repository's lockfile."
+    expired_at: 2026-11-30
+  - id: CVE-2026-118773
+    paths:
+      - "usr/local/lib/node_modules/npm/node_modules/glob/package.json"
+    purls:
+      - "pkg:npm/glob@13.0.6"
     statement: "Build stage only, never deployed: npm's own bundled dependencies, at the npm version pinned by frontend/package.json's packageManager field. They run once in CI on this repository's lockfile."
     expired_at: 2026-11-30

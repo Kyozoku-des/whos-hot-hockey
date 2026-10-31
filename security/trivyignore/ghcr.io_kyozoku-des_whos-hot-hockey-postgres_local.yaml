@@ -388,6 +388,16 @@ vulnerabilities:
       - "pkg:deb/debian/locales@2.41-12%2Bdeb13u4?arch=all&distro=debian-13.7"
     statement: "postgres:17 (Debian) base of whos-hot-hockey-postgres: no Debian fix released yet. PostgreSQL is reachable only from the Compose network and the host's loopback; these are OS libraries and tools, not the server itself."
     expired_at: 2026-11-30
+  - id: CVE-2026-84243
+    paths:
+      - "ghcr.io/kyozoku-des/whos-hot-hockey-postgres:local (debian 13.7)"
+    purls:
+      - "pkg:deb/debian/libc-bin@2.41-12%2Bdeb13u4?arch=amd64&distro=debian-13.7"
+      - "pkg:deb/debian/libc-l10n@2.41-12%2Bdeb13u4?arch=all&distro=debian-13.7"
+      - "pkg:deb/debian/libc6@2.41-12%2Bdeb13u4?arch=amd64&distro=debian-13.7"
+      - "pkg:deb/debian/locales@2.41-12%2Bdeb13u4?arch=all&distro=debian-13.7"
+    statement: "postgres:17 (Debian) base of whos-hot-hockey-postgres: no Debian fix released yet. PostgreSQL is reachable only from the Compose network and the host's loopback; these are OS libraries and tools, not the server itself."
+    expired_at: 2026-11-30
   - id: CVE-2026-85091
     paths:
       - "ghcr.io/kyozoku-des/whos-hot-hockey-postgres:local (debian 13.7)"
